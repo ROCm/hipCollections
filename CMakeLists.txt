@@ -34,7 +34,7 @@
 cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
-    file(DOWNLOAD https://$ENV{GITHUB_USER}:$ENV{GITHUB_PASS}@raw.githubusercontent.com/AMD-AI/rapids-cmake/main/RAPIDS.cmake 
+    file(DOWNLOAD https://$ENV{GITHUB_USER}:$ENV{GITHUB_PASS}@raw.githubusercontent.com/AMD-AI/rapids-cmake/feature/add-rocthrust/RAPIDS.cmake 
          ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
 endif()
 include(${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
@@ -50,7 +50,7 @@ include(rapids-find)
 # * Enable the CMake CUDA language
 rapids_hip_init_architectures(CUCO)
 
-project(CUCO VERSION 0.0.1 LANGUAGES CXX CUDA)
+project(CUCO VERSION 0.0.1 LANGUAGES CXX HIP)
 
 ###################################################################################################
 # - build options ---------------------------------------------------------------------------------
@@ -60,8 +60,11 @@ if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}")
   set(default_build_option_state ON)
 endif()
 
-option(BUILD_TESTS "Configure CMake to build tests" ${default_build_option_state})
-option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ${default_build_option_state})
+#Todo(hip): Enable building of tests.
+option(BUILD_TESTS "Configure CMake to build tests" OFF)
+#option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ${default_build_option_state})
+#Todo(hip): Enable building benchmarks, NVbench is required
+option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" OFF)
 option(BUILD_EXAMPLES "Configure CMake to build examples" ${default_build_option_state})
 option(INSTALL_CUCO "Enable CMake install rules for cuco" ${default_build_option_state})
 
@@ -80,10 +83,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ##############################################################################
 # - compiler options ---------------------------------------------------------
 
-# * Find CUDAToolkit package
+# * Find HIP package
 # * Offers support for CMAKE_CUDA_ARCHITECTURES=NATIVE
 rapids_find_package(
-    CUDAToolkit REQUIRED
+    HIP REQUIRED
     BUILD_EXPORT_SET cuco-exports
     INSTALL_EXPORT_SET cuco-exports
 )
@@ -93,7 +96,8 @@ rapids_find_package(
 
 rapids_cpm_init()
 
-include(cmake/thirdparty/get_cccl.cmake)
+include(cmake/thirdparty/get_rocthrust.cmake)
+include(cmake/thirdparty/get_libhipcxx.cmake)
 
 ###################################################################################################
 # - cuco target   ---------------------------------------------------------------------------------
@@ -102,7 +106,10 @@ add_library(cuco::cuco ALIAS cuco)
 target_include_directories(cuco INTERFACE
     INTERFACE   $<BUILD_INTERFACE:${CUCO_SOURCE_DIR}/include>
                 $<INSTALL_INTERFACE:include>)
-target_link_libraries(cuco INTERFACE CCCL::CCCL CUDA::toolkit)
+#target_link_libraries(cuco INTERFACE libhipcxx::libhipcxx hip::device $<BUILD_INTERFACE:cuco::Thrust>)
+#target_link_libraries(cuco INTERFACE libhipcxx::libhipcxx hip::device $<BUILD_INTERFACE::cuco::rocthrust)
+#FIXME(hip): Fix target cuco::rocthrust and use CMake generator expression
+target_link_libraries(cuco INTERFACE libhipcxx::libhipcxx hip::device roc::rocthrust)
 target_compile_features(cuco INTERFACE cxx_std_17 cuda_std_17)
 
 ###################################################################################################
