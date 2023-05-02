@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <test_utils.hpp>
 
 #include <cuco/static_map.cuh>
@@ -38,8 +55,8 @@ TEMPLATE_TEST_CASE_SIG("static_map: unique sequence of keys on given stream",
                        (int64_t, int32_t),
                        (int64_t, int64_t))
 {
-  cudaStream_t stream;
-  CUCO_CUDA_TRY(cudaStreamCreate(&stream));
+  hipStream_t stream;
+  CUCO_CUDA_TRY(hipStreamCreate(&stream));
 
   constexpr std::size_t num_keys{500'000};
   auto map = cuco::static_map{num_keys * 2,
@@ -90,5 +107,5 @@ TEMPLATE_TEST_CASE_SIG("static_map: unique sequence of keys on given stream",
     REQUIRE(cuco::test::all_of(d_contained.begin(), d_contained.end(), thrust::identity{}, stream));
   }
 
-  CUCO_CUDA_TRY(cudaStreamDestroy(stream));
+  CUCO_CUDA_TRY(hipStreamDestroy(stream));
 }

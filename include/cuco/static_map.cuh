@@ -14,7 +14,26 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
+
+#include "hip/hip_runtime.h"
 
 #include <cuco/detail/__config>
 #include <cuco/detail/open_addressing/open_addressing_impl.cuh>
@@ -1274,7 +1293,7 @@ class static_map {
              empty_key<Key> empty_key_sentinel,
              empty_value<Value> empty_value_sentinel,
              Allocator const& alloc = Allocator{},
-             cudaStream_t stream    = 0);
+             hipStream_t stream    = 0);
 
   /**
    * @brief Constructs a fixed-size map with erase capability.
@@ -1295,7 +1314,7 @@ class static_map {
              empty_value<Value> empty_value_sentinel,
              erased_key<Key> erased_key_sentinel,
              Allocator const& alloc = Allocator{},
-             cudaStream_t stream    = 0);
+             hipStream_t stream    = 0);
 
   /**
    * @brief Destroys the map and frees its contents.
@@ -1328,7 +1347,7 @@ class static_map {
               InputIt last,
               Hash hash           = Hash{},
               KeyEqual key_equal  = KeyEqual{},
-              cudaStream_t stream = 0);
+              hipStream_t stream = 0);
 
   /**
    * @brief Inserts key/value pairs in the range `[first, last)` if `pred`
@@ -1364,7 +1383,7 @@ class static_map {
                  Predicate pred,
                  Hash hash           = Hash{},
                  KeyEqual key_equal  = KeyEqual{},
-                 cudaStream_t stream = 0);
+                 hipStream_t stream = 0);
 
   /**
    * @brief Erases keys in the range `[first, last)`.
@@ -1400,7 +1419,7 @@ class static_map {
              InputIt last,
              Hash hash           = Hash{},
              KeyEqual key_equal  = KeyEqual{},
-             cudaStream_t stream = 0);
+             hipStream_t stream = 0);
 
   /**
    * @brief Finds the values corresponding to all keys in the range `[first, last)`.
@@ -1430,7 +1449,7 @@ class static_map {
             OutputIt output_begin,
             Hash hash           = Hash{},
             KeyEqual key_equal  = KeyEqual{},
-            cudaStream_t stream = 0);
+            hipStream_t stream = 0);
 
   /**
    * @brief Retrieves all of the keys and their associated values.
@@ -1453,7 +1472,7 @@ class static_map {
   template <typename KeyOut, typename ValueOut>
   std::pair<KeyOut, ValueOut> retrieve_all(KeyOut keys_out,
                                            ValueOut values_out,
-                                           cudaStream_t stream = 0) const;
+                                           hipStream_t stream = 0) const;
 
   /**
    * @brief Indicates whether the keys in the range `[first, last)` are contained in the map.
@@ -1485,7 +1504,7 @@ class static_map {
                 OutputIt output_begin,
                 Hash hash           = Hash{},
                 KeyEqual key_equal  = KeyEqual{},
-                cudaStream_t stream = 0) const;
+                hipStream_t stream = 0) const;
 
  private:
   class device_view_base {

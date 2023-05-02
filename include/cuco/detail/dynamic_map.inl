@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 namespace cuco {
 
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
@@ -21,7 +38,7 @@ dynamic_map<Key, Value, Scope, Allocator>::dynamic_map(std::size_t initial_capac
                                                        empty_key<Key> empty_key_sentinel,
                                                        empty_value<Value> empty_value_sentinel,
                                                        Allocator const& alloc,
-                                                       cudaStream_t stream)
+                                                       hipStream_t stream)
   : empty_key_sentinel_(empty_key_sentinel.value),
     empty_value_sentinel_(empty_value_sentinel.value),
     erased_key_sentinel_(empty_key_sentinel.value),
@@ -48,7 +65,7 @@ dynamic_map<Key, Value, Scope, Allocator>::dynamic_map(std::size_t initial_capac
                                                        empty_value<Value> empty_value_sentinel,
                                                        erased_key<Key> erased_key_sentinel,
                                                        Allocator const& alloc,
-                                                       cudaStream_t stream)
+                                                       hipStream_t stream)
   : empty_key_sentinel_(empty_key_sentinel.value),
     empty_value_sentinel_(empty_value_sentinel.value),
     erased_key_sentinel_(erased_key_sentinel.value),
@@ -75,7 +92,7 @@ dynamic_map<Key, Value, Scope, Allocator>::dynamic_map(std::size_t initial_capac
 }
 
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
-void dynamic_map<Key, Value, Scope, Allocator>::reserve(std::size_t n, cudaStream_t stream)
+void dynamic_map<Key, Value, Scope, Allocator>::reserve(std::size_t n, hipStream_t stream)
 {
   int64_t num_elements_remaining = n;
   uint32_t submap_idx            = 0;
@@ -119,7 +136,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::reserve(std::size_t n, cudaStrea
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
 template <typename InputIt, typename Hash, typename KeyEqual>
 void dynamic_map<Key, Value, Scope, Allocator>::insert(
-  InputIt first, InputIt last, Hash hash, KeyEqual key_equal, cudaStream_t stream)
+  InputIt first, InputIt last, Hash hash, KeyEqual key_equal, hipStream_t stream)
 {
   // TODO: memset an atomic variable is unsafe
   static_assert(sizeof(std::size_t) == sizeof(atomic_ctr_type),
@@ -141,7 +158,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::insert(
     // only if we meet the minimum insert size.
     if (capacity_remaining >= min_insert_size_) {
       CUCO_CUDA_TRY(
-        cudaMemsetAsync(submap_num_successes_[submap_idx], 0, sizeof(atomic_ctr_type), stream));
+        hipMemsetAsync(submap_num_successes_[submap_idx], 0, sizeof(atomic_ctr_type), stream));
 
       auto const n         = std::min(capacity_remaining, num_to_insert);
       auto const grid_size = (tile_size * n + stride * block_size - 1) / (stride * block_size);
@@ -158,10 +175,10 @@ void dynamic_map<Key, Value, Scope, Allocator>::insert(
                                                key_equal);
 
       std::size_t h_num_successes;
-      CUCO_CUDA_TRY(cudaMemcpyAsync(&h_num_successes,
+      CUCO_CUDA_TRY(hipMemcpyAsync(&h_num_successes,
                                     submap_num_successes_[submap_idx],
                                     sizeof(atomic_ctr_type),
-                                    cudaMemcpyDeviceToHost,
+                                    hipMemcpyDeviceToHost,
                                     stream));
       submaps_[submap_idx]->size_ += h_num_successes;
       size_ += h_num_successes;
@@ -175,7 +192,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::insert(
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
 template <typename InputIt, typename Hash, typename KeyEqual>
 void dynamic_map<Key, Value, Scope, Allocator>::erase(
-  InputIt first, InputIt last, Hash hash, KeyEqual key_equal, cudaStream_t stream)
+  InputIt first, InputIt last, Hash hash, KeyEqual key_equal, hipStream_t stream)
 {
   // TODO: memset an atomic variable is unsafe
   static_assert(sizeof(std::size_t) == sizeof(atomic_ctr_type),
@@ -190,7 +207,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::erase(
 
   // zero out submap success counters
   for (uint32_t i = 0; i < submaps_.size(); ++i) {
-    CUCO_CUDA_TRY(cudaMemsetAsync(submap_num_successes_[i], 0, sizeof(atomic_ctr_type), stream));
+    CUCO_CUDA_TRY(hipMemsetAsync(submap_num_successes_[i], 0, sizeof(atomic_ctr_type), stream));
   }
 
   auto const temp_storage_size = submaps_.size() * sizeof(unsigned long long);
@@ -206,10 +223,10 @@ void dynamic_map<Key, Value, Scope, Allocator>::erase(
 
   for (uint32_t i = 0; i < submaps_.size(); ++i) {
     std::size_t h_submap_num_successes;
-    CUCO_CUDA_TRY(cudaMemcpyAsync(&h_submap_num_successes,
+    CUCO_CUDA_TRY(hipMemcpyAsync(&h_submap_num_successes,
                                   submap_num_successes_[i],
                                   sizeof(atomic_ctr_type),
-                                  cudaMemcpyDeviceToHost,
+                                  hipMemcpyDeviceToHost,
                                   stream));
     submaps_[i]->size_ -= h_submap_num_successes;
     size_ -= h_submap_num_successes;
@@ -223,7 +240,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::find(InputIt first,
                                                      OutputIt output_begin,
                                                      Hash hash,
                                                      KeyEqual key_equal,
-                                                     cudaStream_t stream)
+                                                     hipStream_t stream)
 {
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
@@ -234,7 +251,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::find(InputIt first,
 
   detail::find<block_size, tile_size, Value><<<grid_size, block_size, 0, stream>>>(
     first, last, output_begin, submap_views_.data().get(), submaps_.size(), hash, key_equal);
-  CUCO_CUDA_TRY(cudaDeviceSynchronize());
+  CUCO_CUDA_TRY(hipDeviceSynchronize());
 }
 
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
@@ -244,7 +261,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::contains(InputIt first,
                                                          OutputIt output_begin,
                                                          Hash hash,
                                                          KeyEqual key_equal,
-                                                         cudaStream_t stream)
+                                                         hipStream_t stream)
 {
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
@@ -255,7 +272,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::contains(InputIt first,
 
   detail::contains<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
     first, last, output_begin, submap_views_.data().get(), submaps_.size(), hash, key_equal);
-  CUCO_CUDA_TRY(cudaDeviceSynchronize());
+  CUCO_CUDA_TRY(hipDeviceSynchronize());
 }
 
 }  // namespace cuco
