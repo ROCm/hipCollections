@@ -146,7 +146,7 @@ template <class Key,
           class Allocator,
           class Storage>
 template <typename InputIt>
-static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size_type
+typename static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size_type
 static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::insert(
   InputIt first, InputIt last, cuda::stream_ref stream)
 {
@@ -623,7 +623,7 @@ template <class Key,
           class ProbingScheme,
           class Allocator,
           class Storage>
-static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size_type
+typename static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size_type
 static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size(
   cuda::stream_ref stream) const
 {
@@ -651,7 +651,7 @@ template <class Key,
           class ProbingScheme,
           class Allocator,
           class Storage>
-constexpr static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::key_type
+constexpr typename static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::key_type
 static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::empty_key_sentinel()
   const noexcept
 {
