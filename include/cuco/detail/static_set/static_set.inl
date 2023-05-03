@@ -37,6 +37,12 @@
 #include <cuco/operator.hpp>
 #include <cuco/static_set_ref.cuh>
 
+#include <thrust/iterator/counting_iterator.h>
+#include <thrust/iterator/transform_iterator.h>
+
+#include <hipcub/device/device_reduce.hpp>
+#include <hipcub/device/device_select.hpp>
+
 #include <cstddef>
 
 namespace cuco {
