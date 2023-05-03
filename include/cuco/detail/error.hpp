@@ -67,9 +67,9 @@
 #define GET_CUCO_CUDA_TRY_MACRO(_1, _2, NAME, ...) NAME
 #define CUCO_CUDA_TRY_2(_call, _exception_type)                                                    \
   do {                                                                                             \
-    hipError_t const error = (_call);                                                             \
+    hipError_t error = (_call);                                                             \
     if (hipSuccess != error) {                                                                    \
-      hipGetLastError();                                                                          \
+      error = hipGetLastError();                                                                          \
       throw _exception_type{std::string{"CUDA error at: "} + __FILE__ + CUCO_STRINGIFY(__LINE__) + \
                             ": " + hipGetErrorName(error) + " " + hipGetErrorString(error)};     \
     }                                                                                              \

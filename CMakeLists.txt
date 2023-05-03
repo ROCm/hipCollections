@@ -99,6 +99,9 @@ rapids_cpm_init()
 include(cmake/thirdparty/get_rocthrust.cmake)
 include(cmake/thirdparty/get_libhipcxx.cmake)
 
+#Todo(HIP): Ideally, we could use rapids-cmake to configure hipcub
+find_package(hipcub REQUIRED CONFIG PATHS "/opt/rocm/hipcub")
+
 ###################################################################################################
 # - cuco target   ---------------------------------------------------------------------------------
 add_library(cuco INTERFACE)

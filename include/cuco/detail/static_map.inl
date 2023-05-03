@@ -301,7 +301,7 @@ void static_map<Key, Value, Scope, Allocator>::contains(InputIt first,
 
 template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename KeyEqual>
-__device__ static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert_result
+__device__ typename static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert_result
 static_map<Key, Value, Scope, Allocator>::device_mutable_view::packed_cas(
   iterator current_slot,
   value_type const& insert_pair,
@@ -333,7 +333,7 @@ static_map<Key, Value, Scope, Allocator>::device_mutable_view::packed_cas(
 
 template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename KeyEqual>
-__device__ static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert_result
+__device__ typename static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert_result
 static_map<Key, Value, Scope, Allocator>::device_mutable_view::back_to_back_cas(
   iterator current_slot,
   value_type const& insert_pair,
@@ -373,7 +373,7 @@ static_map<Key, Value, Scope, Allocator>::device_mutable_view::back_to_back_cas(
 
 template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename KeyEqual>
-__device__ static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert_result
+__device__ typename static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert_result
 static_map<Key, Value, Scope, Allocator>::device_mutable_view::cas_dependent_write(
   iterator current_slot,
   value_type const& insert_pair,
@@ -404,7 +404,7 @@ template <typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert(
   value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
 {
-  auto current_slot{initial_slot(insert_pair.first, hash)};
+  auto current_slot{this->initial_slot(insert_pair.first, hash)};
 
   while (true) {
     key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -441,7 +441,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
 
     // if we couldn't insert the key, but it wasn't a duplicate, then there must
     // have been some other key there, so we keep looking for a slot
-    current_slot = next_slot(current_slot);
+    current_slot = this->next_slot(current_slot);
   }
 }
 
@@ -540,7 +540,7 @@ template <typename CG, typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert(
   CG const& g, value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
 {
-  auto current_slot = initial_slot(g, insert_pair.first, hash);
+  auto current_slot = this->initial_slot(g, insert_pair.first, hash);
 
   while (true) {
     key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -552,11 +552,14 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
       cuco::detail::bitwise_compare(existing_key, this->get_erased_key_sentinel());
 
     // the key we are trying to insert is already in the map, so we return with failure to insert
-    if (g.any(not slot_is_available and key_equal(existing_key, insert_pair.first))) {
-      return false;
-    }
-
-    auto const bucket_contains_available = g.ballot(slot_is_available);
+    //todo(HIP): we need a workaround for any which is missing in HIP cg
+    //if (g.any(not slot_is_available and key_equal(existing_key, insert_pair.first))) {
+    //  return false;
+    //}
+    
+    //todo(HIP): we need a workaround for ballot which is missing in HIP cg
+    //auto const bucket_contains_available = g.ballot(slot_is_available);
+    auto const bucket_contains_available = false;
 
     // we found an empty slot, but not the key we are inserting, so this must
     // be an empty slot into which we can insert the key
@@ -594,7 +597,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
     // if there are no empty slots in the current bucket,
     // we move onto the next bucket
     else {
-      current_slot = next_slot(g, current_slot);
+      current_slot = this->next_slot(g, current_slot);
     }
   }
 }
@@ -712,7 +715,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(Key const& k,
                                                             Hash hash,
                                                             KeyEqual key_equal) noexcept
 {
-  auto current_slot = initial_slot(k, hash);
+  auto current_slot = this->initial_slot(k, hash);
 
   while (true) {
     auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -724,7 +727,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(Key const& k,
     // Key exists, return iterator to location
     if (key_equal(existing_key, k)) { return current_slot; }
 
-    current_slot = next_slot(current_slot);
+    current_slot = this->next_slot(current_slot);
   }
 }
 
@@ -759,7 +762,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
                                                             Hash hash,
                                                             KeyEqual key_equal) noexcept
 {
-  auto current_slot = initial_slot(g, k, hash);
+  auto current_slot = this->initial_slot(g, k, hash);
 
   while (true) {
     auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -771,7 +774,8 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
 
     // the key we were searching for was found by one of the threads,
     // so we return an iterator to the entry
-    auto const exists = g.ballot(not slot_is_empty and key_equal(existing_key, k));
+    //todo(HIP): we need a workaround for ballot which is missing in HIP cg
+    auto const exists = false; // g.ballot(not slot_is_empty and key_equal(existing_key, k));
     if (exists) {
       uint32_t src_lane = __ffs(exists) - 1;
       // TODO: This shouldn't cast an iterator to an int to shuffle. Instead, get the index of the
@@ -781,7 +785,8 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
     }
 
     // we found an empty slot, meaning that the key we're searching for isn't present
-    if (g.ballot(slot_is_empty)) { return this->end(); }
+    //todo(HIP): we need a workaround for ballot which is missing in HIP cg
+    //if (g.ballot(slot_is_empty)) { return this->end(); }
 
     // otherwise, all slots in the current bucket are full with other keys, so we move onto the
     // next bucket
