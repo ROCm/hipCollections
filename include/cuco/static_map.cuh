@@ -51,7 +51,7 @@
 #include <thrust/functional.h>
 
 #if defined(CUCO_HAS_CUDA_BARRIER)
-#include <cuda/barrier>
+#include <hip/barrier>
 #endif
 
 #include <cstddef>
@@ -1211,7 +1211,7 @@ namespace legacy {
  */
 template <typename Key,
           typename Value,
-          cuda::thread_scope Scope = cuda::thread_scope_device,
+          hip::thread_scope Scope = hip::thread_scope_device,
           typename Allocator       = cuco::cuda_allocator<char>>
 class static_map {
   static_assert(
@@ -1230,13 +1230,13 @@ class static_map {
   using value_type         = cuco::pair<Key, Value>;            ///< Type of key/value pairs
   using key_type           = Key;                               ///< Key type
   using mapped_type        = Value;                             ///< Type of mapped values
-  using atomic_key_type    = cuda::atomic<key_type, Scope>;     ///< Type of atomic keys
-  using atomic_mapped_type = cuda::atomic<mapped_type, Scope>;  ///< Type of atomic mapped values
+  using atomic_key_type    = hip::atomic<key_type, Scope>;     ///< Type of atomic keys
+  using atomic_mapped_type = hip::atomic<mapped_type, Scope>;  ///< Type of atomic mapped values
   using pair_atomic_type =
     cuco::pair<atomic_key_type,
                atomic_mapped_type>;  ///< Pair type of atomic key and atomic mapped value
   using slot_type           = pair_atomic_type;                  ///< Type of hash map slots
-  using atomic_ctr_type     = cuda::atomic<std::size_t, Scope>;  ///< Atomic counter type
+  using atomic_ctr_type     = hip::atomic<std::size_t, Scope>;  ///< Atomic counter type
   using allocator_type      = Allocator;                         ///< Allocator type
   using slot_allocator_type = typename std::allocator_traits<Allocator>::template rebind_alloc<
     pair_atomic_type>;  ///< Type of the allocator to (de)allocate slots

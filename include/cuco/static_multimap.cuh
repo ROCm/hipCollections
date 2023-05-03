@@ -48,7 +48,7 @@
 #include <thrust/functional.h>
 
 #if defined(CUCO_HAS_CUDA_BARRIER)
-#include <cuda/barrier>
+#include <hip/barrier>
 #endif
 
 #include <hip/hip_cooperative_groups.h>
@@ -953,7 +953,7 @@ class static_multimap {
  */
 template <typename Key,
           typename Value,
-          cuda::thread_scope Scope = cuda::thread_scope_device,
+          hip::thread_scope Scope = hip::thread_scope_device,
           typename Allocator       = cuco::cuda_allocator<char>,
           class ProbeSequence = cuco::legacy::double_hashing<8, cuco::default_hash_function<Key>>>
 class static_multimap {

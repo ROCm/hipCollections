@@ -248,7 +248,7 @@ class dynamic_map {
  */
 template <typename Key,
           typename Value,
-          cuda::thread_scope Scope = cuda::thread_scope_device,
+          hip::thread_scope Scope = hip::thread_scope_device,
           typename Allocator       = cuco::cuda_allocator<char>>
 class dynamic_map {
   static_assert(std::is_arithmetic<Key>::value, "Unsupported, non-arithmetic key type.");
@@ -257,7 +257,7 @@ class dynamic_map {
   using value_type      = cuco::pair<Key, Value>;            ///< Type of key/value pairs
   using key_type        = Key;                               ///< Key type
   using mapped_type     = Value;                             ///< Type of mapped values
-  using atomic_ctr_type = cuda::atomic<std::size_t, Scope>;  ///< Atomic counter type
+  using atomic_ctr_type = hip::atomic<std::size_t, Scope>;  ///< Atomic counter type
   using view_type =
     typename cuco::legacy::static_map<Key, Value, Scope>::device_view;  ///< Type for submap device
                                                                         ///< view

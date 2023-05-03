@@ -42,8 +42,7 @@ function(ConfigureExample EXAMPLE_NAME EXAMPLE_SRC)
                                           RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples")
     target_include_directories(${EXAMPLE_NAME} PRIVATE
                                              "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_compile_options(${EXAMPLE_NAME} PRIVATE --compiler-options=-Wall --compiler-options=-Wextra
-      --expt-extended-lambda --expt-relaxed-constexpr -Xcompiler -Wno-subobject-linkage)
+    target_compile_options(${EXAMPLE_NAME} PRIVATE -Wall -Wextra -Xcompiler -Wno-subobject-linkage)
     target_link_libraries(${EXAMPLE_NAME} PRIVATE cuco hip::device)
 endfunction(ConfigureExample)
 

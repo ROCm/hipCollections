@@ -36,7 +36,7 @@
 #include <cuco/detail/utils.cuh>
 #include <cuco/pair.cuh>
 
-#include <cuda/std/atomic>
+#include <hip/std/atomic>
 
 #include <hip/hip_cooperative_groups.h>
 
@@ -83,7 +83,7 @@ class probe_sequence_base {
  */
 template <typename Key,
           typename Value,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           uint32_t VectorWidth,
           uint32_t CGSize>
 class probe_sequence_impl_base {
@@ -91,8 +91,8 @@ class probe_sequence_impl_base {
   using value_type         = cuco::pair<Key, Value>;            ///< Type of key/value pairs
   using key_type           = Key;                               ///< Key type
   using mapped_type        = Value;                             ///< Type of mapped values
-  using atomic_key_type    = cuda::atomic<key_type, Scope>;     ///< Type of atomic keys
-  using atomic_mapped_type = cuda::atomic<mapped_type, Scope>;  ///< Type of atomic mapped values
+  using atomic_key_type    = hip::atomic<key_type, Scope>;     ///< Type of atomic keys
+  using atomic_mapped_type = hip::atomic<mapped_type, Scope>;  ///< Type of atomic mapped values
   /// Pair type of atomic key and atomic mapped value
   using pair_atomic_type = cuco::pair<atomic_key_type, atomic_mapped_type>;
   /// Type of the forward iterator to `pair_atomic_type`
@@ -176,7 +176,7 @@ class probe_sequence_impl_base {
  */
 template <typename Key,
           typename Value,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           uint32_t VectorWidth,
           int32_t CGSize,
           typename Hash>
@@ -322,7 +322,7 @@ class linear_probing_impl
  */
 template <typename Key,
           typename Value,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           uint32_t VectorWidth,
           uint32_t CGSize,
           typename Hash1,
@@ -458,7 +458,7 @@ class double_hashing_impl
  * @tparam Scope The scope in which multimap operations will be performed by
  * individual threads
  */
-template <typename ProbeImpl, typename Key, typename Value, cuda::thread_scope Scope>
+template <typename ProbeImpl, typename Key, typename Value, hip::thread_scope Scope>
 class probe_sequence : public ProbeImpl::template impl<Key, Value, Scope> {
  public:
   using impl_type =

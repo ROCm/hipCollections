@@ -46,6 +46,7 @@
 
 namespace cuco {
 namespace detail {
+  
 namespace cg = cooperative_groups;
 
 CUCO_SUPPRESS_KERNEL_WARNINGS
@@ -280,7 +281,7 @@ CUCO_KERNEL void count(
   // and atomically add to the grand total
   std::size_t block_num_matches = BlockReduce(temp_storage).Sum(thread_num_matches);
   if (threadIdx.x == 0) {
-    num_matches->fetch_add(block_num_matches, cuda::std::memory_order_relaxed);
+    num_matches->fetch_add(block_num_matches, hip::std::memory_order_relaxed);
   }
 }
 
@@ -339,7 +340,7 @@ CUCO_KERNEL void pair_count(
   // and atomically add to the grand total
   std::size_t block_num_matches = BlockReduce(temp_storage).Sum(thread_num_matches);
   if (threadIdx.x == 0) {
-    num_matches->fetch_add(block_num_matches, cuda::std::memory_order_relaxed);
+    num_matches->fetch_add(block_num_matches, hip::std::memory_order_relaxed);
   }
 }
 
@@ -516,7 +517,7 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
 
   __shared__ pair_type probe_output_buffer[num_flushing_cgs][buffer_size];
   __shared__ pair_type contained_output_buffer[num_flushing_cgs][buffer_size];
-  // TODO: replace this with shared memory cuda::atomic variables once the dynamiic initialization
+  // TODO: replace this with shared memory hip::atomic variables once the dynamiic initialization
   // warning issue is solved __shared__ atomicT counter[num_flushing_cgs][buffer_size];
   __shared__ uint32_t flushing_cg_counter[num_flushing_cgs];
 

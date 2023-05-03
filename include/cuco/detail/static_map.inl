@@ -43,7 +43,7 @@
 
 namespace cuco::legacy {
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 static_map<Key, Value, Scope, Allocator>::static_map(std::size_t capacity,
                                                      empty_key<Key> empty_key_sentinel,
                                                      empty_value<Value> empty_value_sentinel,
@@ -67,7 +67,7 @@ static_map<Key, Value, Scope, Allocator>::static_map(std::size_t capacity,
       slots_, empty_key_sentinel_, empty_value_sentinel_, capacity_);
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 static_map<Key, Value, Scope, Allocator>::static_map(std::size_t capacity,
                                                      empty_key<Key> empty_key_sentinel,
                                                      empty_value<Value> empty_value_sentinel,
@@ -96,14 +96,14 @@ static_map<Key, Value, Scope, Allocator>::static_map(std::size_t capacity,
       slots_, empty_key_sentinel_, empty_value_sentinel_, capacity_);
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 static_map<Key, Value, Scope, Allocator>::~static_map()
 {
   std::allocator_traits<slot_allocator_type>::deallocate(slot_allocator_, slots_, capacity_);
   std::allocator_traits<counter_allocator_type>::deallocate(counter_allocator_, num_successes_, 1);
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename InputIt, typename Hash, typename KeyEqual>
 void static_map<Key, Value, Scope, Allocator>::insert(
   InputIt first, InputIt last, Hash hash, KeyEqual key_equal, hipStream_t stream)
@@ -132,7 +132,7 @@ void static_map<Key, Value, Scope, Allocator>::insert(
   size_ += h_num_successes;
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename InputIt,
           typename StencilIt,
           typename Predicate,
@@ -169,7 +169,7 @@ void static_map<Key, Value, Scope, Allocator>::insert_if(InputIt first,
   size_ += h_num_successes;
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename InputIt, typename Hash, typename KeyEqual>
 void static_map<Key, Value, Scope, Allocator>::erase(
   InputIt first, InputIt last, Hash hash, KeyEqual key_equal, hipStream_t stream)
@@ -202,7 +202,7 @@ void static_map<Key, Value, Scope, Allocator>::erase(
   size_ -= h_num_successes;
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename InputIt, typename OutputIt, typename Hash, typename KeyEqual>
 void static_map<Key, Value, Scope, Allocator>::find(InputIt first,
                                                     InputIt last,
@@ -224,7 +224,7 @@ void static_map<Key, Value, Scope, Allocator>::find(InputIt first,
     <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename KeyOut, typename ValueOut>
 std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator>::retrieve_all(
   KeyOut keys_out, ValueOut values_out, hipStream_t stream) const
@@ -277,7 +277,7 @@ std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator>::retrieve_a
   return std::make_pair(keys_out + h_num_out, values_out + h_num_out);
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename InputIt, typename OutputIt, typename Hash, typename KeyEqual>
 void static_map<Key, Value, Scope, Allocator>::contains(InputIt first,
                                                         InputIt last,
@@ -299,7 +299,7 @@ void static_map<Key, Value, Scope, Allocator>::contains(InputIt first,
     <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename KeyEqual>
 __device__ static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert_result
 static_map<Key, Value, Scope, Allocator>::device_mutable_view::packed_cas(
@@ -319,7 +319,7 @@ static_map<Key, Value, Scope, Allocator>::device_mutable_view::packed_cas(
       current_slot);
 
   bool success = slot->compare_exchange_strong(
-    expected_pair.packed, new_pair.packed, cuda::std::memory_order_relaxed);
+    expected_pair.packed, new_pair.packed, hip::std::memory_order_relaxed);
   if (success) {
     return insert_result::SUCCESS;
   }
@@ -331,7 +331,7 @@ static_map<Key, Value, Scope, Allocator>::device_mutable_view::packed_cas(
   return insert_result::CONTINUE;
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename KeyEqual>
 __device__ static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert_result
 static_map<Key, Value, Scope, Allocator>::device_mutable_view::back_to_back_cas(
@@ -340,7 +340,7 @@ static_map<Key, Value, Scope, Allocator>::device_mutable_view::back_to_back_cas(
   KeyEqual key_equal,
   Key expected_key) noexcept
 {
-  using cuda::std::memory_order_relaxed;
+  using hip::std::memory_order_relaxed;
 
   auto expected_value = this->get_empty_value_sentinel();
 
@@ -371,7 +371,7 @@ static_map<Key, Value, Scope, Allocator>::device_mutable_view::back_to_back_cas(
   return insert_result::CONTINUE;
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename KeyEqual>
 __device__ static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert_result
 static_map<Key, Value, Scope, Allocator>::device_mutable_view::cas_dependent_write(
@@ -380,7 +380,7 @@ static_map<Key, Value, Scope, Allocator>::device_mutable_view::cas_dependent_wri
   KeyEqual key_equal,
   Key expected_key) noexcept
 {
-  using cuda::std::memory_order_relaxed;
+  using hip::std::memory_order_relaxed;
 
   auto& slot_key = current_slot->first;
 
@@ -399,7 +399,7 @@ static_map<Key, Value, Scope, Allocator>::device_mutable_view::cas_dependent_wri
   return insert_result::CONTINUE;
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert(
   value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
@@ -407,7 +407,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
   auto current_slot{initial_slot(insert_pair.first, hash)};
 
   while (true) {
-    key_type const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+    key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as the
     // sentinel is not a valid key value. Therefore, first check for the sentinel
     auto const slot_is_available =
@@ -445,7 +445,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
   }
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename Hash, typename KeyEqual>
 __device__
   thrust::pair<typename static_map<Key, Value, Scope, Allocator>::device_mutable_view::iterator,
@@ -463,7 +463,7 @@ __device__
   auto current_slot{this->initial_slot(insert_pair.first, hash)};
 
   while (true) {
-    key_type const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+    key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as the
     // sentinel is not a valid key value. Therefore, first check for the sentinel
     auto const slot_is_available =
@@ -477,7 +477,7 @@ __device__
       if constexpr (not cuco::detail::is_packable<value_type>()) {
         auto& slot_value       = current_slot->second;
         auto const empty_value = this->get_empty_value_sentinel();
-        while (cuco::detail::bitwise_compare(slot_value.load(cuda::std::memory_order_relaxed),
+        while (cuco::detail::bitwise_compare(slot_value.load(hip::std::memory_order_relaxed),
                                              empty_value)) {
           // spin
         }
@@ -519,7 +519,7 @@ __device__
         if constexpr (not cuco::detail::is_packable<value_type>()) {
           auto& slot_value       = current_slot->second;
           auto const empty_value = this->get_empty_value_sentinel();
-          while (cuco::detail::bitwise_compare(slot_value.load(cuda::std::memory_order_relaxed),
+          while (cuco::detail::bitwise_compare(slot_value.load(hip::std::memory_order_relaxed),
                                                empty_value)) {
             // spin
           }
@@ -535,7 +535,7 @@ __device__
   }
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename CG, typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert(
   CG const& g, value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
@@ -543,7 +543,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
   auto current_slot = initial_slot(g, insert_pair.first, hash);
 
   while (true) {
-    key_type const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+    key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as the
     // sentinel is not a valid key value. Therefore, first check for the sentinel
@@ -599,7 +599,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
   }
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::erase(
   key_type const& k, Hash hash, KeyEqual key_equal) noexcept
@@ -633,13 +633,13 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
         cuco::detail::pair_converter<value_type> new_pair{insert_pair};
 
         return slot->compare_exchange_strong(
-          expected_pair.packed, new_pair.packed, cuda::std::memory_order_relaxed);
+          expected_pair.packed, new_pair.packed, hip::std::memory_order_relaxed);
       }
       if constexpr (not cuco::detail::is_packable<value_type>()) {
         current_slot->second.compare_exchange_strong(
-          existing_value, insert_pair.second, cuda::std::memory_order_relaxed);
+          existing_value, insert_pair.second, hip::std::memory_order_relaxed);
         return current_slot->first.compare_exchange_strong(
-          existing_key, insert_pair.first, cuda::std::memory_order_relaxed);
+          existing_key, insert_pair.first, hip::std::memory_order_relaxed);
       }
     }
 
@@ -647,7 +647,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
   }
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename CG, typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::erase(
   CG const& g, key_type const& k, Hash hash, KeyEqual key_equal) noexcept
@@ -684,13 +684,13 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
           cuco::detail::pair_converter<value_type> new_pair{insert_pair};
 
           status = slot->compare_exchange_strong(
-            expected_pair.packed, new_pair.packed, cuda::std::memory_order_relaxed);
+            expected_pair.packed, new_pair.packed, hip::std::memory_order_relaxed);
         }
         if constexpr (not cuco::detail::is_packable<value_type>()) {
           current_slot->second.compare_exchange_strong(
-            existing_value, insert_pair.second, cuda::std::memory_order_relaxed);
+            existing_value, insert_pair.second, hip::std::memory_order_relaxed);
           status = current_slot->first.compare_exchange_strong(
-            existing_key, insert_pair.first, cuda::std::memory_order_relaxed);
+            existing_key, insert_pair.first, hip::std::memory_order_relaxed);
         }
       }
 
@@ -705,7 +705,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
   }
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename Hash, typename KeyEqual>
 __device__ typename static_map<Key, Value, Scope, Allocator>::device_view::iterator
 static_map<Key, Value, Scope, Allocator>::device_view::find(Key const& k,
@@ -715,7 +715,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(Key const& k,
   auto current_slot = initial_slot(k, hash);
 
   while (true) {
-    auto const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+    auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
     // Key doesn't exist, return end()
     if (cuco::detail::bitwise_compare(existing_key, this->get_empty_key_sentinel())) {
       return this->end();
@@ -728,7 +728,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(Key const& k,
   }
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename Hash, typename KeyEqual>
 __device__ typename static_map<Key, Value, Scope, Allocator>::device_view::const_iterator
 static_map<Key, Value, Scope, Allocator>::device_view::find(Key const& k,
@@ -738,7 +738,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(Key const& k,
   auto current_slot = initial_slot(k, hash);
 
   while (true) {
-    auto const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+    auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
     // Key doesn't exist, return end()
     if (cuco::detail::bitwise_compare(existing_key, this->get_empty_key_sentinel())) {
       return this->end();
@@ -751,7 +751,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(Key const& k,
   }
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename CG, typename Hash, typename KeyEqual>
 __device__ typename static_map<Key, Value, Scope, Allocator>::device_view::iterator
 static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
@@ -762,7 +762,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
   auto current_slot = initial_slot(g, k, hash);
 
   while (true) {
-    auto const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+    auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
     // the sentinel is not a valid key value. Therefore, first check for the sentinel
@@ -789,7 +789,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
   }
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename CG, typename Hash, typename KeyEqual>
 __device__ typename static_map<Key, Value, Scope, Allocator>::device_view::const_iterator
 static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
@@ -800,7 +800,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
   auto current_slot = initial_slot(g, k, hash);
 
   while (true) {
-    auto const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+    auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
     // the sentinel is not a valid key value. Therefore, first check for the sentinel
@@ -829,7 +829,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
   }
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename ProbeKey, typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_view::contains(
   ProbeKey const& k, Hash hash, KeyEqual key_equal) const noexcept
@@ -837,7 +837,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_view::contains(
   auto current_slot = initial_slot(k, hash);
 
   while (true) {
-    auto const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+    auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     if (cuco::detail::bitwise_compare(existing_key, this->empty_key_sentinel_)) { return false; }
 
@@ -847,7 +847,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_view::contains(
   }
 }
 
-template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
 template <typename CG, typename ProbeKey, typename Hash, typename KeyEqual>
 __device__ std::enable_if_t<std::is_invocable_v<KeyEqual, ProbeKey, Key>, bool>
 static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
@@ -858,7 +858,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
   auto current_slot = initial_slot(g, k, hash);
 
   while (true) {
-    key_type const existing_key = current_slot->first.load(cuda::std::memory_order_relaxed);
+    key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
     // the sentinel is not a valid key value. Therefore, first check for the sentinel
