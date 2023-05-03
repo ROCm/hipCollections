@@ -25,6 +25,7 @@ __pycache__
 *.dylib
 .cache
 .vscode
+.devcontainer
 *.code-workspace
 *.swp
 *.pytest_cache
@@ -66,7 +67,6 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-/tests/Testing/
 
 ## Patching
 *.diff
@@ -381,52 +381,8 @@ ASALocalRun/
 # Visual Studio History (VSHistory) files
 .vshistory/
 
-# BeatPulse healthcheck temp database
-healthchecksdb
-
-# Backup folder for Package Reference Convert tool in Visual Studio 2017
-MigrationBackup/
-
-# Ionide (cross platform F# VS Code tools) working folder
-.ionide/
-
-# Fody - auto-generated XML schema
-FodyWeavers.xsd
-
-# VS Code files for those working on multiple tools
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
-
-# Local History for Visual Studio Code
-.history/
-
-# Windows Installer files from build outputs
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-
-# JetBrains Rider
-*.sln.iml
-
-<<<<<<< HEAD
 # clang
 compile_commands.json
-/.clangd/
 
 # figures
 *.eps
-
-# Github
-/.config/
-/.devcontainer.json
-
-# AWS cache
-/.aws/
-
-

@@ -1108,7 +1108,7 @@ template <typename Key,
           typename Allocator,
           class ProbeSequence>
 template <typename CG>
-__device__ __forceinline__ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view
+__device__ __forceinline__ typename static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view
 static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::make_copy(
   CG g, pair_atomic_type* const memory_to_use, device_view source_device_view) noexcept
 {
@@ -1128,9 +1128,9 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::make_
   pair_atomic_type const* const slots_ptr = source_device_view.get_slots();
   for (std::size_t i = g.thread_rank(); i < source_device_view.get_capacity(); i += g.size()) {
     new (&memory_to_use[i].first)
-      atomic_key_type{slots_ptr[i].first.load(cuda::memory_order_relaxed)};
+      atomic_key_type{slots_ptr[i].first.load(hip::memory_order_relaxed)};
     new (&memory_to_use[i].second)
-      atomic_mapped_type{slots_ptr[i].second.load(cuda::memory_order_relaxed)};
+      atomic_mapped_type{slots_ptr[i].second.load(hip::memory_order_relaxed)};
   }
   g.sync();
 #endif
@@ -1526,7 +1526,7 @@ std::size_t static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::get_si
   auto begin  = thrust::make_transform_iterator(raw_slots(), detail::slot_to_tuple<Key, Value>{});
   auto filled = cuco::detail::slot_is_filled<Key>{get_empty_key_sentinel()};
 
-  return thrust::count_if(thrust::cuda::par.on(stream), begin, begin + get_capacity(), filled);
+  return thrust::count_if(thrust::hip::par.on(stream), begin, begin + get_capacity(), filled);
 }
 
 template <typename Key,

@@ -410,7 +410,8 @@ CUCO_KERNEL void retrieve(InputIt first,
 
   flushing_cg.sync();
 
-  while (flushing_cg.any(idx < n)) {
+  //todo(HIP): need a workaround, cg::binary_partition is not available for HIP cg
+  /*while (flushing_cg.any(idx < n)) {
     bool active_flag        = idx < n;
     auto active_flushing_cg = cg::binary_partition<flushing_cg_size>(flushing_cg, active_flag);
 
@@ -437,7 +438,7 @@ CUCO_KERNEL void retrieve(InputIt first,
       }
     }
     idx += loop_stride;
-  }
+  }*/
 
   flushing_cg.sync();
   // Final flush of output buffer
@@ -525,6 +526,8 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
 
   flushing_cg.sync();
 
+  //Todo(hip): need a workaround for missing cg::binary_partition with hip
+  /*
   while (flushing_cg.any(idx < n)) {
     bool active_flag        = idx < n;
     auto active_flushing_cg = cg::binary_partition<flushing_cg_size>(flushing_cg, active_flag);
@@ -556,7 +559,7 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
       }
     }
     idx += loop_stride;
-  }
+  }*/
 
   flushing_cg.sync();
   // Final flush of output buffer

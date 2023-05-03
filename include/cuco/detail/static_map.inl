@@ -738,7 +738,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(Key const& k,
                                                             Hash hash,
                                                             KeyEqual key_equal) const noexcept
 {
-  auto current_slot = initial_slot(k, hash);
+  auto current_slot = this->initial_slot(k, hash);
 
   while (true) {
     auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -750,7 +750,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(Key const& k,
     // Key exists, return iterator to location
     if (key_equal(existing_key, k)) { return current_slot; }
 
-    current_slot = next_slot(current_slot);
+    current_slot = this->next_slot(current_slot);
   }
 }
 
@@ -839,7 +839,7 @@ template <typename ProbeKey, typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_view::contains(
   ProbeKey const& k, Hash hash, KeyEqual key_equal) const noexcept
 {
-  auto current_slot = initial_slot(k, hash);
+  auto current_slot = this->initial_slot(k, hash);
 
   while (true) {
     auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -848,7 +848,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_view::contains(
 
     if (key_equal(existing_key, k)) { return true; }
 
-    current_slot = next_slot(current_slot);
+    current_slot = this->next_slot(current_slot);
   }
 }
 
@@ -860,7 +860,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
                                                                 Hash hash,
                                                                 KeyEqual key_equal) const noexcept
 {
-  auto current_slot = initial_slot(g, k, hash);
+  auto current_slot = this->initial_slot(g, k, hash);
 
   while (true) {
     key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -872,10 +872,12 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
 
     // the key we were searching for was found by one of the threads, so we return an iterator to
     // the entry
-    if (g.ballot(not slot_is_empty and key_equal(existing_key, k))) { return true; }
+    // todo(HIP): HIP CG does not have ballot, we need a workaround
+    //if (g.ballot(not slot_is_empty and key_equal(existing_key, k))) { return true; }
 
     // we found an empty slot, meaning that the key we're searching for isn't present
-    if (g.ballot(slot_is_empty)) { return false; }
+    // todo(HIP): HIP CG does not have ballot, we need a workaround
+    //if (g.ballot(slot_is_empty)) { return false; }
 
     // otherwise, all slots in the current bucket are full with other keys, so we move onto the
     // next bucket

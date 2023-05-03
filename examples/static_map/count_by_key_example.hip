@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <cuco/static_map.cuh>
 
 #include <cub/block/block_reduce.cuh>
@@ -60,7 +77,7 @@ __global__ void count_by_key(Map map_ref,
                              uint64_t num_keys,
                              UniqueIter num_unique_keys)
 {
-  using BlockReduce = cub::BlockReduce<uint64_t, BlockSize>;
+  using BlockReduce = hipcub::BlockReduce<uint64_t, BlockSize>;
   __shared__ typename BlockReduce::TempStorage temp_storage;
 
   int64_t const loop_stride = gridDim.x * BlockSize;
@@ -75,8 +92,8 @@ __global__ void count_by_key(Map map_ref,
       thread_unique_keys++;
     } else {
       // key is already in the map -> increment count
-      auto ref = cuda::atomic_ref<uint32_t, cuda::thread_scope_device>{slot->second};
-      ref.fetch_add(1, cuda::memory_order_relaxed);
+      auto ref = hip::atomic_ref<uint32_t, hip::thread_scope_device>{slot->second};
+      ref.fetch_add(1, hip::memory_order_relaxed);
     }
     idx += loop_stride;
   }
@@ -85,9 +102,9 @@ __global__ void count_by_key(Map map_ref,
   // and atomically add to the grand total
   uint64_t block_unique_keys = BlockReduce(temp_storage).Sum(thread_unique_keys);
   if (threadIdx.x == 0) {
-    cuda::atomic_ref<uint64_t, cuda::thread_scope_device> grid_unique_keys(
+    hip::atomic_ref<uint64_t, hip::thread_scope_device> grid_unique_keys(
       *thrust::raw_pointer_cast(num_unique_keys));
-    grid_unique_keys.fetch_add(block_unique_keys, cuda::memory_order_relaxed);
+    grid_unique_keys.fetch_add(block_unique_keys, hip::memory_order_relaxed);
   }
 }
 
