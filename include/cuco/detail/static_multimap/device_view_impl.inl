@@ -372,7 +372,9 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
   __device__ __forceinline__ std::enable_if_t<uses_vector_load, void> insert(
     CG g, value_type const& insert_pair) noexcept
   {
-    auto current_slot = initial_slot(g, insert_pair.first);
+    auto current_slot = this->initial_slot(g, insert_pair.first);
+    //todo(HIP): need workaround for missing any
+    /*
     while (true) {
       value_type arr[2];
       load_pair_array(&arr[0], current_slot);
@@ -404,9 +406,9 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       // if there are no empty slots in the current bucket,
       // we move onto the next bucket
       else {
-        current_slot = next_slot(current_slot);
+        this->current_slot = next_slot(current_slot);
       }
-    }  // while true
+    }  // while true */
   }
 
   /**
@@ -740,10 +742,12 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     CG const& g, Key const& k, KeyEqual key_equal) noexcept
   {
     std::size_t count = 0;
-    auto current_slot = initial_slot(g, k);
+    auto current_slot = this->initial_slot(g, k);
 
     [[maybe_unused]] bool found_match = false;
 
+    // todo(HIP): need a workaround for missing any 
+    /*
     while (true) {
       value_type arr[2];
       load_pair_array(&arr[0], current_slot);
@@ -768,8 +772,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         return count;
       }
 
-      current_slot = next_slot(current_slot);
-    }
+      current_slot = this->next_slot(current_slot);
+    }*/
   }
 
   /**
