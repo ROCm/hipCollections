@@ -635,7 +635,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
     while (true) {
       value_type arr[2];
-      load_pair_array(&arr[0], current_slot);
+      this->load_pair_array(&arr[0], current_slot);
 
       auto const first_slot_is_empty =
         detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -853,13 +853,13 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   {
     std::size_t count = 0;
     auto key          = pair.first;
-    auto current_slot = initial_slot(g, key);
+    auto current_slot = this->initial_slot(g, key);
 
     [[maybe_unused]] bool found_match = false;
 
     while (true) {
       value_type arr[2];
-      load_pair_array(&arr[0], current_slot);
+      this->load_pair_array(&arr[0], current_slot);
 
       auto const first_slot_is_empty =
         detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -870,19 +870,21 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const second_slot_equals = (not second_slot_is_empty and pair_equal(arr[1], pair));
 
       if constexpr (is_outer) {
-        if (g.any(first_slot_equals or second_slot_equals)) { found_match = true; }
+        //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
+        if (__any(first_slot_equals or second_slot_equals)) { found_match = true; }
       }
 
       count += (first_slot_equals + second_slot_equals);
 
-      if (g.any(first_slot_is_empty or second_slot_is_empty)) {
+      //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
+      if (__any(first_slot_is_empty or second_slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) && (g.thread_rank() == 0)) { count++; }
         }
         return count;
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }
   }
 
@@ -906,7 +908,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   {
     std::size_t count = 0;
     auto key          = pair.first;
-    auto current_slot = initial_slot(g, key);
+    auto current_slot = this->initial_slot(g, key);
 
     [[maybe_unused]] bool found_match = false;
 
@@ -919,19 +921,20 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const equals = not slot_is_empty and pair_equal(slot_contents, pair);
 
       if constexpr (is_outer) {
-        if (g.any(equals)) { found_match = true; }
+        //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
+        if (__any(equals)) { found_match = true; }
       }
 
       count += equals;
-
-      if (g.any(slot_is_empty)) {
+      //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
+      if (__any(slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) && (g.thread_rank() == 0)) { count++; }
         }
         return count;
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }
   }
 
