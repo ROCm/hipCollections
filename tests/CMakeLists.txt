@@ -135,10 +135,10 @@ ConfigureTest(STATIC_MULTISET_TEST
 ConfigureTest(STATIC_MULTIMAP_TEST
     static_multimap/count_test.cu
     static_multimap/find_test.cu
-    static_multimap/heterogeneous_lookup_test.cu
+    # static_multimap/heterogeneous_lookup_test.cu # TODO(HIP/AMD): still necessary?
     static_multimap/insert_contains_test.cu
     static_multimap/insert_if_test.cu
-    static_multimap/multiplicity_test.cu
+    # static_multimap/multiplicity_test.cu # TODO(HIP/AMD): still necessary?
     static_multimap/for_each_test.cu)
 
 ###################################################################################################

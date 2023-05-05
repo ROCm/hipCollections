@@ -425,7 +425,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
   __device__ __forceinline__ std::enable_if_t<not uses_vector_load, void> insert(
     CG g, value_type const& insert_pair) noexcept
   {
-    auto current_slot = initial_slot(g, insert_pair.first);
+    auto current_slot = this->initial_slot(g, insert_pair.first);
 
     while (true) {
       value_type slot_contents = *reinterpret_cast<value_type const*>(current_slot);
@@ -435,12 +435,15 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       // the sentinel is not a valid key value. Therefore, first check for the sentinel
       auto const slot_is_empty =
         detail::bitwise_compare(existing_key, this->get_empty_key_sentinel());
-      auto const bucket_contains_empty = g.ballot(slot_is_empty);
+      
+      // Todo(HIP/AMD): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now      
+      auto const bucket_contains_empty = __ballot(slot_is_empty);
 
       if (bucket_contains_empty) {
         // the first lane in the group with an empty slot will attempt the insert
         insert_result status{insert_result::CONTINUE};
-        uint32_t src_lane = __ffs(bucket_contains_empty) - 1;
+        // Todo(HIP/AMD): casted to int?
+        uint32_t src_lane = __ffs((int)bucket_contains_empty) - 1;
 
         if (g.thread_rank() == src_lane) {
 #if (__CUDA_ARCH__ < 700)
@@ -451,7 +454,9 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
         }
 
         // successful insert
-        if (g.any(status == insert_result::SUCCESS)) { return; }
+        //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
+        if (__any(status == insert_result::SUCCESS)) { return; }
+        // if (g.any(status == insert_result::SUCCESS)) { return; }
         // if we've gotten this far, a different key took our spot
         // before we could insert. We need to retry the insert on the
         // same bucket
@@ -459,7 +464,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       // if there are no empty slots in the current bucket,
       // we move onto the next bucket
       else {
-        current_slot = next_slot(current_slot);
+        current_slot = this->next_slot(current_slot);
       }
     }  // while true
   }
@@ -624,8 +629,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     Equal equal) const noexcept
   {
     auto current_slot = [&]() {
-      if constexpr (is_pair_contains) { return initial_slot(g, element.first); }
-      if constexpr (not is_pair_contains) { return initial_slot(g, element); }
+      if constexpr (is_pair_contains) { return this->initial_slot(g, element.first); }
+      if constexpr (not is_pair_contains) { return this->initial_slot(g, element); }
     }();
 
     while (true) {
@@ -654,10 +659,12 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       }();
 
       // the key we were searching for was found by one of the threads, so we return true
-      if (g.any(first_equals or second_equals)) { return true; }
+      //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
+      if (__any(first_equals or second_equals)) { return true; }
 
       // we found an empty slot, meaning that the key we're searching for isn't present
-      if (g.any(first_slot_is_empty or second_slot_is_empty)) { return false; }
+      //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
+      if (__any(first_slot_is_empty or second_slot_is_empty)) { return false; }
 
       // otherwise, all slots in the current bucket are full with other keys, so we move onto the
       // next bucket
@@ -690,8 +697,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     Equal equal) const noexcept
   {
     auto current_slot = [&]() {
-      if constexpr (is_pair_contains) { return initial_slot(g, element.first); }
-      if constexpr (not is_pair_contains) { return initial_slot(g, element); }
+      if constexpr (is_pair_contains) { return this->initial_slot(g, element.first); }
+      if constexpr (not is_pair_contains) { return this->initial_slot(g, element); }
     }();
 
     while (true) {
@@ -713,10 +720,12 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       }();
 
       // the key we were searching for was found by one of the threads, so we return true
-      if (g.any(equals)) { return true; }
+      //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
+      if (__any(equals)) { return true; }
 
       // we found an empty slot, meaning that the key we're searching for isn't present
-      if (g.any(slot_is_empty)) { return false; }
+      //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
+      if (__any(slot_is_empty)) { return false; }
 
       // otherwise, all slots in the current bucket are full with other keys, so we move onto the
       // next bucket
@@ -794,7 +803,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     CG const& g, Key const& k, KeyEqual key_equal) noexcept
   {
     std::size_t count = 0;
-    auto current_slot = initial_slot(g, k);
+    auto current_slot = this->initial_slot(g, k);
 
     [[maybe_unused]] bool found_match = false;
 
@@ -807,19 +816,20 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const equals = not slot_is_empty and key_equal(current_key, k);
 
       if constexpr (is_outer) {
-        if (g.any(equals)) { found_match = true; }
+        //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
+        if (__any(equals)) { found_match = true; }
       }
 
       count += equals;
-
-      if (g.any(slot_is_empty)) {
+      //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
+      if (__any(slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) && (g.thread_rank() == 0)) { count++; }
         }
         return count;
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }
   }
 

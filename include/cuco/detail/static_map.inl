@@ -655,7 +655,7 @@ template <typename CG, typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::erase(
   CG const& g, key_type const& k, Hash hash, KeyEqual key_equal) noexcept
 {
-  auto current_slot = initial_slot(g, k, hash);
+  auto current_slot = this->initial_slot(g, k, hash);
   value_type const insert_pair =
     make_pair<Key, Value>(this->get_erased_key_sentinel(), this->get_empty_value_sentinel());
 
@@ -670,11 +670,13 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
     auto const slot_is_empty =
       cuco::detail::bitwise_compare(existing_key, this->get_empty_key_sentinel());
 
-    auto const exists = g.ballot(not slot_is_empty and key_equal(existing_key, k));
+    //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now
+    auto const exists = __ballot(not slot_is_empty and key_equal(existing_key, k));
 
     // Key exists, return true if successfully deleted
     if (exists) {
-      uint32_t src_lane = __ffs(exists) - 1;
+      //Todo(HIP): check if casting is fine?
+      uint32_t src_lane = __ffs((int)exists) - 1;
 
       bool status;
       if (g.thread_rank() == src_lane) {
@@ -702,9 +704,10 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
     }
 
     // empty slot found, but key not found, must not be in the map
-    if (g.ballot(slot_is_empty)) { return false; }
+    //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now
+    if (__ballot(slot_is_empty)) { return false; }
 
-    current_slot = next_slot(g, current_slot);
+    current_slot = this->next_slot(g, current_slot);
   }
 }
 
