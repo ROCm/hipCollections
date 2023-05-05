@@ -49,7 +49,7 @@
 
 // User-defined key type
 template <typename T>
-struct key_pair_type {
+struct alignas(8) key_pair_type { //no hip support for unaligned atomics https://ontrack-internal.amd.com/browse/SWDEV-393058
   T a;
   T b;
 
@@ -66,7 +66,7 @@ struct key_pair_type {
 
 // User-defined key type
 template <typename T>
-struct large_key_type {
+struct alignas(8) large_key_type { //no hip support for unaligned atomics https://ontrack-internal.amd.com/browse/SWDEV-393058
   T a;
   T b;
   T c;
@@ -84,7 +84,7 @@ struct large_key_type {
 
 // User-defined value type
 template <typename T>
-struct value_pair_type {
+struct alignas(8) value_pair_type { //no hip support for unaligned atomics https://ontrack-internal.amd.com/browse/SWDEV-393058
   T f;
   T s;
 
@@ -100,7 +100,7 @@ struct value_pair_type {
 // User-defined device hasher
 struct hash_custom_key {
   template <typename custom_type>
-  __device__ uint32_t operator()(custom_type k)
+  __host__ __device__ uint32_t operator()(custom_type k) //todo(HIP): __host__ needed to select the right template, compiler issue?
   {
     return thrust::raw_reference_cast(k).a;
   };
@@ -109,7 +109,7 @@ struct hash_custom_key {
 // User-defined device key equality
 struct custom_key_equals {
   template <typename lhs_type, typename rhs_type>
-  __device__ bool operator()(lhs_type lhs, rhs_type rhs)
+  __host__ __device__ bool operator()(lhs_type lhs, rhs_type rhs)  //todo(HIP): __host__ needed to select the right template, compiler issue?
   {
     return lhs == static_cast<lhs_type>(rhs);
   }
