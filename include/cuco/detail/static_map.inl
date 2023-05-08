@@ -243,27 +243,27 @@ std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator>::retrieve_a
   auto temp_allocator = temp_allocator_type{slot_allocator_};
   auto d_num_out      = reinterpret_cast<std::size_t*>(
     std::allocator_traits<temp_allocator_type>::allocate(temp_allocator, sizeof(std::size_t)));
-  hipcub::DeviceSelect::If(nullptr,
+  CUCO_CUDA_TRY(hipcub::DeviceSelect::If(nullptr,
                         temp_storage_bytes,
                         begin,
                         zipped_out_begin,
                         d_num_out,
                         get_capacity(),
                         filled,
-                        stream);
+                        stream));
 
   // Allocate temporary storage
   auto d_temp_storage =
     std::allocator_traits<temp_allocator_type>::allocate(temp_allocator, temp_storage_bytes);
 
-  hipcub::DeviceSelect::If(d_temp_storage,
+  CUCO_CUDA_TRY(hipcub::DeviceSelect::If(d_temp_storage,
                         temp_storage_bytes,
                         begin,
                         zipped_out_begin,
                         d_num_out,
                         get_capacity(),
                         filled,
-                        stream);
+                        stream));
 
   std::size_t h_num_out;
   CUCO_CUDA_TRY(
@@ -768,7 +768,8 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
   auto current_slot = this->initial_slot(g, k, hash);
 
   while (true) {
-    auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
+    //todo(HIP): activate again
+    //auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
     // the sentinel is not a valid key value. Therefore, first check for the sentinel
@@ -863,10 +864,11 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
                                                                 Hash hash,
                                                                 KeyEqual key_equal) const noexcept
 {
-  auto current_slot = this->initial_slot(g, k, hash);
+  //todo(HIP): activate again
+  //auto current_slot = this->initial_slot(g, k, hash);
 
-  while (true) {
-    key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
+  //while (true) {
+ //   key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
     // the sentinel is not a valid key value. Therefore, first check for the sentinel
@@ -882,9 +884,10 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
     // todo(HIP): HIP CG does not have ballot, we need a workaround
     //if (g.ballot(slot_is_empty)) { return false; }
 
-    // otherwise, all slots in the current bucket are full with other keys, so we move onto the
+    // otherwise, all slots in the current window are full with other keys, so we move onto the
     // next bucket
-    current_slot = next_slot(g, current_slot);
-  }
+    // current_slot = this->next_slot(g, current_slot);
+  //}
+  return true; // TODO(HIP/AMD): fix return value
 }
 }  // namespace cuco::legacy

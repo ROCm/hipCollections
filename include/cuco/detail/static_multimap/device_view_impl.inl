@@ -372,7 +372,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
   __device__ __forceinline__ std::enable_if_t<uses_vector_load, void> insert(
     CG g, value_type const& insert_pair) noexcept
   {
-    auto current_slot = this->initial_slot(g, insert_pair.first);
+    //auto current_slot = this->initial_slot(g, insert_pair.first);
     //todo(HIP): need workaround for missing any
     /*
     while (true) {
@@ -750,10 +750,10 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   __device__ __forceinline__ std::enable_if_t<uses_vector_load, std::size_t> count(
     CG const& g, Key const& k, KeyEqual key_equal) noexcept
   {
-    std::size_t count = 0;
-    auto current_slot = this->initial_slot(g, k);
+    //std::size_t count = 0;
+    //auto current_slot = this->initial_slot(g, k);
 
-    [[maybe_unused]] bool found_match = false;
+    //[[maybe_unused]] bool found_match = false;
 
     // todo(HIP): need a workaround for missing any 
     /*
@@ -783,6 +783,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       current_slot = this->next_slot(current_slot);
     }*/
+    return 0; //todo(HIP): fix return value
   }
 
   /**

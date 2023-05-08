@@ -1540,11 +1540,11 @@ class static_map {
                                          empty_key<Key> empty_key_sentinel,
                                          empty_value<Value> empty_value_sentinel,
                                          erased_key<Key> erased_key_sentinel) noexcept
-      : slots_{slots},
-        capacity_{capacity},
-        empty_key_sentinel_{empty_key_sentinel.value},
+      : empty_key_sentinel_{empty_key_sentinel.value},
         erased_key_sentinel_{erased_key_sentinel.value},
-        empty_value_sentinel_{empty_value_sentinel.value}
+        empty_value_sentinel_{empty_value_sentinel.value},
+        slots_{slots},
+        capacity_{capacity}
     {
     }
 
