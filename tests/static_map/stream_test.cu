@@ -49,11 +49,11 @@
 
 TEMPLATE_TEST_CASE_SIG("static_map: unique sequence of keys on given stream",
                        "",
-                       ((typename Key, typename Value), Key, Value),
-                       (int32_t, int32_t),
-                       (int32_t, int64_t),
-                       (int64_t, int32_t),
-                       (int64_t, int64_t))
+                       ((typename Key, typename Value, int dummy), Key, Value, dummy),
+                       (int32_t, int32_t, 1),
+                       (int32_t, int64_t, 1),
+                       (int64_t, int32_t, 1),
+                       (int64_t, int64_t, 1))
 {
   hipStream_t stream;
   CUCO_CUDA_TRY(hipStreamCreate(&stream));

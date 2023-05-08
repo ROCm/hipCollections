@@ -57,8 +57,8 @@ function(ConfigureTest TEST_NAME)
     set_target_properties(${TEST_NAME} PROPERTIES
                                        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
     target_compile_options(${TEST_NAME} PRIVATE -Wall -Wextra
-      -Wno-subobject-linkage)
-    # Todo: Find equivalents of --expt-extended-lambda -Xcompiler
+      )
+    # Todo: Find equivalents of --expt-extended-lambda -Xcompiler -Wno-subobject-linkage
     catch_discover_tests(${TEST_NAME} EXTRA_ARGS --allow-running-no-tests)
 endfunction(ConfigureTest)
 

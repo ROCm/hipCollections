@@ -87,11 +87,11 @@ __global__ void shared_memory_test_kernel(Ref* maps,
 
 TEMPLATE_TEST_CASE_SIG("static_map shared memory tests",
                        "",
-                       ((typename Key, typename Value), Key, Value),
-                       (int32_t, int32_t),
-                       (int32_t, int64_t),
-                       (int64_t, int32_t),
-                       (int64_t, int64_t))
+                       ((typename Key, typename Value, int dummy), Key, Value, dummy),
+                       (int32_t, int32_t, 1),
+                       (int32_t, int64_t, 1),
+                       (int64_t, int32_t, 1),
+                       (int64_t, int64_t, 1))
 {
   constexpr std::size_t number_of_maps  = 1000;
   constexpr std::size_t elements_in_map = 500;
