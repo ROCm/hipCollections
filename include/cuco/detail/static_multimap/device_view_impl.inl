@@ -1199,14 +1199,14 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     PairEqual pair_equal) noexcept
   {
     auto const lane_id                = probing_cg.thread_rank();
-    auto current_slot                 = initial_slot(probing_cg, pair.first);
+    auto current_slot                 = this->initial_slot(probing_cg, pair.first);
     [[maybe_unused]] auto found_match = false;
 
     auto num_matches = 0;
 
     while (true) {
       value_type arr[2];
-      load_pair_array(&arr[0], current_slot);
+      this->load_pair_array(&arr[0], current_slot);
 
       auto const first_slot_is_empty =
         detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -1214,8 +1214,9 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         detail::bitwise_compare(arr[1].first, this->get_empty_key_sentinel());
       auto const first_equals  = (not first_slot_is_empty and pair_equal(arr[0], pair));
       auto const second_equals = (not second_slot_is_empty and pair_equal(arr[1], pair));
-      auto const first_exists  = probing_cg.ballot(first_equals);
-      auto const second_exists = probing_cg.ballot(second_equals);
+      //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now
+      auto const first_exists  = __ballot(first_equals);
+      auto const second_exists = __ballot(second_equals);
 
       if (first_exists or second_exists) {
         if constexpr (is_outer) { found_match = true; }
@@ -1242,7 +1243,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         }
         num_matches += (num_first_matches + __popc(second_exists));
       }
-      if (probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
+      //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, using __any for now
+      if (__any(first_slot_is_empty or second_slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) and lane_id == 0) {
             *(probe_key_begin)     = pair.first;
@@ -1254,7 +1256,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         return;  // exit if any slot in the current bucket is empty
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while
   }
 
@@ -1310,7 +1312,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     PairEqual pair_equal) noexcept
   {
     auto const lane_id                = probing_cg.thread_rank();
-    auto current_slot                 = initial_slot(probing_cg, pair.first);
+    auto current_slot                 = this->initial_slot(probing_cg, pair.first);
     [[maybe_unused]] auto found_match = false;
 
     auto num_matches = 0;
@@ -1325,7 +1327,9 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const slot_is_empty =
         detail::bitwise_compare(slot_contents.first, this->get_empty_key_sentinel());
       auto const equals = (not slot_is_empty and pair_equal(slot_contents, pair));
-      auto const exists = probing_cg.ballot(equals);
+      // auto const exists = probing_cg.ballot(equals);
+      //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed using __ballot for now
+      auto const exists = __ballot(equals);
 
       if (exists) {
         if constexpr (is_outer) { found_match = true; }
@@ -1341,7 +1345,9 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         }
         num_matches += __popc(exists);
       }
-      if (probing_cg.any(slot_is_empty)) {
+      //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed using __any for now
+      if (__any(slot_is_empty)) {
+      // if (probing_cg.any(slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) and lane_id == 0) {
             *(probe_key_begin)     = pair.first;
@@ -1353,7 +1359,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         return;  // exit if any slot in the current bucket is empty
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while
   }
 
