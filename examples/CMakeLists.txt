@@ -42,7 +42,7 @@ function(ConfigureExample EXAMPLE_NAME EXAMPLE_SRC)
                                           RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples")
     target_include_directories(${EXAMPLE_NAME} PRIVATE
                                              "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_compile_options(${EXAMPLE_NAME} PRIVATE -Wall -Wno-unused-parameter -Wno-unused-variable) #todo(HIP):remove -Wno-unused-parameter -Wno-unused-variable
+    target_compile_options(${EXAMPLE_NAME} PRIVATE -Wall -Wno-unused-parameter) #todo(HIP):remove -Wno-unused-parameter
     target_link_libraries(${EXAMPLE_NAME} PRIVATE cuco hip::device hip::hipcub)
 endfunction(ConfigureExample)
 
