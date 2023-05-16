@@ -48,7 +48,7 @@ include(rapids-find)
 
 # * Determine GPU architectures
 # * Enable the CMake CUDA language
-rapids_hip_init_architectures(CUCO)
+rapids_hip_init_architectures(CUCO "NATIVE")
 
 project(CUCO VERSION 0.0.1 LANGUAGES CXX HIP)
 
