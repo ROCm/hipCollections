@@ -42,7 +42,7 @@
 
 TEMPLATE_TEST_CASE_SIG("utility storage tests",
                        "",
-                       ((typename Key, typename Value, int dummy), Key, Value, dummy),
+                       ((typename Key, typename Value, int dummy), Key, Value, dummy),  //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
                        (int32_t, int32_t, 1),
                        (int32_t, int64_t, 1),
                        (int64_t, int64_t, 1))

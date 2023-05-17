@@ -38,7 +38,7 @@
 #include <catch2/catch_template_test_macros.hpp>
 
 TEMPLATE_TEST_CASE_SIG(
-  "utility extent tests", "", ((typename SizeType, int dummy), SizeType, dummy), (int32_t,1), (int64_t,1), (std::size_t,1))
+  "utility extent tests", "", ((typename SizeType, int dummy), SizeType, dummy), (int32_t,1), (int64_t,1), (std::size_t,1)) // FIXME(HIP/AMD): dummy fixes ambiguous get_wrapper calls in catch2
 {
   SizeType constexpr num            = 1234;
   SizeType constexpr gold_reference = 314;  // 157 x 2
