@@ -41,7 +41,6 @@ include(${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
 
 include(rapids-cmake)
 include(rapids-cpm)
-#include(rapids-cuda)
 include(rapids-hip)
 include(rapids-export)
 include(rapids-find)
@@ -60,7 +59,6 @@ if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}")
   set(default_build_option_state ON)
 endif()
 
-#Todo(hip): Enable building of tests.
 option(BUILD_TESTS "Configure CMake to build tests" ON)
 #option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ${default_build_option_state})
 #Todo(hip): Enable building benchmarks, NVbench is required
