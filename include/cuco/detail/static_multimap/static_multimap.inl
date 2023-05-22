@@ -739,10 +739,16 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::insert(InputI
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
   auto const grid_size = (cg_size() * num_keys + stride * block_size - 1) / (stride * block_size);
-  auto view            = get_device_mutable_view();
+  auto view            = get_device_mutable_view();docker 
 
-  detail::insert<block_size, cg_size()>
-    <<<grid_size, block_size, 0, stream>>>(first, num_keys, view);
+  /*if constexpr(cg_size()==1) {
+    detail::insert<block_size>
+      <<<grid_size, block_size, 0, stream>>>(first, num_keys, view);
+  }
+  else {*/
+    detail::insert<block_size, cg_size()>
+      <<<grid_size, block_size, 0, stream>>>(first, num_keys, view);
+  //}
   CUCO_CUDA_TRY(hipStreamSynchronize(stream));
 }
 

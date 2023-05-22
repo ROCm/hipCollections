@@ -113,7 +113,7 @@ void static_map<Key, Value, Scope, Allocator>::insert(
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto const tile_size  = 4;
+  auto constexpr tile_size  = 1; //4 for CUDA, todo(HIP): investigate best value
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_mutable_view();
 
@@ -122,8 +122,14 @@ void static_map<Key, Value, Scope, Allocator>::insert(
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
 
-  detail::insert<block_size, tile_size>
+  if constexpr(tile_size==1) {
+    detail::insert<block_size>
     <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
+  }
+  else {
+    detail::insert<block_size, tile_size>
+    <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
+  }
   CUCO_CUDA_TRY(hipMemcpyAsync(
     &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
 
@@ -151,7 +157,7 @@ void static_map<Key, Value, Scope, Allocator>::insert_if(InputIt first,
 
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = 4;
+  auto constexpr tile_size  = 1; //4 for CUDA, todo(HIP): investigate best value
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -160,8 +166,14 @@ void static_map<Key, Value, Scope, Allocator>::insert_if(InputIt first,
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
 
-  detail::insert_if_n<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
-    first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
+  if constexpr(tile_size==1) {
+    detail::insert_if_n<block_size><<<grid_size, block_size, 0, stream>>>(
+       first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
+  }
+  else {
+    detail::insert_if_n<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
+       first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
+  }
   CUCO_CUDA_TRY(hipMemcpyAsync(
     &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
   CUCO_CUDA_TRY(hipStreamSynchronize(stream));
@@ -183,7 +195,7 @@ void static_map<Key, Value, Scope, Allocator>::erase(
 
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = 4;
+  auto constexpr tile_size  = 1; //4 for CUDA, todo(HIP): investigate best value
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -192,8 +204,14 @@ void static_map<Key, Value, Scope, Allocator>::erase(
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
 
-  detail::erase<block_size, tile_size>
-    <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
+  if constexpr(tile_size==1) {
+      detail::erase<block_size>
+      <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
+  }
+  else {
+      detail::erase<block_size, tile_size>
+      <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
+  }
   CUCO_CUDA_TRY(hipMemcpyAsync(
     &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
 
@@ -216,12 +234,18 @@ void static_map<Key, Value, Scope, Allocator>::find(InputIt first,
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto const tile_size  = 4;
+  auto constexpr tile_size  = 1; //4 for CUDA todo(HIP): investigate best value;
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_view();
 
-  detail::find<block_size, tile_size, Value>
-    <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
+  if constexpr(tile_size==1) {
+    detail::find<block_size, Value>
+      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
+  }
+  else {
+    detail::find<block_size, tile_size, Value>
+      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
+  }
 }
 
 template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
@@ -291,12 +315,18 @@ void static_map<Key, Value, Scope, Allocator>::contains(InputIt first,
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto const tile_size  = 4;
+  auto constexpr tile_size  = 1; //4; for CUDA, todo(HIP): investigate best value
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_view();
 
-  detail::contains<block_size, tile_size>
-    <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
+  if constexpr(tile_size==1) {
+    detail::contains<block_size>
+      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
+  }
+  else {
+    detail::contains<block_size, tile_size>
+      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
+  }
 }
 
 template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
@@ -607,7 +637,7 @@ template <typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::erase(
   key_type const& k, Hash hash, KeyEqual key_equal) noexcept
 {
-  auto current_slot{initial_slot(k, hash)};
+  auto current_slot{this->initial_slot(k, hash)};
 
   value_type const insert_pair =
     make_pair<Key, Value>(this->get_erased_key_sentinel(), this->get_empty_value_sentinel());
@@ -646,7 +676,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
       }
     }
 
-    current_slot = next_slot(current_slot);
+    current_slot = this->next_slot(current_slot);
   }
 }
 
