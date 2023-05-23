@@ -1542,6 +1542,14 @@ class static_multimap {
       cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& g,
       value_type const& insert_pair) noexcept;
 
+
+    /**
+     * @brief Inserts the specified key/value pair into the map.
+     *
+     * @param insert_pair The pair to insert
+     */
+    __device__ __forceinline__ void insert(
+      value_type const& insert_pair) noexcept;
    private:
     using device_view_base<device_mutable_view_impl>::impl_;
   };  // class device mutable view
@@ -1736,6 +1744,23 @@ class static_multimap {
     template <typename KeyEqual = thrust::equal_to<key_type>>
     __device__ __forceinline__ std::size_t count(
       cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& g,
+      Key const& k,
+      KeyEqual key_equal = KeyEqual{}) noexcept;
+
+    /**
+     * @brief Counts the occurrence of a given key contained in multimap.
+     *
+     * For a given key, `k`, counts all matching keys, `k'`, as determined by `key_equal(k, k')` and
+     * returns the sum of all matches for `k`.
+     *
+     * @tparam KeyEqual Binary callable type
+     * @param k The key to search for
+     * @param key_equal The binary callable used to compare two keys
+     * for equality
+     * @return Number of matches found by the current thread
+     */
+    template <typename KeyEqual = thrust::equal_to<key_type>>
+    __device__ __forceinline__ std::size_t count(
       Key const& k,
       KeyEqual key_equal = KeyEqual{}) noexcept;
 

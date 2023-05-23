@@ -362,6 +362,102 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
    * @brief Inserts the specified key/value pair into the map using vector loads.
    *
    * @tparam uses_vector_load Boolean flag indicating whether vector loads are used
+   *
+   * @param insert_pair The pair to insert
+   * @return void.
+   */
+  template <bool uses_vector_load>
+  __device__ __forceinline__ std::enable_if_t<uses_vector_load, void> insert(
+    value_type const& insert_pair) noexcept
+  {
+    auto g = cooperative_groups::tiled_partition<1>(cooperative_groups::this_thread_block());
+    auto current_slot = this->initial_slot(g, insert_pair.first);
+    
+    while (true) {
+      value_type arr[2];
+      this->load_pair_array(&arr[0], current_slot);
+
+      // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
+      // the sentinel is not a valid key value. Therefore, first check for the sentinel
+      auto const first_slot_is_empty =
+        (detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel()));
+      auto const second_slot_is_empty =
+        (detail::bitwise_compare(arr[1].first, this->get_empty_key_sentinel()));
+      auto const window_contains_empty = first_slot_is_empty or second_slot_is_empty;
+
+      if (window_contains_empty) {
+        // the first lane in the group with an empty slot will attempt the insert
+        insert_result status{insert_result::CONTINUE};
+        auto insert_location = first_slot_is_empty ? current_slot : current_slot + 1;
+          // One single CAS operation since vector loads are dedicated to packable pairs
+          status = packed_cas(insert_location, insert_pair);
+        
+        // successful insert
+        if(status == insert_result::SUCCESS) { return; }
+        // if we've gotten this far, a different key took our spot
+        // before we could insert. We need to retry the insert on the
+        // same window
+      }
+      // if there are no empty slots in the current window,
+      // we move onto the next window
+      else {
+        current_slot = this->next_slot(current_slot);
+      }
+    }  // while true */
+  }
+
+  /**
+   * @brief Inserts the specified key/value pair into the map using scalar loads.
+   *
+   * @tparam uses_vector_load Boolean flag indicating whether vector loads are used
+   *
+   * @param insert_pair The pair to insert
+   * @return void.
+   */
+  template <bool uses_vector_load>
+  __device__ __forceinline__ std::enable_if_t<not uses_vector_load, void> insert(
+     value_type const& insert_pair) noexcept
+  {
+    auto g = cooperative_groups::tiled_partition<1>(cooperative_groups::this_thread_block());
+    auto current_slot = this->initial_slot(g, insert_pair.first);
+
+    while (true) {
+      value_type slot_contents = *reinterpret_cast<value_type const*>(current_slot);
+      auto const& existing_key = slot_contents.first;
+
+      // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
+      // the sentinel is not a valid key value. Therefore, first check for the sentinel
+      auto const slot_is_empty =
+        detail::bitwise_compare(existing_key, this->get_empty_key_sentinel());
+
+      if (slot_is_empty) {
+        // the first lane in the group with an empty slot will attempt the insert
+        insert_result status{insert_result::CONTINUE};
+    
+#if (__CUDA_ARCH__ < 700)
+          status = cas_dependent_write(current_slot, insert_pair);
+#else
+          status = back_to_back_cas(current_slot, insert_pair);
+#endif
+
+        // successful insert
+        if(status == insert_result::SUCCESS) { return; }
+        // if we've gotten this far, a different key took our spot
+        // before we could insert. We need to retry the insert on the
+        // same window
+      }
+      // if there are no empty slots in the current window,
+      // we move onto the next window
+      else {
+        current_slot = this->next_slot(current_slot);
+      }
+    }// while true
+  }
+
+  /**
+   * @brief Inserts the specified key/value pair into the map using vector loads.
+   *
+   * @tparam uses_vector_load Boolean flag indicating whether vector loads are used
    * @tparam CG Cooperative Group type
    *
    * @param g The Cooperative Group that performs the insert
@@ -738,6 +834,101 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
    *
    * @tparam uses_vector_load Boolean flag indicating whether vector loads are used
    * @tparam is_outer Boolean flag indicating whether outer join is peformed
+   * @tparam KeyEqual Binary callable type
+   * @param k The key to search for
+   * @param key_equal The binary callable used to compare two keys
+   * for equality
+   * @return Number of matches found by the current thread
+   */
+  template <bool uses_vector_load, bool is_outer, typename KeyEqual>
+  __device__ __forceinline__ std::enable_if_t<uses_vector_load, std::size_t> count(
+    Key const& k, KeyEqual key_equal) noexcept
+  {
+    std::size_t count = 0;
+    auto g = cooperative_groups::tiled_partition<1>(cooperative_groups::this_thread_block());
+    auto current_slot = this->initial_slot(g, k);
+
+    [[maybe_unused]] bool found_match = false;
+
+    while (true) {
+      value_type arr[2];
+      this->load_pair_array(&arr[0], current_slot);
+
+      auto const first_slot_is_empty =
+        detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
+      auto const second_slot_is_empty =
+        detail::bitwise_compare(arr[1].first, this->get_empty_key_sentinel());
+      auto const first_equals  = (not first_slot_is_empty and key_equal(arr[0].first, k));
+      auto const second_equals = (not second_slot_is_empty and key_equal(arr[1].first, k));
+
+      if constexpr (is_outer) {
+        if (first_equals or second_equals) { found_match = true; }
+      }
+
+      count += (first_equals + second_equals);
+
+      if (first_slot_is_empty or second_slot_is_empty) {
+        if constexpr (is_outer) {
+          if (not found_match) { count++; }
+        }
+        return count;
+      }
+
+      current_slot = this->next_slot(current_slot);
+    }
+  }
+
+  /**
+   * @brief Counts the occurrence of a given key contained in multimap using scalar loads.
+   *
+   * @tparam uses_vector_load Boolean flag indicating whether vector loads are used
+   * @tparam is_outer Boolean flag indicating whether outer join is peformed
+   * @tparam KeyEqual Binary callable type
+   * @param k The key to search for
+   * @param key_equal The binary callable used to compare two keys
+   * for equality
+   * @return Number of matches found by the current thread
+   */
+  template <bool uses_vector_load, bool is_outer, typename KeyEqual>
+  __device__ __forceinline__ std::enable_if_t<not uses_vector_load, std::size_t> count(
+    Key const& k, KeyEqual key_equal) noexcept
+  {
+    std::size_t count = 0;
+    auto g = cooperative_groups::tiled_partition<1>(cooperative_groups::this_thread_block());
+    auto current_slot = this->initial_slot(g, k);
+
+    [[maybe_unused]] bool found_match = false;
+
+    while (true) {
+      value_type slot_contents = *reinterpret_cast<value_type const*>(current_slot);
+      auto const& current_key  = slot_contents.first;
+
+      auto const slot_is_empty =
+        detail::bitwise_compare(current_key, this->get_empty_key_sentinel());
+      auto const equals = not slot_is_empty and key_equal(current_key, k);
+
+      if constexpr (is_outer) {
+        if (equals) { found_match = true; }
+      }
+
+      count += equals;
+
+      if (slot_is_empty) {
+        if constexpr (is_outer) {
+          if (not found_match) { count++; }
+        }
+        return count;
+      }
+
+      current_slot = this->next_slot(current_slot);
+    }
+  }
+
+  /**
+   * @brief Counts the occurrence of a given key contained in multimap using vector loads.
+   *
+   * @tparam uses_vector_load Boolean flag indicating whether vector loads are used
+   * @tparam is_outer Boolean flag indicating whether outer join is peformed
    * @tparam CG Cooperative Group type
    * @tparam KeyEqual Binary callable type
    * @param g The Cooperative Group used to perform the count operation
@@ -784,7 +975,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       current_slot = this->next_slot(current_slot);
     }*/
     return 0; //todo(HIP): fix return value
-  }
+  } 
 
   /**
    * @brief Counts the occurrence of a given key contained in multimap using scalar loads.

@@ -769,8 +769,14 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::insert_if(
   auto const grid_size = (cg_size() * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
-  detail::insert_if_n<block_size, cg_size()>
-    <<<grid_size, block_size, 0, stream>>>(first, stencil, num_keys, view, pred);
+  if constexpr(cg_size()==1) {
+    detail::insert_if_n<block_size>
+      <<<grid_size, block_size, 0, stream>>>(first, stencil, num_keys, view, pred);
+  }
+  else {
+    detail::insert_if_n<block_size, cg_size()>
+      <<<grid_size, block_size, 0, stream>>>(first, stencil, num_keys, view, pred);
+  } 
   CUCO_CUDA_TRY(hipStreamSynchronize(stream));
 }
 
@@ -1102,6 +1108,18 @@ template <typename Key,
           class ProbeSequence>
 __device__ __forceinline__ void
 static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutable_view::insert(
+  value_type const& insert_pair) noexcept
+{
+  impl_.template insert<uses_vector_load()>(insert_pair);
+}
+
+template <typename Key,
+          typename Value,
+          hip::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+__device__ __forceinline__ void
+static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutable_view::insert(
   cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& g,
   value_type const& insert_pair) noexcept
 {
@@ -1219,6 +1237,21 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::pair_
 {
   constexpr bool is_pair_contains = true;
   return impl_.template contains<is_pair_contains, uses_vector_load()>(g, p, pair_equal);
+}
+
+template <typename Key,
+          typename Value,
+          hip::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+template <typename KeyEqual>
+__device__ __forceinline__ std::size_t
+static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::count(
+  Key const& k,
+  KeyEqual key_equal) noexcept
+{
+  constexpr bool is_outer = false;
+  return impl_.template count<uses_vector_load(), is_outer>(k, key_equal);
 }
 
 template <typename Key,

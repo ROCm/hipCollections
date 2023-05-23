@@ -86,6 +86,34 @@ CUCO_KERNEL void initialize(pair_atomic_type* const slots, Key k, Value v, int64
 /**
  * @brief Inserts all key/value pairs in the range `[first, last)`.
  *
+ *
+ * @tparam block_size The size of the thread block
+ * @tparam InputIt Device accessible random access input iterator where
+ * `std::is_convertible<std::iterator_traits<InputIt>::value_type,
+ * static_multimap<K, V>::value_type>` is `true`
+ * @tparam viewT Type of device view allowing access of hash map storage
+ *
+ * @param first Beginning of the sequence of key/value pairs
+ * @param n Number of key/value pairs to insert
+ * @param view Mutable device view used to access the hash map's slot storage
+ */
+template <uint32_t block_size, typename InputIt, typename viewT>
+__global__ void insert(InputIt first, int64_t n, viewT view)
+{
+  int64_t const loop_stride = gridDim.x * block_size;
+  int64_t idx               = block_size * blockIdx.x + threadIdx.x;
+
+  while (idx < n) {
+    // force conversion to value_type
+    typename viewT::value_type const insert_pair{*(first + idx)};
+    view.insert(insert_pair);
+    idx += loop_stride;
+  }
+}
+
+/**
+ * @brief Inserts all key/value pairs in the range `[first, last)`.
+ *
  * Uses the CUDA Cooperative Groups API to leverage groups of multiple threads to perform each
  * key/value insertion. This provides a significant boost in throughput compared to the non
  * Cooperative Group `insert` at moderate to high load factors.
@@ -113,6 +141,49 @@ CUCO_KERNEL void insert(InputIt first, int64_t n, viewT view)
     // force conversion to value_type
     typename viewT::value_type const insert_pair{*(first + idx)};
     view.insert(tile, insert_pair);
+    idx += loop_stride;
+  }
+}
+
+/**
+ * @brief Inserts key/value pairs in the range `[first, first + n)` if `pred` of the
+ * corresponding stencil returns true.
+ *
+ * The key/value pair `*(first + i)` is inserted if `pred( *(stencil + i) )` returns true.
+ *
+ *
+ * @tparam block_size The size of the thread block
+ * @tparam InputIt Device accessible random access input iterator where
+ * `std::is_convertible<std::iterator_traits<InputIt>::value_type,
+ * static_multimap<K, V>::value_type>` is `true`
+ * @tparam StencilIt Device accessible random access iterator whose value_type is
+ * convertible to Predicate's argument type
+ * @tparam viewT Type of device view allowing access of hash map storage
+ * @tparam Predicate Unary predicate callable whose return type must be convertible to `bool` and
+ * argument type is convertible from `std::iterator_traits<StencilIt>::value_type`.
+ *
+ * @param first Beginning of the sequence of key/value pairs
+ * @param s Beginning of the stencil sequence
+ * @param n Number of elements to insert
+ * @param view Mutable device view used to access the hash map's slot storage
+ * @param pred Predicate to test on every element in the range `[s, s + n)`
+ */
+template <uint32_t block_size,
+          typename InputIt,
+          typename StencilIt,
+          typename viewT,
+          typename Predicate>
+__global__ void insert_if_n(InputIt first, StencilIt s, int64_t n, viewT view, Predicate pred)
+{
+  int64_t const loop_stride = gridDim.x * block_size;
+  int64_t idx               = (block_size * blockIdx.x + threadIdx.x);
+
+  while (idx < n) {
+    if (pred(*(s + idx))) {
+      typename viewT::value_type const insert_pair{*(first + idx)};
+      // force conversion to value_type
+      view.insert(insert_pair);
+    }
     idx += loop_stride;
   }
 }
@@ -223,6 +294,62 @@ CUCO_KERNEL void contains(InputIt first, int64_t n, OutputIt output_begin, viewT
     __syncthreads();
     if (tile.thread_rank() == 0) { *(output_begin + idx) = writeBuffer[threadIdx.x / tile_size]; }
     idx += loop_stride;
+  }
+}
+
+/**
+ * @brief Counts the occurrences of keys in `[first, last)` contained in the multimap.
+ *
+ * For each key, `k = *(first + i)`, counts all matching keys, `k'`, as determined by `key_equal(k,
+ * k')` and stores the sum of all matches for all keys to `num_matches`. If `k` does not have any
+ * matches, it contributes 1 to the final sum only if `is_outer` is true.
+ *
+ * @tparam block_size The size of the thread block
+ * @tparam uses_vector_load Boolean flag indicating whether vector loads are used or not
+ * @tparam is_outer Boolean flag indicating whether non-matches are counted
+ * @tparam InputIt Device accessible input iterator whose `value_type` is convertible to the map's
+ * `key_type`
+ * @tparam atomicT Type of atomic storage
+ * @tparam viewT Type of device view allowing access of hash map storage
+ * @tparam KeyEqual Binary callable
+ *
+ * @param first Beginning of the sequence of keys to count
+ * @param n Number of the keys to query
+ * @param num_matches The number of all the matches for a sequence of keys
+ * @param view Device view used to access the hash map's slot storage
+ * @param key_equal Binary function to compare two keys for equality
+ */
+template <uint32_t block_size,
+          bool is_outer,
+          typename InputIt,
+          typename atomicT,
+          typename viewT,
+          typename KeyEqual>
+__global__ void count(
+  InputIt first, int64_t n, atomicT* num_matches, viewT view, KeyEqual key_equal)
+{
+  int64_t const loop_stride = gridDim.x * block_size;
+  int64_t idx               = (block_size * blockIdx.x + threadIdx.x);
+
+  typedef hipcub::BlockReduce<std::size_t, block_size> BlockReduce;
+  __shared__ typename BlockReduce::TempStorage temp_storage;
+  std::size_t thread_num_matches = 0;
+
+  while (idx < n) {
+    auto key = *(first + idx);
+    if constexpr (is_outer) {
+      //thread_num_matches += view.count_outer(tile, key, key_equal);
+    } else {
+      thread_num_matches += view.count(key, key_equal);
+    }
+    idx += loop_stride;
+  }
+
+  // compute number of successfully inserted elements for each block
+  // and atomically add to the grand total
+  std::size_t block_num_matches = BlockReduce(temp_storage).Sum(thread_num_matches);
+  if (threadIdx.x == 0) {
+    num_matches->fetch_add(block_num_matches, hip::std::memory_order_relaxed);
   }
 }
 
