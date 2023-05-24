@@ -951,11 +951,14 @@ class static_multimap {
  * and `cuco::legacy::double_hashing`. (see `probe_sequences.cuh`)
  * @tparam Allocator Type of allocator used for device storage
  */
+#ifndef HIP_CG_SIZE
+#define HIP_CG_SIZE 8
+#endif
 template <typename Key,
           typename Value,
           hip::thread_scope Scope = hip::thread_scope_device,
           typename Allocator       = cuco::cuda_allocator<char>,
-          class ProbeSequence = cuco::legacy::double_hashing<8, cuco::default_hash_function<Key>>>
+          class ProbeSequence = cuco::legacy::double_hashing<HIP_CG_SIZE, cuco::default_hash_function<Key>>>
 class static_multimap {
   static_assert(
     cuco::is_bitwise_comparable_v<Key>,

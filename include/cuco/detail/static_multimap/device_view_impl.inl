@@ -468,12 +468,13 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
   __device__ __forceinline__ std::enable_if_t<uses_vector_load, void> insert(
     CG g, value_type const& insert_pair) noexcept
   {
-    //auto current_slot = this->initial_slot(g, insert_pair.first);
-    //todo(HIP): need workaround for missing any
-    /*
+    auto current_slot = this->initial_slot(g, insert_pair.first);
+    auto hip_g        = hip_warp_primitives::_cooperative_group();
+    hip_g.set_size(g.size());
+
     while (true) {
       value_type arr[2];
-      load_pair_array(&arr[0], current_slot);
+      this->load_pair_array(&arr[0], current_slot);
 
       // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
       // the sentinel is not a valid key value. Therefore, first check for the sentinel
@@ -486,7 +487,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       if (bucket_contains_empty) {
         // the first lane in the group with an empty slot will attempt the insert
         insert_result status{insert_result::CONTINUE};
-        uint32_t src_lane = __ffs(bucket_contains_empty) - 1;
+        uint32_t src_lane = __ffsll((unsigned long long)bucket_contains_empty) - 1;
         if (g.thread_rank() == src_lane) {
           auto insert_location = first_slot_is_empty ? current_slot : current_slot + 1;
           // One single CAS operation since vector loads are dedicated to packable pairs
@@ -494,7 +495,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
         }
 
         // successful insert
-        if (g.any(status == insert_result::SUCCESS)) { return; }
+        if (hip_g.any(status == insert_result::SUCCESS)) { return; }
         // if we've gotten this far, a different key took our spot
         // before we could insert. We need to retry the insert on the
         // same bucket
@@ -502,9 +503,9 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       // if there are no empty slots in the current bucket,
       // we move onto the next bucket
       else {
-        this->current_slot = next_slot(current_slot);
+        current_slot = this->next_slot(current_slot);
       }
-    }  // while true */
+    }  // while true 
   }
 
   /**
@@ -522,6 +523,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
     CG g, value_type const& insert_pair) noexcept
   {
     auto current_slot = this->initial_slot(g, insert_pair.first);
+    auto hip_g        = hip_warp_primitives::_cooperative_group();
+    hip_g.set_size(g.size());
 
     while (true) {
       value_type slot_contents = *reinterpret_cast<value_type const*>(current_slot);
@@ -531,15 +534,13 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       // the sentinel is not a valid key value. Therefore, first check for the sentinel
       auto const slot_is_empty =
         detail::bitwise_compare(existing_key, this->get_empty_key_sentinel());
-      
-      // Todo(HIP/AMD): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now      
-      auto const bucket_contains_empty = __ballot(slot_is_empty);
+      auto const bucket_contains_empty = g.ballot(slot_is_empty);
 
       if (bucket_contains_empty) {
         // the first lane in the group with an empty slot will attempt the insert
         insert_result status{insert_result::CONTINUE};
         // Todo(HIP/AMD): casted to int?
-        uint32_t src_lane = __ffs((int)bucket_contains_empty) - 1;
+        uint32_t src_lane = __ffsll((unsigned long long)bucket_contains_empty) - 1;
 
         if (g.thread_rank() == src_lane) {
 #if (__CUDA_ARCH__ < 700)
@@ -551,7 +552,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
 
         // successful insert
         //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
-        if (__any(status == insert_result::SUCCESS)) { return; }
+        if (hip_g.any(status == insert_result::SUCCESS)) { return; }
         // if (g.any(status == insert_result::SUCCESS)) { return; }
         // if we've gotten this far, a different key took our spot
         // before we could insert. We need to retry the insert on the
@@ -941,16 +942,18 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   __device__ __forceinline__ std::enable_if_t<uses_vector_load, std::size_t> count(
     CG const& g, Key const& k, KeyEqual key_equal) noexcept
   {
-    //std::size_t count = 0;
-    //auto current_slot = this->initial_slot(g, k);
+    std::size_t count = 0;
+    auto current_slot = this->initial_slot(g, k);
+    auto hip_g        = hip_warp_primitives::_cooperative_group();
+    hip_g.set_size(g.size());
 
-    //[[maybe_unused]] bool found_match = false;
+    [[maybe_unused]] bool found_match = false;
 
     // todo(HIP): need a workaround for missing any 
-    /*
+    
     while (true) {
       value_type arr[2];
-      load_pair_array(&arr[0], current_slot);
+      this->load_pair_array(&arr[0], current_slot);
 
       auto const first_slot_is_empty =
         detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -960,12 +963,12 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const second_equals = (not second_slot_is_empty and key_equal(arr[1].first, k));
 
       if constexpr (is_outer) {
-        if (g.any(first_equals or second_equals)) { found_match = true; }
+        if (hip_g.any(first_equals or second_equals)) { found_match = true; }
       }
 
       count += (first_equals + second_equals);
 
-      if (g.any(first_slot_is_empty or second_slot_is_empty)) {
+      if (hip_g.any(first_slot_is_empty or second_slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) && (g.thread_rank() == 0)) { count++; }
         }
@@ -973,8 +976,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       }
 
       current_slot = this->next_slot(current_slot);
-    }*/
-    return 0; //todo(HIP): fix return value
+    }
   } 
 
   /**
@@ -996,6 +998,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   {
     std::size_t count = 0;
     auto current_slot = this->initial_slot(g, k);
+    auto hip_g        = hip_warp_primitives::_cooperative_group();
+    hip_g.set_size(g.size());
 
     [[maybe_unused]] bool found_match = false;
 
@@ -1009,12 +1013,12 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       if constexpr (is_outer) {
         //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
-        if (__any(equals)) { found_match = true; }
+        if (hip_g.any(equals)) { found_match = true; }
       }
 
       count += equals;
       //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
-      if (__any(slot_is_empty)) {
+      if (hip_g.any(slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) && (g.thread_rank() == 0)) { count++; }
         }
@@ -1046,6 +1050,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     std::size_t count = 0;
     auto key          = pair.first;
     auto current_slot = this->initial_slot(g, key);
+    auto hip_g        = hip_warp_primitives::_cooperative_group();
+    hip_g.set_size(g.size());
 
     [[maybe_unused]] bool found_match = false;
 
@@ -1063,13 +1069,13 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       if constexpr (is_outer) {
         //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
-        if (__any(first_slot_equals or second_slot_equals)) { found_match = true; }
+        if (hip_g.any(first_slot_equals or second_slot_equals)) { found_match = true; }
       }
 
       count += (first_slot_equals + second_slot_equals);
 
       //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
-      if (__any(first_slot_is_empty or second_slot_is_empty)) {
+      if (hip_g.any(first_slot_is_empty or second_slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) && (g.thread_rank() == 0)) { count++; }
         }
@@ -1101,6 +1107,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     std::size_t count = 0;
     auto key          = pair.first;
     auto current_slot = this->initial_slot(g, key);
+    auto hip_g        = hip_warp_primitives::_cooperative_group();
+    hip_g.set_size(g.size());
 
     [[maybe_unused]] bool found_match = false;
 
@@ -1114,12 +1122,12 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       if constexpr (is_outer) {
         //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
-        if (__any(equals)) { found_match = true; }
+        if (hip_g.any(equals)) { found_match = true; }
       }
 
       count += equals;
       //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
-      if (__any(slot_is_empty)) {
+      if (hip_g.any(slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) && (g.thread_rank() == 0)) { count++; }
         }

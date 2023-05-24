@@ -48,7 +48,7 @@ include(rapids-find)
 # * Determine GPU architectures
 # * Enable the CMake CUDA language
 rapids_hip_init_architectures(CUCO "NATIVE")
-
+add_compile_definitions(HIP_CG_SIZE=${HIP_CG_SIZE})
 project(CUCO VERSION 0.0.1 LANGUAGES CXX HIP)
 
 ###################################################################################################
