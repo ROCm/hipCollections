@@ -518,34 +518,34 @@ CUCO_KERNEL void retrieve(InputIt first,
                           viewT view,
                           KeyEqual key_equal)
 {
-  //using pair_type = typename viewT::value_type;
+  using pair_type = typename viewT::value_type;
 
-  //constexpr uint32_t num_flushing_cgs = block_size / flushing_cg_size;
-  //const uint32_t flushing_cg_id       = threadIdx.x / flushing_cg_size;
+  constexpr uint32_t num_flushing_cgs = block_size / flushing_cg_size;
+  const uint32_t flushing_cg_id       = threadIdx.x / flushing_cg_size;
 
-  //auto flushing_cg          = cg::tiled_partition<flushing_cg_size>(cg::this_thread_block());
-  //auto probing_cg           = cg::tiled_partition<probing_cg_size>(cg::this_thread_block());
-  //int64_t const loop_stride = gridDim.x * block_size / probing_cg_size;
-  //int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / probing_cg_size;
+  auto flushing_cg          = cg::tiled_partition<flushing_cg_size>(cg::this_thread_block());
+  auto probing_cg           = cg::tiled_partition<probing_cg_size>(cg::this_thread_block());
+  int64_t const loop_stride = gridDim.x * block_size / probing_cg_size;
+  int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / probing_cg_size;
 
   __shared__ pair_type output_buffer[num_flushing_cgs][buffer_size];
   // TODO: replace this with shared memory cuda::atomic variables once the dynamiic initialization
   // warning issue is solved __shared__ atomicT counter[num_flushing_cgs][buffer_size];
-  //__shared__ uint32_t flushing_cg_counter[num_flushing_cgs];
+  __shared__ uint32_t flushing_cg_counter[num_flushing_cgs];
 
-  //if (flushing_cg.thread_rank() == 0) { flushing_cg_counter[flushing_cg_id] = 0; }
+  if (flushing_cg.thread_rank() == 0) { flushing_cg_counter[flushing_cg_id] = 0; }
 
   flushing_cg.sync();
 
-  //todo(HIP): need a workaround, cg::binary_partition is not available for HIP cg
-  /*while (flushing_cg.any(idx < n)) {
+  while (hip_flushing_cg.any(idx < n)) {
     bool active_flag        = idx < n;
-    auto active_flushing_cg = cg::binary_partition<flushing_cg_size>(flushing_cg, active_flag);
+    auto active_flushing_cg = hip_warp_primitives::binary_partition(hip_flushing_cg, active_flag);
+    // auto active_flushing_cg = cg::binary_partition<flushing_cg_size>(flushing_cg, active_flag);
 
     if (active_flag) {
       auto key = *(first + idx);
       if constexpr (is_outer) {
-        view.retrieve_outer<buffer_size>(active_flushing_cg,
+        view.template retrieve_outer<buffer_size>(active_flushing_cg,
                                          probing_cg,
                                          key,
                                          &flushing_cg_counter[flushing_cg_id],
@@ -554,7 +554,7 @@ CUCO_KERNEL void retrieve(InputIt first,
                                          output_begin,
                                          key_equal);
       } else {
-        view.retrieve<buffer_size>(active_flushing_cg,
+        view.template retrieve<buffer_size>(active_flushing_cg,
                                    probing_cg,
                                    key,
                                    &flushing_cg_counter[flushing_cg_id],
@@ -565,17 +565,17 @@ CUCO_KERNEL void retrieve(InputIt first,
       }
     }
     idx += loop_stride;
-  }*/
+  }
 
   flushing_cg.sync();
   // Final flush of output buffer
-  /*if (flushing_cg_counter[flushing_cg_id] > 0) {
+  if (flushing_cg_counter[flushing_cg_id] > 0) {
     view.flush_output_buffer(flushing_cg,
                              flushing_cg_counter[flushing_cg_id],
                              output_buffer[flushing_cg_id],
                              num_matches,
                              output_begin);
-  }*/
+  }
 }
 
 /**
@@ -633,23 +633,26 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
                                viewT view,
                                PairEqual pair_equal)
 {
-  //using pair_type = typename viewT::value_type;
+  using pair_type = typename viewT::value_type;
 
-  //constexpr uint32_t num_flushing_cgs = block_size / flushing_cg_size;
-  //const uint32_t flushing_cg_id       = threadIdx.x / flushing_cg_size;
+  constexpr uint32_t num_flushing_cgs = block_size / flushing_cg_size;
+  const uint32_t flushing_cg_id       = threadIdx.x / flushing_cg_size;
 
-  //auto flushing_cg          = cg::tiled_partition<flushing_cg_size>(cg::this_thread_block());
-  //auto probing_cg           = cg::tiled_partition<probing_cg_size>(cg::this_thread_block());
-  //int64_t const loop_stride = gridDim.x * block_size / probing_cg_size;
-  //int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / probing_cg_size;
+  auto flushing_cg          = cg::tiled_partition<flushing_cg_size>(cg::this_thread_block());
+  auto probing_cg           = cg::tiled_partition<probing_cg_size>(cg::this_thread_block());
+  int64_t const loop_stride = gridDim.x * block_size / probing_cg_size;
+  int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / probing_cg_size;
 
-  //__shared__ pair_type probe_output_buffer[num_flushing_cgs][buffer_size];
-  //__shared__ pair_type contained_output_buffer[num_flushing_cgs][buffer_size];
+  auto hip_flushing_cg        = hip_warp_primitives::_cooperative_group();
+  hip_flushing_cg.set_size(flushing_cg.size());
+
+  __shared__ pair_type probe_output_buffer[num_flushing_cgs][buffer_size];
+  __shared__ pair_type contained_output_buffer[num_flushing_cgs][buffer_size];
   // TODO: replace this with shared memory hip::atomic variables once the dynamiic initialization
   // warning issue is solved __shared__ atomicT counter[num_flushing_cgs][buffer_size];
-  //__shared__ uint32_t flushing_cg_counter[num_flushing_cgs];
+  __shared__ uint32_t flushing_cg_counter[num_flushing_cgs];
 
-  //if (flushing_cg.thread_rank() == 0) { flushing_cg_counter[flushing_cg_id] = 0; }
+  if (flushing_cg.thread_rank() == 0) { flushing_cg_counter[flushing_cg_id] = 0; }
 
   flushing_cg.sync();
 
@@ -657,12 +660,13 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
   /*
   while (flushing_cg.any(idx < n)) {
     bool active_flag        = idx < n;
-    auto active_flushing_cg = cg::binary_partition<flushing_cg_size>(flushing_cg, active_flag);
+    auto active_flushing_cg = hip_warp_primitives::binary_partition(hip_flushing_cg, active_flag);
+    // auto active_flushing_cg = cg::binary_partition<flushing_cg_size>(flushing_cg, active_flag);
 
     if (active_flag) {
       pair_type pair = *(first + idx);
       if constexpr (is_outer) {
-        view.pair_retrieve_outer<buffer_size>(active_flushing_cg,
+        view.template pair_retrieve_outer<buffer_size>(active_flushing_cg,
                                               probing_cg,
                                               pair,
                                               &flushing_cg_counter[flushing_cg_id],
@@ -673,7 +677,7 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
                                               contained_output_begin,
                                               pair_equal);
       } else {
-        view.pair_retrieve<buffer_size>(active_flushing_cg,
+        view.template pair_retrieve<buffer_size>(active_flushing_cg,
                                         probing_cg,
                                         pair,
                                         &flushing_cg_counter[flushing_cg_id],
@@ -686,11 +690,11 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
       }
     }
     idx += loop_stride;
-  }*/
+  }
 
   flushing_cg.sync();
   // Final flush of output buffer
-  /*if (flushing_cg_counter[flushing_cg_id] > 0) {
+  if (flushing_cg_counter[flushing_cg_id] > 0) {
     view.flush_output_buffer(flushing_cg,
                              flushing_cg_counter[flushing_cg_id],
                              probe_output_buffer[flushing_cg_id],
@@ -698,7 +702,7 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
                              num_matches,
                              probe_output_begin,
                              contained_output_begin);
-  }*/
+  }
 }
 }  // namespace detail
 }  // namespace cuco

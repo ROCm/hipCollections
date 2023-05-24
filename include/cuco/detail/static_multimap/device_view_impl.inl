@@ -614,7 +614,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                                       atomicT* num_matches,
                                                       OutputIt output_begin) noexcept
   {
-    std::size_t offset;
+    std::size_t offset = 0;
     const auto lane_id = g.thread_rank();
     if (0 == lane_id) {
       offset = num_matches->fetch_add(num_outputs, hip::std::memory_order_relaxed);
@@ -684,7 +684,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                                       OutputIt1 probe_output_begin,
                                                       OutputIt2 contained_output_begin) noexcept
   {
-    std::size_t offset;
+    std::size_t offset = 0;
     const auto lane_id = g.thread_rank();
     if (0 == lane_id) {
       offset = num_matches->fetch_add(num_outputs, hip::std::memory_order_relaxed);
@@ -725,6 +725,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     ProbeT const& element,
     Equal equal) const noexcept
   {
+    auto hip_g        = hip_warp_primitives::_cooperative_group();
+    hip_g.set_size(g.size());
     auto current_slot = [&]() {
       if constexpr (is_pair_contains) { return this->initial_slot(g, element.first); }
       if constexpr (not is_pair_contains) { return this->initial_slot(g, element); }
@@ -757,11 +759,11 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       // the key we were searching for was found by one of the threads, so we return true
       //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
-      if (__any(first_equals or second_equals)) { return true; }
+      if (hip_g.any(first_equals or second_equals)) { return true; }
 
       // we found an empty slot, meaning that the key we're searching for isn't present
       //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
-      if (__any(first_slot_is_empty or second_slot_is_empty)) { return false; }
+      if (hip_g.any(first_slot_is_empty or second_slot_is_empty)) { return false; }
 
       // otherwise, all slots in the current bucket are full with other keys, so we move onto the
       // next bucket
@@ -793,6 +795,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     ProbeT const& element,
     Equal equal) const noexcept
   {
+    auto hip_g        = hip_warp_primitives::_cooperative_group();
+    hip_g.set_size(g.size());
     auto current_slot = [&]() {
       if constexpr (is_pair_contains) { return this->initial_slot(g, element.first); }
       if constexpr (not is_pair_contains) { return this->initial_slot(g, element); }
@@ -818,11 +822,11 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       // the key we were searching for was found by one of the threads, so we return true
       //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
-      if (__any(equals)) { return true; }
+      if (hip_g.any(equals)) { return true; }
 
       // we found an empty slot, meaning that the key we're searching for isn't present
       //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
-      if (__any(slot_is_empty)) { return false; }
+      if (hip_g.any(slot_is_empty)) { return false; }
 
       // otherwise, all slots in the current bucket are full with other keys, so we move onto the
       // next bucket
@@ -1180,17 +1184,21 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                            OutputIt output_begin,
                                            KeyEqual key_equal) noexcept
   {
+    auto hip_flushing_cg        = hip_warp_primitives::_cooperative_group();
+    hip_flushing_cg.set_size(flushing_cg.size());
+    auto hip_probing_cg        = hip_warp_primitives::_cooperative_group();
+    hip_probing_cg.set_size(probing_cg.size());
     const uint32_t cg_lane_id = probing_cg.thread_rank();
 
-    auto current_slot = initial_slot(probing_cg, k);
+    auto current_slot = this->initial_slot(probing_cg, k);
 
     bool running                      = true;
     [[maybe_unused]] bool found_match = false;
 
-    while (flushing_cg.any(running)) {
+    while (hip_flushing_cg.any(running)) {
       if (running) {
         value_type arr[2];
-        load_pair_array(&arr[0], current_slot);
+        this->load_pair_array(&arr[0], current_slot);
 
         auto const first_slot_is_empty =
           detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -1198,8 +1206,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
           detail::bitwise_compare(arr[1].first, this->get_empty_key_sentinel());
         auto const first_equals  = (not first_slot_is_empty and key_equal(arr[0].first, k));
         auto const second_equals = (not second_slot_is_empty and key_equal(arr[1].first, k));
-        auto const first_exists  = probing_cg.ballot(first_equals);
-        auto const second_exists = probing_cg.ballot(second_equals);
+        auto const first_exists  = hip_probing_cg.ballot(first_equals);
+        auto const second_exists = hip_probing_cg.ballot(second_equals);
 
         if (first_exists or second_exists) {
           if constexpr (is_outer) { found_match = true; }
@@ -1207,7 +1215,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
           auto const num_first_matches  = __popc(first_exists);
           auto const num_second_matches = __popc(second_exists);
 
-          uint32_t output_idx;
+          uint32_t output_idx = 0;
           if (0 == cg_lane_id) {
             output_idx = atomicAdd(flushing_cg_counter, (num_first_matches + num_second_matches));
           }
@@ -1224,7 +1232,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
               cuco::make_pair(k, arr[1].second);
           }
         }
-        if (probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
+        if (hip_probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
           running = false;
           if constexpr (is_outer) {
             if ((not found_match) && (cg_lane_id == 0)) {
@@ -1247,7 +1255,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         flushing_cg.sync();
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while running
   }
 
@@ -1289,9 +1297,11 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                            OutputIt output_begin,
                                            KeyEqual key_equal) noexcept
   {
+    auto hip_g        = hip_warp_primitives::_cooperative_group();
+    hip_g.set_size(g.size());
     const uint32_t lane_id = g.thread_rank();
 
-    auto current_slot = initial_slot(g, k);
+    auto current_slot = this->initial_slot(g, k);
 
     bool running                      = true;
     [[maybe_unused]] bool found_match = false;
@@ -1306,7 +1316,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const slot_is_empty =
         detail::bitwise_compare(slot_contents.first, this->get_empty_key_sentinel());
       auto const equals = (not slot_is_empty and key_equal(slot_contents.first, k));
-      auto const exists = g.ballot(equals);
+      auto const exists = hip_g.ballot(equals);
 
       uint32_t output_idx = *cg_counter;
 
@@ -1320,7 +1330,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         }
         if (0 == lane_id) { (*cg_counter) += num_matches; }
       }
-      if (g.any(slot_is_empty)) {
+      if (hip_g.any(slot_is_empty)) {
         running = false;
         if constexpr (is_outer) {
           if ((not found_match) && (lane_id == 0)) {
@@ -1342,7 +1352,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         if (lane_id == 0) { *cg_counter = 0; }
         g.sync();
       }
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while running
   }
 
@@ -1397,6 +1407,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     OutputIt4 contained_val_begin,
     PairEqual pair_equal) noexcept
   {
+    auto hip_probing_cg        = hip_warp_primitives::_cooperative_group();
+    hip_probing_cg.set_size(probing_cg.size());
     auto const lane_id                = probing_cg.thread_rank();
     auto current_slot                 = this->initial_slot(probing_cg, pair.first);
     [[maybe_unused]] auto found_match = false;
@@ -1414,8 +1426,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const first_equals  = (not first_slot_is_empty and pair_equal(arr[0], pair));
       auto const second_equals = (not second_slot_is_empty and pair_equal(arr[1], pair));
       //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now
-      auto const first_exists  = __ballot(first_equals);
-      auto const second_exists = __ballot(second_equals);
+      auto const first_exists  = hip_probing_cg.ballot(first_equals);
+      auto const second_exists = hip_probing_cg.ballot(second_equals);
 
       if (first_exists or second_exists) {
         if constexpr (is_outer) { found_match = true; }
@@ -1443,7 +1455,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         num_matches += (num_first_matches + __popc(second_exists));
       }
       //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, using __any for now
-      if (__any(first_slot_is_empty or second_slot_is_empty)) {
+      if (hip_probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) and lane_id == 0) {
             *(probe_key_begin)     = pair.first;
@@ -1510,6 +1522,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     OutputIt4 contained_val_begin,
     PairEqual pair_equal) noexcept
   {
+    auto hip_probing_cg        = hip_warp_primitives::_cooperative_group();
+    hip_probing_cg.set_size(probing_cg.size());
     auto const lane_id                = probing_cg.thread_rank();
     auto current_slot                 = this->initial_slot(probing_cg, pair.first);
     [[maybe_unused]] auto found_match = false;
@@ -1528,7 +1542,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const equals = (not slot_is_empty and pair_equal(slot_contents, pair));
       // auto const exists = probing_cg.ballot(equals);
       //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed using __ballot for now
-      auto const exists = __ballot(equals);
+      auto const exists = hip_probing_cg.ballot(equals);
 
       if (exists) {
         if constexpr (is_outer) { found_match = true; }
@@ -1545,7 +1559,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         num_matches += __popc(exists);
       }
       //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed using __any for now
-      if (__any(slot_is_empty)) {
+      if (hip_probing_cg.any(slot_is_empty)) {
       // if (probing_cg.any(slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) and lane_id == 0) {
@@ -1613,18 +1627,22 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                                 OutputIt2 contained_output_begin,
                                                 PairEqual pair_equal) noexcept
   {
+    auto hip_flushing_cg        = hip_warp_primitives::_cooperative_group();
+    hip_flushing_cg.set_size(flushing_cg.size());
+    auto hip_probing_cg        = hip_warp_primitives::_cooperative_group();
+    hip_probing_cg.set_size(probing_cg.size());
     const uint32_t cg_lane_id = probing_cg.thread_rank();
 
     auto key          = pair.first;
-    auto current_slot = initial_slot(probing_cg, key);
+    auto current_slot = this->initial_slot(probing_cg, key);
 
     bool running                      = true;
     [[maybe_unused]] bool found_match = false;
 
-    while (flushing_cg.any(running)) {
+    while (hip_flushing_cg.any(running)) {
       if (running) {
         value_type arr[2];
-        load_pair_array(&arr[0], current_slot);
+        this->load_pair_array(&arr[0], current_slot);
 
         auto const first_slot_is_empty =
           detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -1632,8 +1650,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
           detail::bitwise_compare(arr[1].first, this->get_empty_key_sentinel());
         auto const first_equals  = (not first_slot_is_empty and pair_equal(arr[0], pair));
         auto const second_equals = (not second_slot_is_empty and pair_equal(arr[1], pair));
-        auto const first_exists  = probing_cg.ballot(first_equals);
-        auto const second_exists = probing_cg.ballot(second_equals);
+        auto const first_exists  = hip_probing_cg.ballot(first_equals);
+        auto const second_exists = hip_probing_cg.ballot(second_equals);
 
         if (first_exists or second_exists) {
           if constexpr (is_outer) { found_match = true; }
@@ -1641,7 +1659,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
           auto const num_first_matches  = __popc(first_exists);
           auto const num_second_matches = __popc(second_exists);
 
-          uint32_t output_idx;
+          uint32_t output_idx = 0;
           if (0 == cg_lane_id) {
             output_idx = atomicAdd(flushing_cg_counter, (num_first_matches + num_second_matches));
           }
@@ -1659,7 +1677,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
             contained_output_buffer[output_idx + num_first_matches + lane_offset] = arr[1];
           }
         }
-        if (probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
+        if (hip_probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
           running = false;
           if constexpr (is_outer) {
             if ((not found_match) && (cg_lane_id == 0)) {
@@ -1689,7 +1707,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         flushing_cg.sync();
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while running
   }
 
@@ -1740,10 +1758,13 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                                 OutputIt2 contained_output_begin,
                                                 PairEqual pair_equal) noexcept
   {
+    auto hip_g        = hip_warp_primitives::_cooperative_group();
+    hip_g.set_size(g.size());
+
     const uint32_t lane_id = g.thread_rank();
 
     auto key          = pair.first;
-    auto current_slot = initial_slot(g, key);
+    auto current_slot = this->initial_slot(g, key);
 
     bool running                      = true;
     [[maybe_unused]] bool found_match = false;
@@ -1758,7 +1779,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const slot_is_empty =
         detail::bitwise_compare(slot_contents.first, this->get_empty_key_sentinel());
       auto const equals = (not slot_is_empty and pair_equal(slot_contents, pair));
-      auto const exists = g.ballot(equals);
+      auto const exists = hip_g.ballot(equals);
 
       uint32_t output_idx = *cg_counter;
 
@@ -1773,7 +1794,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         }
         if (0 == lane_id) { (*cg_counter) += num_matches; }
       }
-      if (g.any(slot_is_empty)) {
+      if (hip_g.any(slot_is_empty)) {
         running = false;
         if constexpr (is_outer) {
           if ((not found_match) && (lane_id == 0)) {
@@ -1803,7 +1824,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         if (lane_id == 0) { *cg_counter = 0; }
         g.sync();
       }
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while running
   }
 };  // class device_view_impl
