@@ -643,8 +643,7 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
   int64_t const loop_stride = gridDim.x * block_size / probing_cg_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / probing_cg_size;
 
-  auto hip_flushing_cg        = hip_warp_primitives::_cooperative_group();
-  hip_flushing_cg.set_size(flushing_cg.size());
+  auto hip_flushing_cg      = hip_warp_primitives::tiled_partition_ext(flushing_cg.size());
 
   __shared__ pair_type probe_output_buffer[num_flushing_cgs][buffer_size];
   __shared__ pair_type contained_output_buffer[num_flushing_cgs][buffer_size];

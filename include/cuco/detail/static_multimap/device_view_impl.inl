@@ -469,8 +469,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
     CG g, value_type const& insert_pair) noexcept
   {
     auto current_slot = this->initial_slot(g, insert_pair.first);
-    auto hip_g        = hip_warp_primitives::_cooperative_group();
-    hip_g.set_size(g.size());
+    auto hip_g        = hip_warp_primitives::tiled_partition_ext(g.size());
 
     while (true) {
       value_type arr[2];
@@ -523,8 +522,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
     CG g, value_type const& insert_pair) noexcept
   {
     auto current_slot = this->initial_slot(g, insert_pair.first);
-    auto hip_g        = hip_warp_primitives::_cooperative_group();
-    hip_g.set_size(g.size());
+    auto hip_g        = hip_warp_primitives::tiled_partition_ext(g.size());
 
     while (true) {
       value_type slot_contents = *reinterpret_cast<value_type const*>(current_slot);
@@ -725,8 +723,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     ProbeT const& element,
     Equal equal) const noexcept
   {
-    auto hip_g        = hip_warp_primitives::_cooperative_group();
-    hip_g.set_size(g.size());
+    auto hip_g        = hip_warp_primitives::tiled_partition_ext(g.size());
     auto current_slot = [&]() {
       if constexpr (is_pair_contains) { return this->initial_slot(g, element.first); }
       if constexpr (not is_pair_contains) { return this->initial_slot(g, element); }
@@ -795,8 +792,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     ProbeT const& element,
     Equal equal) const noexcept
   {
-    auto hip_g        = hip_warp_primitives::_cooperative_group();
-    hip_g.set_size(g.size());
+    auto hip_g        = hip_warp_primitives::tiled_partition_ext(g.size());
     auto current_slot = [&]() {
       if constexpr (is_pair_contains) { return this->initial_slot(g, element.first); }
       if constexpr (not is_pair_contains) { return this->initial_slot(g, element); }
@@ -948,8 +944,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   {
     std::size_t count = 0;
     auto current_slot = this->initial_slot(g, k);
-    auto hip_g        = hip_warp_primitives::_cooperative_group();
-    hip_g.set_size(g.size());
+    auto hip_g        = hip_warp_primitives::tiled_partition_ext(g.size());
 
     [[maybe_unused]] bool found_match = false;
 
@@ -1002,8 +997,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   {
     std::size_t count = 0;
     auto current_slot = this->initial_slot(g, k);
-    auto hip_g        = hip_warp_primitives::_cooperative_group();
-    hip_g.set_size(g.size());
+    auto hip_g        = hip_warp_primitives::tiled_partition_ext(g.size());
 
     [[maybe_unused]] bool found_match = false;
 
@@ -1054,8 +1048,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     std::size_t count = 0;
     auto key          = pair.first;
     auto current_slot = this->initial_slot(g, key);
-    auto hip_g        = hip_warp_primitives::_cooperative_group();
-    hip_g.set_size(g.size());
+    auto hip_g        = hip_warp_primitives::tiled_partition_ext(g.size());
 
     [[maybe_unused]] bool found_match = false;
 
@@ -1111,8 +1104,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     std::size_t count = 0;
     auto key          = pair.first;
     auto current_slot = this->initial_slot(g, key);
-    auto hip_g        = hip_warp_primitives::_cooperative_group();
-    hip_g.set_size(g.size());
+    auto hip_g        = hip_warp_primitives::tiled_partition_ext(g.size());
 
     [[maybe_unused]] bool found_match = false;
 
@@ -1184,10 +1176,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                            OutputIt output_begin,
                                            KeyEqual key_equal) noexcept
   {
-    auto hip_flushing_cg        = hip_warp_primitives::_cooperative_group();
-    hip_flushing_cg.set_size(flushing_cg.size());
-    auto hip_probing_cg        = hip_warp_primitives::_cooperative_group();
-    hip_probing_cg.set_size(probing_cg.size());
+    auto hip_flushing_cg      = hip_warp_primitives::tiled_partition_ext(flushing_cg.size());
+    auto hip_probing_cg       = hip_warp_primitives::tiled_partition_ext(probing_cg.size());
     const uint32_t cg_lane_id = probing_cg.thread_rank();
 
     auto current_slot = this->initial_slot(probing_cg, k);
@@ -1297,8 +1287,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                            OutputIt output_begin,
                                            KeyEqual key_equal) noexcept
   {
-    auto hip_g        = hip_warp_primitives::_cooperative_group();
-    hip_g.set_size(g.size());
+    auto hip_g        = hip_warp_primitives::tiled_partition_ext(g.size());
     const uint32_t lane_id = g.thread_rank();
 
     auto current_slot = this->initial_slot(g, k);
@@ -1407,8 +1396,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     OutputIt4 contained_val_begin,
     PairEqual pair_equal) noexcept
   {
-    auto hip_probing_cg        = hip_warp_primitives::_cooperative_group();
-    hip_probing_cg.set_size(probing_cg.size());
+    auto hip_probing_cg               = hip_warp_primitives::tiled_partition_ext(probing_cg.size());
     auto const lane_id                = probing_cg.thread_rank();
     auto current_slot                 = this->initial_slot(probing_cg, pair.first);
     [[maybe_unused]] auto found_match = false;
@@ -1522,8 +1510,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     OutputIt4 contained_val_begin,
     PairEqual pair_equal) noexcept
   {
-    auto hip_probing_cg        = hip_warp_primitives::_cooperative_group();
-    hip_probing_cg.set_size(probing_cg.size());
+    auto hip_probing_cg               = hip_warp_primitives::tiled_partition_ext(probing_cg.size());
     auto const lane_id                = probing_cg.thread_rank();
     auto current_slot                 = this->initial_slot(probing_cg, pair.first);
     [[maybe_unused]] auto found_match = false;
@@ -1627,10 +1614,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                                 OutputIt2 contained_output_begin,
                                                 PairEqual pair_equal) noexcept
   {
-    auto hip_flushing_cg        = hip_warp_primitives::_cooperative_group();
-    hip_flushing_cg.set_size(flushing_cg.size());
-    auto hip_probing_cg        = hip_warp_primitives::_cooperative_group();
-    hip_probing_cg.set_size(probing_cg.size());
+    auto hip_flushing_cg      = hip_warp_primitives::tiled_partition_ext(flushing_cg.size());
+    auto hip_probing_cg       = hip_warp_primitives::tiled_partition_ext(probing_cg.size());
     const uint32_t cg_lane_id = probing_cg.thread_rank();
 
     auto key          = pair.first;
@@ -1758,8 +1743,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                                 OutputIt2 contained_output_begin,
                                                 PairEqual pair_equal) noexcept
   {
-    auto hip_g        = hip_warp_primitives::_cooperative_group();
-    hip_g.set_size(g.size());
+    auto hip_g        = hip_warp_primitives::tiled_partition_ext(g.size());
 
     const uint32_t lane_id = g.thread_rank();
 
