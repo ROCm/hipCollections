@@ -359,7 +359,7 @@ class key_generator {
   template <typename Dist, typename OutputIt>
   void generate(Dist dist, OutputIt out_begin, OutputIt out_end, hipStream_t stream)
   {
-    generate(dist, out_begin, out_end, thrust::cuda::par_nosync.on(stream));
+    generate(dist, out_begin, out_end, thrust::hip::par_nosync.on(stream));
   }
 
   /**
@@ -439,7 +439,7 @@ class key_generator {
     typedef typename thrust::iterator_system<InOutIt>::type System;
     System system;
 
-    dropout(begin, end, keep_prob, thrust::cuda::par_nosync.on(stream));
+    dropout(begin, end, keep_prob, thrust::hip::par_nosync.on(stream));
   }
 
  private:

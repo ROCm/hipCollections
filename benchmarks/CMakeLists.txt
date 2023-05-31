@@ -13,12 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #=============================================================================
+
+# Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 
+# Todo(HIP): change SOURCE_DIR to GITHUB_REPOSITORY and use the correct URL and GIT_TAG
+# GITHUB_REPOSITORY NVIDIA/nvbench
+# GIT_TAG main
 CPMAddPackage(
   NAME nvbench
-  GITHUB_REPOSITORY NVIDIA/nvbench
-  GIT_TAG main
+  SOURCE_DIR "/home/projects/7/bench/hipBench" 
+  GIT_TAG feature/cmake
   GIT_SHALLOW TRUE
   EXCLUDE_FROM_ALL YES
 )
@@ -35,12 +56,18 @@ function(ConfigureBench BENCH_NAME)
                                         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/benchmarks")
     target_include_directories(${BENCH_NAME} PRIVATE
                                              "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_compile_options(${BENCH_NAME} PRIVATE --expt-extended-lambda -lineinfo)
+    target_compile_options(${BENCH_NAME} PRIVATE -lineinfo) # Todo(HIP/AMD): --expt-extended-lambda
     target_link_libraries(${BENCH_NAME} PRIVATE
                                         nvbench::main
                                         pthread
                                         cuco)
 endfunction(ConfigureBench)
+
+file(GLOB CU_SOURCES
+  ./*/*/*.cu)
+
+set_source_files_properties(${CU_SOURCES} 
+	                   PROPERTIES LANGUAGE HIP)
 
 ###################################################################################################
 ### benchmark sources #############################################################################
