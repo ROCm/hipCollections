@@ -1165,7 +1165,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                            OutputIt output_begin,
                                            KeyEqual key_equal) noexcept
   {
-    //todo(hip): check why not use flushing_cg (which is a result of binary partition)
+    // todo(hip): check why not use flushing_cg (which is a result of binary partition)
     auto hip_flushing_cg      = hip_warp_primitives::tiled_partition_ext(flushing_cg.size());
     auto hip_probing_cg       = hip_warp_primitives::tiled_partition_ext(probing_cg.size());
     const uint32_t cg_lane_id = probing_cg.thread_rank();
