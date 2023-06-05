@@ -53,7 +53,7 @@ namespace detail {
  */
 __device__ __forceinline__ int32_t count_least_significant_bits(uint32_t x, int32_t n)
 {
-  return __popc(x & (1 << n) - 1);
+  return __popcll(x & (1UL << n) - 1UL);
 }
 
 /**

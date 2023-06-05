@@ -1165,6 +1165,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                            OutputIt output_begin,
                                            KeyEqual key_equal) noexcept
   {
+    //todo(hip): check why not use flushing_cg (which is a result of binary partition)
     auto hip_flushing_cg      = hip_warp_primitives::tiled_partition_ext(flushing_cg.size());
     auto hip_probing_cg       = hip_warp_primitives::tiled_partition_ext(probing_cg.size());
     const uint32_t cg_lane_id = probing_cg.thread_rank();
@@ -1191,8 +1192,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         if (first_exists or second_exists) {
           if constexpr (is_outer) { found_match = true; }
 
-          auto const num_first_matches  = __popc(first_exists);
-          auto const num_second_matches = __popc(second_exists);
+          auto const num_first_matches  = __popcll(first_exists);
+          auto const num_second_matches = __popcll(second_exists);
 
           uint32_t output_idx = 0;
           if (0 == cg_lane_id) {
@@ -1300,7 +1301,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       if (exists) {
         if constexpr (is_outer) { found_match = true; }
-        auto const num_matches = __popc(exists);
+        auto const num_matches = __popcll(exists);
         if (equals) {
           // Each match computes its lane-level offset
           auto const lane_offset = detail::count_least_significant_bits(exists, lane_id);
@@ -1731,7 +1732,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       if (first_exists or second_exists) {
         if constexpr (is_outer) { found_match = true; }
 
-        auto const num_first_matches = __popc(first_exists);
+        auto const num_first_matches = __popcll(first_exists);
 
         if (first_equals) {
           auto lane_offset      = detail::count_least_significant_bits(first_exists, lane_id);
@@ -1751,7 +1752,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
           *(contained_key_begin + output_idx) = arr[1].first;
           *(contained_val_begin + output_idx) = arr[1].second;
         }
-        num_matches += (num_first_matches + __popc(second_exists));
+        num_matches += (num_first_matches + __popcll(second_exists));
       }
 
       if (hip_probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
@@ -1853,7 +1854,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
           *(contained_key_begin + output_idx) = slot_contents.first;
           *(contained_val_begin + output_idx) = slot_contents.second;
         }
-        num_matches += __popc(exists);
+        num_matches += __popcll(exists);
       }
 
       if (hip_probing_cg.any(slot_is_empty)) {
@@ -1950,8 +1951,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         if (first_exists or second_exists) {
           if constexpr (is_outer) { found_match = true; }
 
-          auto const num_first_matches  = __popc(first_exists);
-          auto const num_second_matches = __popc(second_exists);
+          auto const num_first_matches  = __popcll(first_exists);
+          auto const num_second_matches = __popcll(second_exists);
 
           uint32_t output_idx = 0;
           if (0 == cg_lane_id) {
@@ -2078,7 +2079,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       if (exists) {
         if constexpr (is_outer) { found_match = true; }
-        auto const num_matches = __popc(exists);
+        auto const num_matches = __popcll(exists);
         if (equals) {
           // Each match computes its lane-level offset
           auto const lane_offset = detail::count_least_significant_bits(exists, lane_id);
