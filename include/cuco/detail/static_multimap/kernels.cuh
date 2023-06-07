@@ -649,7 +649,7 @@ __global__ void retrieve(InputIt first,
     if (active_flag) {
       auto key = *(first + idx);
       if constexpr (is_outer) {
-        view.template retrieve_outer_no_probe_cg<buffer_size>(active_flushing_cg,
+        view.template retrieve_outer_no_cg_probe<buffer_size>(active_flushing_cg,
                                                               key,
                                                               &flushing_cg_counter[flushing_cg_id],
                                                               output_buffer[flushing_cg_id],
@@ -657,7 +657,7 @@ __global__ void retrieve(InputIt first,
                                                               output_begin,
                                                               key_equal);
       } else {
-        view.template retrieve_no_probe_cg<buffer_size>(active_flushing_cg,
+        view.template retrieve_no_cg_probe<buffer_size>(active_flushing_cg,
                                                         key,
                                                         &flushing_cg_counter[flushing_cg_id],
                                                         output_buffer[flushing_cg_id],

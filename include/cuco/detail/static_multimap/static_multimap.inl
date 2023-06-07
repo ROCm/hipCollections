@@ -1396,11 +1396,11 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::retri
 {
   constexpr bool is_outer = false;
   if constexpr (uses_vector_load()) {
-    impl_.template retrieve_no_probe_cg_vector<buffer_size, is_outer>(
+    impl_.template retrieve_no_cg_probe_vector<buffer_size, is_outer>(
       flushing_cg, k, flushing_cg_counter, output_buffer, num_matches, output_begin, key_equal);
   } else  // In the case of scalar load, flushing CG is the same as probing CG
   {
-    impl_.template retrieve_no_probe_cg<buffer_size, is_outer>(
+    impl_.template retrieve_no_cg_probe<buffer_size, is_outer>(
       flushing_cg, k, flushing_cg_counter, output_buffer, num_matches, output_begin, key_equal);
   }
 }
