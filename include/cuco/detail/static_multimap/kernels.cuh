@@ -721,8 +721,6 @@ __global__ void retrieve(InputIt first,
                          viewT view,
                          KeyEqual key_equal)
 {
-  using pair_type = typename viewT::value_type;
-
   int64_t const loop_stride = gridDim.x * block_size;
   int64_t idx               = block_size * blockIdx.x + threadIdx.x;
 

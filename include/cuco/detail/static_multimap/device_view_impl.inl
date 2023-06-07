@@ -1165,8 +1165,6 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                            OutputIt output_begin,
                                            KeyEqual key_equal) noexcept
   {
-    // todo(hip): check why not use flushing_cg (which is a result of binary partition)
-    auto hip_flushing_cg      = hip_warp_primitives::tiled_partition_ext(flushing_cg.size());
     auto hip_probing_cg       = hip_warp_primitives::tiled_partition_ext(probing_cg.size());
     const uint32_t cg_lane_id = probing_cg.thread_rank();
 
@@ -1175,7 +1173,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     bool running                      = true;
     [[maybe_unused]] bool found_match = false;
 
-    while (hip_flushing_cg.any(running)) {
+    while (flushing_cg.any(running)) {
       if (running) {
         value_type arr[2];
         this->load_pair_array(&arr[0], current_slot);
@@ -1562,7 +1560,6 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const slot_is_empty =
         detail::bitwise_compare(slot_contents.first, this->get_empty_key_sentinel());
       auto const equals = (not slot_is_empty and key_equal(slot_contents.first, k));
-      auto const exists = equals;
 
       if (equals) {
         uint32_t output_idx = num_matches->fetch_add(1, hip::std::memory_order_relaxed);
