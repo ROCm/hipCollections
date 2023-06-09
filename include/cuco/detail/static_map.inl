@@ -113,7 +113,7 @@ void static_map<Key, Value, Scope, Allocator>::insert(
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto constexpr tile_size  = 1; //4 for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = 4; //4 for CUDA, todo(HIP): investigate best value
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_mutable_view();
 
@@ -157,7 +157,7 @@ void static_map<Key, Value, Scope, Allocator>::insert_if(InputIt first,
 
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = 1; //4 for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = 4; //4 for CUDA, todo(HIP): investigate best value
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -195,7 +195,7 @@ void static_map<Key, Value, Scope, Allocator>::erase(
 
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = 1; //4 for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = 4; //4 for CUDA, todo(HIP): investigate best value
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -234,7 +234,7 @@ void static_map<Key, Value, Scope, Allocator>::find(InputIt first,
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto constexpr tile_size  = 1; //4 for CUDA todo(HIP): investigate best value;
+  auto constexpr tile_size  = 4; //4 for CUDA todo(HIP): investigate best value;
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_view();
 
@@ -315,7 +315,7 @@ void static_map<Key, Value, Scope, Allocator>::contains(InputIt first,
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto constexpr tile_size  = 1; //4; for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = 4; //4; for CUDA, todo(HIP): investigate best value
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_view();
 
@@ -571,6 +571,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
   CG const& g, value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
 {
   auto current_slot = this->initial_slot(g, insert_pair.first, hash);
+  auto hip_g        = hip_cooperative_groups_ext::tiled_partition_ext(g.size());
 
   while (true) {
     key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -583,22 +584,20 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
 
     // the key we are trying to insert is already in the map, so we return with failure to insert
     //todo(HIP): we need a workaround for any which is missing in HIP cg
-    //if (g.any(not slot_is_available and key_equal(existing_key, insert_pair.first))) {
-    //  return false;
-    //}
+    if (hip_g.any(not slot_is_available and key_equal(existing_key, insert_pair.first))) {
+     return false;
+    }
     
-    //todo(HIP): we need a workaround for ballot which is missing in HIP cg
-    //auto const bucket_contains_available = g.ballot(slot_is_available);
-    auto const bucket_contains_available = false;
+    auto const bucket_contains_available = g.ballot(slot_is_available);
 
     // we found an empty slot, but not the key we are inserting, so this must
     // be an empty slot into which we can insert the key
     if (bucket_contains_available) {
       // the first lane in the group with an empty slot will attempt the insert
       insert_result status{insert_result::CONTINUE};
-      uint32_t src_lane = __ffs(bucket_contains_available) - 1;
+      uint32_t src_lane = __ffs((int)bucket_contains_available) - 1;
 
-      if (g.thread_rank() == src_lane) {
+      if (hip_g.thread_rank() == src_lane) {
         // One single CAS operation if `value_type` is packable
         if constexpr (cuco::detail::is_packable<value_type>()) {
           status = packed_cas(current_slot, insert_pair, key_equal, existing_key);
@@ -613,7 +612,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
         }
       }
 
-      uint32_t res_status = g.shfl(static_cast<uint32_t>(status), src_lane);
+      uint32_t res_status = hip_g.shfl(static_cast<uint32_t>(status), src_lane);
       status              = static_cast<insert_result>(res_status);
 
       // successful insert
@@ -685,6 +684,7 @@ template <typename CG, typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::erase(
   CG const& g, key_type const& k, Hash hash, KeyEqual key_equal) noexcept
 {
+  auto hip_g        = hip_cooperative_groups_ext::tiled_partition_ext(g.size());
   auto current_slot = this->initial_slot(g, k, hash);
   value_type const insert_pair =
     make_pair<Key, Value>(this->get_erased_key_sentinel(), this->get_empty_value_sentinel());
@@ -701,15 +701,15 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
       cuco::detail::bitwise_compare(existing_key, this->get_empty_key_sentinel());
 
     //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now
-    auto const exists = __ballot(not slot_is_empty and key_equal(existing_key, k));
+    auto const exists = hip_g.ballot(not slot_is_empty and key_equal(existing_key, k));
 
     // Key exists, return true if successfully deleted
     if (exists) {
       //Todo(HIP): check if casting is fine?
       uint32_t src_lane = __ffs((int)exists) - 1;
 
-      bool status;
-      if (g.thread_rank() == src_lane) {
+      bool status = false;
+      if (hip_g.thread_rank() == src_lane) {
         if constexpr (cuco::detail::is_packable<value_type>()) {
           auto slot = reinterpret_cast<
             cuda::atomic<typename cuco::detail::pair_converter<value_type>::packed_type>*>(
@@ -729,13 +729,13 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
         }
       }
 
-      uint32_t res_status = g.shfl(static_cast<uint32_t>(status), src_lane);
+      uint32_t res_status = hip_g.shfl(static_cast<uint32_t>(status), src_lane);
       return static_cast<bool>(res_status);
     }
 
     // empty slot found, but key not found, must not be in the map
     //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now
-    if (__ballot(slot_is_empty)) { return false; }
+    if (hip_g.ballot(slot_is_empty)) { return false; }
 
     current_slot = this->next_slot(g, current_slot);
   }
@@ -796,10 +796,11 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
                                                             KeyEqual key_equal) noexcept
 {
   auto current_slot = this->initial_slot(g, k, hash);
+  auto hip_g        = hip_cooperative_groups_ext::tiled_partition_ext(g.size());
 
   while (true) {
     //todo(HIP): activate again
-    //auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
+    auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
     // the sentinel is not a valid key value. Therefore, first check for the sentinel
@@ -809,18 +810,18 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
     // the key we were searching for was found by one of the threads,
     // so we return an iterator to the entry
     //todo(HIP): we need a workaround for ballot which is missing in HIP cg
-    auto const exists = false; // g.ballot(not slot_is_empty and key_equal(existing_key, k));
+    auto const exists = hip_g.ballot(not slot_is_empty and key_equal(existing_key, k));
     if (exists) {
-      uint32_t src_lane = __ffs(exists) - 1;
+      uint32_t src_lane = __ffs((int)exists) - 1;
       // TODO: This shouldn't cast an iterator to an int to shuffle. Instead, get the index of the
       // current_slot and shuffle that instead.
-      intptr_t res_slot = g.shfl(reinterpret_cast<intptr_t>(current_slot), src_lane);
+      intptr_t res_slot = hip_g.shfl(reinterpret_cast<intptr_t>(current_slot), src_lane);
       return reinterpret_cast<iterator>(res_slot);
     }
 
     // we found an empty slot, meaning that the key we're searching for isn't present
     //todo(HIP): we need a workaround for ballot which is missing in HIP cg
-    //if (g.ballot(slot_is_empty)) { return this->end(); }
+    if (hip_g.ballot(slot_is_empty)) { return this->end(); }
 
     // otherwise, all slots in the current bucket are full with other keys, so we move onto the
     // next bucket
@@ -837,6 +838,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
                                                             KeyEqual key_equal) const noexcept
 {
   auto current_slot = initial_slot(g, k, hash);
+  auto hip_g        = hip_cooperative_groups_ext::tiled_partition_ext(g.size());
 
   while (true) {
     auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -848,18 +850,18 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
 
     // the key we were searching for was found by one of the threads, so we return an iterator to
     // the entry
-    auto const exists = g.ballot(not slot_is_empty and key_equal(existing_key, k));
+    auto const exists = hip_g.ballot(not slot_is_empty and key_equal(existing_key, k));
     if (exists) {
       uint32_t src_lane = __ffs(exists) - 1;
       // TODO: This shouldn't cast an iterator to an int to shuffle. Instead, get the index of the
       // current_slot and shuffle that instead.
-      intptr_t res_slot = g.shfl(reinterpret_cast<intptr_t>(current_slot), src_lane);
+      intptr_t res_slot = hip_g.shfl(reinterpret_cast<intptr_t>(current_slot), src_lane);
       return reinterpret_cast<const_iterator>(res_slot);
     }
 
     // we found an empty slot, meaning that the key we're searching
     // for isn't in this submap, so we should move onto the next one
-    if (g.ballot(slot_is_empty)) { return this->end(); }
+    if (hip_g.ballot(slot_is_empty)) { return this->end(); }
 
     // otherwise, all slots in the current bucket are full with other keys,
     // so we move onto the next bucket in the current submap
@@ -895,10 +897,10 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
                                                                 KeyEqual key_equal) const noexcept
 {
   //todo(HIP): activate again
-  //auto current_slot = this->initial_slot(g, k, hash);
+  auto current_slot = this->initial_slot(g, k, hash);
 
-  //while (true) {
- //   key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
+  while (true) {
+   key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
     // the sentinel is not a valid key value. Therefore, first check for the sentinel
@@ -908,16 +910,15 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
     // the key we were searching for was found by one of the threads, so we return an iterator to
     // the entry
     // todo(HIP): HIP CG does not have ballot, we need a workaround
-    //if (g.ballot(not slot_is_empty and key_equal(existing_key, k))) { return true; }
+    if (g.ballot(not slot_is_empty and key_equal(existing_key, k))) { return true; }
 
     // we found an empty slot, meaning that the key we're searching for isn't present
     // todo(HIP): HIP CG does not have ballot, we need a workaround
-    //if (g.ballot(slot_is_empty)) { return false; }
+    if (g.ballot(slot_is_empty)) { return false; }
 
     // otherwise, all slots in the current window are full with other keys, so we move onto the
     // next bucket
-    // current_slot = this->next_slot(g, current_slot);
-  //}
-  return true; // TODO(HIP/AMD): fix return value
+    current_slot = this->next_slot(g, current_slot);
+  }
 }
 }  // namespace cuco::legacy
