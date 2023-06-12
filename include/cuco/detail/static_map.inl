@@ -113,7 +113,7 @@ void static_map<Key, Value, Scope, Allocator>::insert(
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto constexpr tile_size  = 4; //4 for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = HIP_TILE_SIZE; //4 for CUDA, todo(HIP): investigate best value
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_mutable_view();
 
@@ -121,7 +121,7 @@ void static_map<Key, Value, Scope, Allocator>::insert(
   static_assert(sizeof(std::size_t) == sizeof(atomic_ctr_type));
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
-
+  printf("static_map tile_size %d\n", tile_size);
   if constexpr(tile_size==1) {
     detail::insert<block_size>
     <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
@@ -157,7 +157,7 @@ void static_map<Key, Value, Scope, Allocator>::insert_if(InputIt first,
 
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = 4; //4 for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = HIP_TILE_SIZE; //4 for CUDA, todo(HIP): investigate best value
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -195,7 +195,7 @@ void static_map<Key, Value, Scope, Allocator>::erase(
 
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = 4; //4 for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = HIP_TILE_SIZE; //4 for CUDA, todo(HIP): investigate best value
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -234,7 +234,7 @@ void static_map<Key, Value, Scope, Allocator>::find(InputIt first,
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto constexpr tile_size  = 4; //4 for CUDA todo(HIP): investigate best value;
+  auto constexpr tile_size  = HIP_TILE_SIZE; //4 for CUDA todo(HIP): investigate best value;
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_view();
 
@@ -315,7 +315,7 @@ void static_map<Key, Value, Scope, Allocator>::contains(InputIt first,
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto constexpr tile_size  = 4; //4; for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = HIP_TILE_SIZE; //4; for CUDA, todo(HIP): investigate best value
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_view();
 

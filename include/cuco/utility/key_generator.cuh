@@ -345,7 +345,7 @@ class key_generator {
   }
 
   /**
-   * @brief Overload of 'generate' which uses 'thrust::cuda::par_nosync' execution policy on CUDA
+   * @brief Overload of 'generate' which uses 'thrust::hip::par_nosync' execution policy on hip
    * stream 'stream'
    *
    * @tparam Dist Key distribution type
@@ -354,7 +354,7 @@ class key_generator {
    * @param dist Random distribution to use
    * @param out_begin Start of the output sequence
    * @param out_end End of the output sequence
-   * @param stream CUDA stream in which this operation is executed in
+   * @param stream hip stream in which this operation is executed in
    */
   template <typename Dist, typename OutputIt>
   void generate(Dist dist, OutputIt out_begin, OutputIt out_end, hipStream_t stream)
@@ -421,7 +421,7 @@ class key_generator {
   }
 
   /**
-   * @brief Overload of 'dropout' which uses 'thrust::cuda::par_nosync' execution policy on CUDA
+   * @brief Overload of 'dropout' which uses 'thrust::hip::par_nosync' execution policy on hip
    * stream 'stream'
    *
    * @tparam InOutIt Input/Ouput iterator typy which value type is the desired key type
@@ -429,7 +429,7 @@ class key_generator {
    * @param begin Start of the key sequence
    * @param end End of the key sequence
    * @param keep_prob Probability that a key is kept
-   * @param stream CUDA stream in which this operation is executed in
+   * @param stream hip stream in which this operation is executed in
    */
   template <typename InOutIt>
   void dropout(InOutIt begin, InOutIt end, double keep_prob, hipStream_t stream)

@@ -114,7 +114,8 @@ target_include_directories(cuco INTERFACE
 #FIXME(hip): Fix target cuco::rocthrust and use CMake generator expression
 target_link_libraries(cuco INTERFACE libhipcxx::libhipcxx hip::device roc::rocthrust)
 target_compile_features(cuco INTERFACE cxx_std_17 cuda_std_17)
-
+set(HIP_TILE_SIZE "4" CACHE STRING "Size of cooperative groups")
+target_compile_options(cuco INTERFACE "-DHIP_TILE_SIZE=${HIP_TILE_SIZE}")
 ###################################################################################################
 # - optionally build tests ------------------------------------------------------------------------
 
