@@ -121,7 +121,6 @@ void static_map<Key, Value, Scope, Allocator>::insert(
   static_assert(sizeof(std::size_t) == sizeof(atomic_ctr_type));
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
-  printf("static_map tile_size %d\n", tile_size);
   if constexpr(tile_size==1) {
     detail::insert<block_size>
     <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
