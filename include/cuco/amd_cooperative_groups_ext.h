@@ -61,13 +61,13 @@ class cooperative_groups_based_warp_primitives {
 
   __device__ void set_mask(lane_mask lm) { __group_mask = lm; }
 
-  __attribute__((optnone)) __device__ inline bool any(int pred) const
+  __device__ inline bool any(int pred) const
   {
     assert(__is_thread_in_mask(__group_mask));
     return __any_sync(__group_mask, pred);
   }
 
-  __attribute__((optnone)) __device__ inline lane_mask ballot(int pred) const
+  __device__ inline lane_mask ballot(int pred) const
   {
     auto result_ballot_sync = __ballot_sync(__group_mask, pred);
     result_ballot_sync      = (__size == WAVEFRONT_SIZE)
@@ -76,7 +76,7 @@ class cooperative_groups_based_warp_primitives {
     return result_ballot_sync;
   }
 
-  __attribute__((optnone)) __device__ inline int thread_rank() const
+  __device__ inline int thread_rank() const
   {
     auto lane_id = __lane_id();
     int rank =
@@ -85,27 +85,35 @@ class cooperative_groups_based_warp_primitives {
     return rank;
   }
 
-  __attribute__((optnone)) __device__ inline void sync() const { return __sync_active_threads(); }
+  __device__ inline void sync() const { return __sync_active_threads(); }
 
-  __attribute__((optnone)) __device__ inline void shfl() const { return __sync_active_threads(); }
+  __device__ inline void shfl() const { return __sync_active_threads(); }
 
   template <class T>
-  __attribute__((optnone)) __device__ inline T shfl(T var, int srcRank) const
+  __device__ inline T shfl(T var, int srcRank) const
   {
     int srcLane = (__size == WAVEFRONT_SIZE) ? srcRank : __fns64(__group_mask, 0, srcRank + 1);
     // printf("mask %llx rank: %ld lane: %ld\n", __group_mask, srcRank, srcLane);
     return __shfl_sync(__group_mask, var, srcLane);
   }
+
+  __device__ inline void compute_groups()
+  {
+    lane_mask __group_mask =
+      __match_any_sync(get_mask(), threadIdx.x / size());  // pass __group_mask instead of ~0
+    set_mask(__group_mask);
+  }
 };
 
-class tiled_partition_ext : public cooperative_groups_based_warp_primitives {
+template<uint32_t CGSIZE>
+class tiled_partition_internal_ext : public cooperative_groups_based_warp_primitives {
  public:
-  __attribute__((optnone)) __device__ tiled_partition_ext(uint32_t cg_size)
-    : cooperative_groups_based_warp_primitives(cg_size, ~0)
+  __device__ tiled_partition_internal_ext()//cooperative_groups::tiled_group& parent
+    : cooperative_groups_based_warp_primitives(CGSIZE, ~0)
   {  // Include all threads
     compute_groups();
   }
-  __attribute__((optnone)) __device__ inline void compute_groups()
+  __device__ inline void compute_groups()
   {
     lane_mask __group_mask =
       __match_any_sync(get_mask(), threadIdx.x / size());  // pass __group_mask instead of ~0
@@ -122,8 +130,10 @@ class coalesced_group_ext : public cooperative_groups_based_warp_primitives {
   }
 };
 
-__attribute__((optnone)) __device__ inline coalesced_group_ext binary_partition(
-  tiled_partition_ext& parent_g, bool pred)
+
+template<uint32_t CGSIZE>
+__device__ inline coalesced_group_ext binary_partition(
+  tiled_partition_internal_ext<CGSIZE>& parent_g, bool pred)
 {
   lane_mask pred_mask = __ballot(pred);
   if (pred) {
@@ -131,6 +141,22 @@ __attribute__((optnone)) __device__ inline coalesced_group_ext binary_partition(
   } else {
     return coalesced_group_ext(~(pred_mask & parent_g.get_mask()));
   }
+}
+
+template<uint32_t CGSIZE>
+class thread_block_tile: public tiled_partition_internal_ext<CGSIZE>{
+  public:
+  __device__ thread_block_tile() : tiled_partition_internal_ext<CGSIZE>(){}
+};
+
+template<uint32_t CGSIZE>
+ __device__ thread_block_tile<CGSIZE> tiled_partition(cooperative_groups::thread_block tb){
+  return thread_block_tile<CGSIZE>();
+}
+
+__device__ cooperative_groups::thread_block this_thread_block(){
+//Todo(HIP): complete the implementation
+  return cooperative_groups::this_thread_block();
 }
 
 }  // namespace hip_cooperative_groups_ext

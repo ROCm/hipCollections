@@ -45,10 +45,14 @@
 
 #include <iterator>
 
+//Todo(HIP): Remove the header once we have CG workaround implemented in ROCm
+#include "../include/cuco/amd_cooperative_groups_ext.h"
+
 namespace cuco {
 namespace test {
 
-namespace cg = cooperative_groups;
+//Todo(HIP): Change to "namespace cg = cooperative_groups;" once we have CG workaround implemented in ROCm
+namespace cg = hip_cooperative_groups_ext;
 
 constexpr int32_t block_size = 128;
 

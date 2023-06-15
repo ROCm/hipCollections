@@ -41,9 +41,11 @@
 #include <hip/hip_cooperative_groups.h>
 
 #include <utility>
-
+#include "../amd_cooperative_groups_ext.h"
+#include "../amd_warp_primitives.h"
 namespace cuco::legacy::detail {
-
+//Todo(HIP): Remove the namespace alias once we have CG workaround implemented in ROCm
+namespace cooperative_groups = hip_cooperative_groups_ext;
 /**
  * @brief Base class of public probe sequence. This class should not be used directly.
  *

@@ -49,7 +49,8 @@ namespace detail {
   
 namespace cg = cooperative_groups;
 
-CUCO_SUPPRESS_KERNEL_WARNINGS
+//TODO(HIP/AMD): enable
+//CUCO_SUPPRESS_KERNEL_WARNINGS
 /**
  * @brief Initializes each slot in the flat `slots` storage to contain `k` and `v`.
  *
@@ -225,6 +226,7 @@ template <uint32_t block_size,
 CUCO_KERNEL void insert_if_n(InputIt first, StencilIt s, int64_t n, viewT view, Predicate pred)
 {
   auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
+  // auto tile                 = hip_cooperative_groups_ext::tiled_partition<tile_size>();
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 
@@ -387,6 +389,7 @@ CUCO_KERNEL void count(
   InputIt first, int64_t n, atomicT* num_matches, viewT view, KeyEqual key_equal)
 {
   auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
+  // auto tile                 = hip_cooperative_groups_ext::tiled_partition<tile_size>();
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 
@@ -446,6 +449,7 @@ CUCO_KERNEL void pair_count(
   InputIt first, int64_t n, atomicT* num_matches, viewT view, PairEqual pair_equal)
 {
   auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
+  // auto tile                 = cooperative_groups::tiled_partition<tile_size>();
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 
@@ -537,10 +541,10 @@ CUCO_KERNEL void retrieve(InputIt first,
 
   flushing_cg.sync();
 
-  while (hip_flushing_cg.any(idx < n)) {
+  while (flushing_cg.any(idx < n)) {
     bool active_flag = idx < n;
     auto active_flushing_cg =
-      hip_cooperative_groups_ext::binary_partition(hip_flushing_cg, active_flag);
+      cooperative_groups::binary_partition(flushing_cg, active_flag);
 
     if (active_flag) {
       auto key = *(first + idx);
@@ -632,7 +636,7 @@ __global__ void retrieve(InputIt first,
   auto flushing_cg          = cg::tiled_partition<flushing_cg_size>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size;
   int64_t idx               = block_size * blockIdx.x + threadIdx.x;
-  auto hip_flushing_cg      = hip_cooperative_groups_ext::tiled_partition_ext(flushing_cg.size());
+  // auto hip_flushing_cg      = hip_cooperative_groups_ext::tiled_partition(flushing_cg.size());
 
   __shared__ pair_type output_buffer[num_flushing_cgs][buffer_size];
   // TODO: replace this with shared memory hip::atomic variables once the dynamiic initialization
@@ -641,10 +645,10 @@ __global__ void retrieve(InputIt first,
 
   if (flushing_cg.thread_rank() == 0) { flushing_cg_counter[flushing_cg_id] = 0; }
 
-  while (hip_flushing_cg.any(idx < n)) {
+  while (flushing_cg.any(idx < n)) {
     bool active_flag = idx < n;
     auto active_flushing_cg =
-      hip_cooperative_groups_ext::binary_partition(hip_flushing_cg, active_flag);
+      cooperative_groups::binary_partition(flushing_cg, active_flag);
 
     if (active_flag) {
       auto key = *(first + idx);
@@ -804,7 +808,7 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
   int64_t const loop_stride = gridDim.x * block_size / probing_cg_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / probing_cg_size;
 
-  auto hip_flushing_cg = hip_cooperative_groups_ext::tiled_partition_ext(flushing_cg.size());
+  // auto hip_flushing_cg = hip_cooperative_groups_ext::tiled_partition(flushing_cg.size());
 
   __shared__ pair_type probe_output_buffer[num_flushing_cgs][buffer_size];
   __shared__ pair_type contained_output_buffer[num_flushing_cgs][buffer_size];
@@ -814,10 +818,10 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
 
   if (flushing_cg.thread_rank() == 0) { flushing_cg_counter[flushing_cg_id] = 0; }
 
-  while (hip_flushing_cg.any(idx < n)) {
+  while (flushing_cg.any(idx < n)) {
     bool active_flag = idx < n;
     auto active_flushing_cg =
-      hip_cooperative_groups_ext::binary_partition(hip_flushing_cg, active_flag);
+      cooperative_groups::binary_partition(flushing_cg, active_flag);
 
     if (active_flag) {
       pair_type pair = *(first + idx);
