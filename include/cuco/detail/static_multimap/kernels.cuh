@@ -300,6 +300,60 @@ CUCO_KERNEL void contains(InputIt first, int64_t n, OutputIt output_begin, viewT
 }
 
 /**
+ * @brief Indicates whether the elements in the range `[first, last)` are contained in the map.
+ *
+ * Stores `true` or `false` to `(output + i)` indicating if the element `*(first + i)` exists in the
+ * map.
+ *
+ *
+ * @tparam is_pair_contains `true` if it's a `pair_contains` implementation
+ * @tparam block_size The size of the thread block
+ * @tparam InputIt Device accessible input iterator
+ * @tparam OutputIt Device accessible output iterator assignable from `bool`
+ * @tparam viewT Type of device view allowing access of hash map storage
+ * @tparam Equal Binary callable type
+ *
+ * @param first Beginning of the sequence of elements
+ * @param n Number of elements to query
+ * @param output_begin Beginning of the sequence of booleans for the presence of each element
+ * @param view Device view used to access the hash map's slot storage
+ * @param equal The binary function to compare input element and slot content for equality
+ */
+template <bool is_pair_contains,
+          uint32_t block_size,
+          typename InputIt,
+          typename OutputIt,
+          typename viewT,
+          typename Equal>
+__global__ void contains(InputIt first, int64_t n, OutputIt output_begin, viewT view, Equal equal)
+{
+  int64_t const loop_stride = gridDim.x * block_size;
+  int64_t idx               = block_size * blockIdx.x + threadIdx.x;
+  __shared__ bool writeBuffer[block_size];
+
+  while (idx < n) {
+    typename std::iterator_traits<InputIt>::value_type element = *(first + idx);
+    auto found                                                 = [&]() {
+      if constexpr (is_pair_contains) { return view.pair_contains(element, equal); }
+      if constexpr (not is_pair_contains) { return view.contains(element, equal); }
+    }();
+
+    /*
+     * The ld.relaxed.gpu instruction used in view.find causes L1 to
+     * flush more frequently, causing increased sector stores from L2 to global memory.
+     * By writing results to shared memory and then synchronizing before writing back
+     * to global, we no longer rely on L1, preventing the increase in sector stores from
+     * L2 to global and improving performance.
+     */
+    writeBuffer[threadIdx.x] = found; 
+    __syncthreads();
+    *(output_begin + idx) = writeBuffer[threadIdx.x]; 
+    idx += loop_stride;
+  }
+}
+
+
+/**
  * @brief Counts the occurrences of keys in `[first, last)` contained in the multimap.
  *
  * For each key, `k = *(first + i)`, counts all matching keys, `k'`, as determined by `key_equal(k,

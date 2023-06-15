@@ -797,8 +797,14 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::contains(
   auto view            = get_device_view();
 
   // todo: add implementation with cg_size = 1
-  detail::contains<is_pair_contains, block_size, cg_size()>
-    <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, key_equal);
+  if constexpr (cg_size() == 1) {
+    detail::contains<is_pair_contains, block_size>
+      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, key_equal);
+  } else {
+    detail::contains<is_pair_contains, block_size, cg_size()>
+      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, key_equal);
+  }
+  
   CUCO_CUDA_TRY(hipStreamSynchronize(stream));
 }
 
@@ -1225,6 +1231,21 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::conta
 {
   constexpr bool is_pair_contains = false;
   return impl_.template contains<is_pair_contains, uses_vector_load()>(g, k, key_equal);
+}
+
+template <typename Key,
+          typename Value,
+          hip::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+template <typename ProbeKey, typename KeyEqual>
+__device__ __forceinline__ bool
+static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::contains(
+  ProbeKey const& k,
+  KeyEqual key_equal) const noexcept
+{
+  constexpr bool is_pair_contains = false;
+  return impl_.template contains<is_pair_contains, uses_vector_load()>(k, key_equal);
 }
 
 template <typename Key,
