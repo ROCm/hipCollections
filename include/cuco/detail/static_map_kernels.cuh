@@ -39,9 +39,10 @@
 #include <cuda/std/atomic>
 
 #include <hip/hip_cooperative_groups.h>
-
+#include "../amd_cooperative_groups_ext.h"
 namespace cuco::legacy::detail {
-namespace cg = cooperative_groups;
+//Todo(HIP): Change to "namespace cg = cooperative_groups;" once we have CG workaround in ROCm.
+namespace cg = hip_cooperative_groups_ext;
 
 CUCO_SUPPRESS_KERNEL_WARNINGS
 /**

@@ -87,8 +87,6 @@ class cooperative_groups_based_warp_primitives {
 
   __device__ inline void sync() const { return __sync_active_threads(); }
 
-  __device__ inline void shfl() const { return __sync_active_threads(); }
-
   template <class T>
   __device__ inline T shfl(T var, int srcRank) const
   {
