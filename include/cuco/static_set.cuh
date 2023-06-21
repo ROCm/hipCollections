@@ -56,7 +56,12 @@
 #include <type_traits>
 #include <utility>
 
+#include "amd_cooperative_groups_ext.h"
+
 namespace cuco {
+// Todo(HIP): Remove once we have the CG workaround implemented in ROCm
+namespace cooperative_groups = hip_cooperative_groups_ext;
+
 /**
  * @brief A GPU-accelerated, unordered, associative container of unique keys.
  *

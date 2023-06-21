@@ -43,6 +43,9 @@
 
 namespace cuco {
 
+// Todo(HIP): change once we have the workarounds in ROCm.
+namespace cooperative_groups = hip_cooperative_groups_ext;
+
 template <typename Key,
           hip::thread_scope Scope,
           typename KeyEqual,
@@ -587,7 +590,7 @@ class operator_impl<op::contains_tag,
 };
 
 template <typename Key,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           typename KeyEqual,
           typename ProbingScheme,
           typename StorageRef,
