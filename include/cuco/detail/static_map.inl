@@ -594,7 +594,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
     if (bucket_contains_available) {
       // the first lane in the group with an empty slot will attempt the insert
       insert_result status{insert_result::CONTINUE};
-      uint32_t src_lane = __ffs((int)bucket_contains_available) - 1;
+      uint32_t src_lane = __ffsll((unsigned long long)bucket_contains_available) - 1;
 
       if (g.thread_rank() == src_lane) {
         // One single CAS operation if `value_type` is packable
@@ -705,7 +705,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
     // Key exists, return true if successfully deleted
     if (exists) {
       //Todo(HIP): check if casting is fine?
-      uint32_t src_lane = __ffs((int)exists) - 1;
+      uint32_t src_lane = __ffsll((unsigned long long)exists) - 1;
 
       bool status = false;
       if (g.thread_rank() == src_lane) {
@@ -811,7 +811,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
     //todo(HIP): we need a workaround for ballot which is missing in HIP cg
     auto const exists = g.ballot(not slot_is_empty and key_equal(existing_key, k));
     if (exists) {
-      uint32_t src_lane = __ffs((int)exists) - 1;
+      uint32_t src_lane = __ffsll((unsigned long long)exists) - 1;
       // TODO: This shouldn't cast an iterator to an int to shuffle. Instead, get the index of the
       // current_slot and shuffle that instead.
       intptr_t res_slot = g.shfl(reinterpret_cast<intptr_t>(current_slot), src_lane);
@@ -851,7 +851,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
     // the entry
     auto const exists = g.ballot(not slot_is_empty and key_equal(existing_key, k));
     if (exists) {
-      uint32_t src_lane = __ffs(exists) - 1;
+      uint32_t src_lane = __ffsll((unsigned long long)exists) - 1;
       // TODO: This shouldn't cast an iterator to an int to shuffle. Instead, get the index of the
       // current_slot and shuffle that instead.
       intptr_t res_slot = g.shfl(reinterpret_cast<intptr_t>(current_slot), src_lane);
