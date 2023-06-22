@@ -739,14 +739,10 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::insert(InputI
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
   auto const grid_size = (cg_size() * num_keys + stride * block_size - 1) / (stride * block_size);
-  auto view            = get_device_mutable_view(); 
+  auto view            = get_device_mutable_view();
 
-  if constexpr (cg_size() == 1) {
-    detail::insert<block_size><<<grid_size, block_size, 0, stream>>>(first, num_keys, view);
-  } else {
-    detail::insert<block_size, cg_size()>
-      <<<grid_size, block_size, 0, stream>>>(first, num_keys, view);
-  }
+  detail::insert<block_size, cg_size()>
+    <<<grid_size, block_size, 0, stream>>>(first, num_keys, view);
   CUCO_CUDA_TRY(hipStreamSynchronize(stream));
 }
 
@@ -767,14 +763,8 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::insert_if(
   auto const grid_size = (cg_size() * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
-  if constexpr(cg_size()==1) {
-    detail::insert_if_n<block_size>
-      <<<grid_size, block_size, 0, stream>>>(first, stencil, num_keys, view, pred);
-  }
-  else {
-    detail::insert_if_n<block_size, cg_size()>
-      <<<grid_size, block_size, 0, stream>>>(first, stencil, num_keys, view, pred);
-  } 
+  detail::insert_if_n<block_size, cg_size()>
+    <<<grid_size, block_size, 0, stream>>>(first, stencil, num_keys, view, pred);
   CUCO_CUDA_TRY(hipStreamSynchronize(stream));
 }
 
@@ -1406,59 +1396,6 @@ template <uint32_t buffer_size,
           typename OutputIt,
           typename KeyEqual>
 __device__ __forceinline__ void
-static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::retrieve_no_cg_probe(
-  FlushingCG const& flushing_cg,
-  Key const& k,
-  uint32_t* flushing_cg_counter,
-  value_type* output_buffer,
-  atomicT* num_matches,
-  OutputIt output_begin,
-  KeyEqual key_equal) noexcept
-{
-  constexpr bool is_outer = false;
-  if constexpr (uses_vector_load()) {
-    impl_.template retrieve_no_cg_probe_vector<buffer_size, is_outer>(
-      flushing_cg, k, flushing_cg_counter, output_buffer, num_matches, output_begin, key_equal);
-  } else  // In the case of scalar load, flushing CG is the same as probing CG
-  {
-    impl_.template retrieve_no_cg_probe<buffer_size, is_outer>(
-      flushing_cg, k, flushing_cg_counter, output_buffer, num_matches, output_begin, key_equal);
-  }
-}
-
-template <typename Key,
-          typename Value,
-          hip::thread_scope Scope,
-          typename Allocator,
-          class ProbeSequence>
-template <typename atomicT, typename OutputIt, typename KeyEqual>
-__device__ __forceinline__ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::
-  device_view::retrieve_no_cg_probe_no_flushing(Key const& k,
-                                                atomicT* num_matches,
-                                                OutputIt output_begin,
-                                                KeyEqual key_equal) noexcept
-{
-  constexpr bool is_outer = false;
-  if constexpr (uses_vector_load()) {
-    impl_.template retrieve_no_cg_probe_no_flushing_vector<is_outer>(
-      k, num_matches, output_begin, key_equal);
-  } else {
-    impl_.template retrieve_no_cg_probe_no_flushing<is_outer>(
-      k, num_matches, output_begin, key_equal);
-  }
-}
-
-template <typename Key,
-          typename Value,
-          hip::thread_scope Scope,
-          typename Allocator,
-          class ProbeSequence>
-template <uint32_t buffer_size,
-          typename FlushingCG,
-          typename atomicT,
-          typename OutputIt,
-          typename KeyEqual>
-__device__ __forceinline__ void
 static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::retrieve_outer(
   FlushingCG const& flushing_cg,
   cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& probing_cg,
@@ -1483,58 +1420,6 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::retri
   {
     impl_.template retrieve<buffer_size, is_outer>(
       probing_cg, k, flushing_cg_counter, output_buffer, num_matches, output_begin, key_equal);
-  }
-}
-
-template <typename Key,
-          typename Value,
-          hip::thread_scope Scope,
-          typename Allocator,
-          class ProbeSequence>
-template <uint32_t buffer_size,
-          typename FlushingCG,
-          typename atomicT,
-          typename OutputIt,
-          typename KeyEqual>
-__device__ __forceinline__ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::
-  device_view::retrieve_outer_no_cg_probe(FlushingCG const& flushing_cg,
-                                          Key const& k,
-                                          uint32_t* flushing_cg_counter,
-                                          value_type* output_buffer,
-                                          atomicT* num_matches,
-                                          OutputIt output_begin,
-                                          KeyEqual key_equal) noexcept
-{
-  constexpr bool is_outer = true;
-  if constexpr (uses_vector_load()) {
-    impl_.template retrieve_no_cg_probe_vector<buffer_size, is_outer>(
-      flushing_cg, k, flushing_cg_counter, output_buffer, num_matches, output_begin, key_equal);
-  } else  // In the case of scalar load, flushing CG is the same as probing CG
-  {
-    impl_.template retrieve_no_cg_probe<buffer_size, is_outer>(
-      flushing_cg, k, flushing_cg_counter, output_buffer, num_matches, output_begin, key_equal);
-  }
-}
-
-template <typename Key,
-          typename Value,
-          hip::thread_scope Scope,
-          typename Allocator,
-          class ProbeSequence>
-template <typename atomicT, typename OutputIt, typename KeyEqual>
-__device__ __forceinline__ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::
-  device_view::retrieve_outer_no_cg_probe_no_flushing(Key const& k,
-                                                      atomicT* num_matches,
-                                                      OutputIt output_begin,
-                                                      KeyEqual key_equal) noexcept
-{
-  constexpr bool is_outer = true;
-  if constexpr (uses_vector_load()) {
-    impl_.template retrieve_no_cg_probe_no_flushing_vector<is_outer>(
-      k, num_matches, output_begin, key_equal);
-  } else {
-    impl_.template retrieve_no_cg_probe_no_flushing<is_outer>(
-      k, num_matches, output_begin, key_equal);
   }
 }
 
