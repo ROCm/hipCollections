@@ -47,12 +47,14 @@ template <typename Key, typename Value, hip::thread_scope Scope, typename Alloca
 static_map<Key, Value, Scope, Allocator>::static_map(std::size_t capacity,
                                                      empty_key<Key> empty_key_sentinel,
                                                      empty_value<Value> empty_value_sentinel,
+                                                     uint32_t TILE_Size,
                                                      Allocator const& alloc,
                                                      hipStream_t stream)
   : capacity_{std::max(capacity, std::size_t{1})},  // to avoid dereferencing a nullptr (Issue #72)
     empty_key_sentinel_{empty_key_sentinel.value},
     empty_value_sentinel_{empty_value_sentinel.value},
     erased_key_sentinel_{empty_key_sentinel.value},
+    TILESize{TILE_Size},
     slot_allocator_{alloc},
     counter_allocator_{alloc}
 {
@@ -72,12 +74,14 @@ static_map<Key, Value, Scope, Allocator>::static_map(std::size_t capacity,
                                                      empty_key<Key> empty_key_sentinel,
                                                      empty_value<Value> empty_value_sentinel,
                                                      erased_key<Key> erased_key_sentinel,
+                                                     uint32_t tile_size,
                                                      Allocator const& alloc,
                                                      hipStream_t stream)
   : capacity_{std::max(capacity, std::size_t{1})},  // to avoid dereferencing a nullptr (Issue #72)
     empty_key_sentinel_{empty_key_sentinel.value},
     empty_value_sentinel_{empty_value_sentinel.value},
     erased_key_sentinel_{erased_key_sentinel.value},
+    TILESize{tile_size},
     slot_allocator_{alloc},
     counter_allocator_{alloc}
 {
@@ -111,23 +115,22 @@ void static_map<Key, Value, Scope, Allocator>::insert(
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
 
-  auto const block_size = 128;
-  auto const stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE;
-  auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
-  auto view             = get_device_mutable_view();
+  auto const block_size    = 128;
+  auto const stride        = 1;
+  auto constexpr tile_size = HIP_TILE_SIZE;
+  auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
+  auto view            = get_device_mutable_view();
 
   // TODO: memset an atomic variable is unsafe
   static_assert(sizeof(std::size_t) == sizeof(atomic_ctr_type));
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
-  if constexpr(tile_size==1) {
-    detail::insert<block_size>
-    <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
-  }
-  else {
-    detail::insert<block_size, tile_size>
-    <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
+  if constexpr (tile_size == 1) {
+    detail::insert<block_size><<<grid_size, block_size, 0, stream>>>(
+      first, num_keys, num_successes_, view, hash, key_equal);
+  } else {
+    detail::insert<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
+      first, num_keys, num_successes_, view, hash, key_equal);
   }
   CUCO_CUDA_TRY(hipMemcpyAsync(
     &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
@@ -156,7 +159,7 @@ void static_map<Key, Value, Scope, Allocator>::insert_if(InputIt first,
 
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE; 
+  auto constexpr tile_size  = HIP_TILE_SIZE;
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -165,13 +168,12 @@ void static_map<Key, Value, Scope, Allocator>::insert_if(InputIt first,
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
 
-  if constexpr(tile_size==1) {
+  if constexpr (tile_size == 1) {
     detail::insert_if_n<block_size><<<grid_size, block_size, 0, stream>>>(
-       first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
-  }
-  else {
+      first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
+  } else {
     detail::insert_if_n<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
-       first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
+      first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
   }
   CUCO_CUDA_TRY(hipMemcpyAsync(
     &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
@@ -194,7 +196,7 @@ void static_map<Key, Value, Scope, Allocator>::erase(
 
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE; 
+  auto constexpr tile_size  = HIP_TILE_SIZE;
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -203,13 +205,12 @@ void static_map<Key, Value, Scope, Allocator>::erase(
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
 
-  if constexpr(tile_size==1) {
-      detail::erase<block_size>
-      <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
-  }
-  else {
-      detail::erase<block_size, tile_size>
-      <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
+  if constexpr (tile_size == 1) {
+    detail::erase<block_size><<<grid_size, block_size, 0, stream>>>(
+      first, num_keys, num_successes_, view, hash, key_equal);
+  } else {
+    detail::erase<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
+      first, num_keys, num_successes_, view, hash, key_equal);
   }
   CUCO_CUDA_TRY(hipMemcpyAsync(
     &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
@@ -231,17 +232,16 @@ void static_map<Key, Value, Scope, Allocator>::find(InputIt first,
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
 
-  auto const block_size = 128;
-  auto const stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE;
-  auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
-  auto view             = get_device_view();
+  auto const block_size    = 128;
+  auto const stride        = 1;
+  auto constexpr tile_size = HIP_TILE_SIZE;
+  auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
+  auto view            = get_device_view();
 
-  if constexpr(tile_size==1) {
+  if constexpr (tile_size == 1) {
     detail::find<block_size, Value>
       <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
-  }
-  else {
+  } else {
     detail::find<block_size, tile_size, Value>
       <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
   }
@@ -267,26 +267,26 @@ std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator>::retrieve_a
   auto d_num_out      = reinterpret_cast<std::size_t*>(
     std::allocator_traits<temp_allocator_type>::allocate(temp_allocator, sizeof(std::size_t)));
   CUCO_CUDA_TRY(hipcub::DeviceSelect::If(nullptr,
-                        temp_storage_bytes,
-                        begin,
-                        zipped_out_begin,
-                        d_num_out,
-                        get_capacity(),
-                        filled,
-                        stream));
+                                         temp_storage_bytes,
+                                         begin,
+                                         zipped_out_begin,
+                                         d_num_out,
+                                         get_capacity(),
+                                         filled,
+                                         stream));
 
   // Allocate temporary storage
   auto d_temp_storage =
     std::allocator_traits<temp_allocator_type>::allocate(temp_allocator, temp_storage_bytes);
 
   CUCO_CUDA_TRY(hipcub::DeviceSelect::If(d_temp_storage,
-                        temp_storage_bytes,
-                        begin,
-                        zipped_out_begin,
-                        d_num_out,
-                        get_capacity(),
-                        filled,
-                        stream));
+                                         temp_storage_bytes,
+                                         begin,
+                                         zipped_out_begin,
+                                         d_num_out,
+                                         get_capacity(),
+                                         filled,
+                                         stream));
 
   std::size_t h_num_out;
   CUCO_CUDA_TRY(
@@ -312,17 +312,16 @@ void static_map<Key, Value, Scope, Allocator>::contains(InputIt first,
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
 
-  auto const block_size = 128;
-  auto const stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE;
-  auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
-  auto view             = get_device_view();
+  auto const block_size    = 128;
+  auto const stride        = 1;
+  auto constexpr tile_size = HIP_TILE_SIZE;
+  auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
+  auto view            = get_device_view();
 
-  if constexpr(tile_size==1) {
+  if constexpr (tile_size == 1) {
     detail::contains<block_size>
       <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
-  }
-  else {
+  } else {
     detail::contains<block_size, tile_size>
       <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
   }
@@ -582,7 +581,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
 
     // the key we are trying to insert is already in the map, so we return with failure to insert
     if (g.any(not slot_is_available and key_equal(existing_key, insert_pair.first))) {
-     return false;
+      return false;
     }
     
     auto const bucket_contains_available = g.ballot(slot_is_available);
@@ -887,7 +886,7 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
   auto current_slot = this->initial_slot(g, k, hash);
 
   while (true) {
-   key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
+    key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
     // the sentinel is not a valid key value. Therefore, first check for the sentinel
