@@ -154,8 +154,7 @@ template <uint32_t block_size,
           typename Predicate>
 CUCO_KERNEL void insert_if_n(InputIt first, StencilIt s, int64_t n, viewT view, Predicate pred)
 {
-  auto tile = cg::tiled_partition<tile_size>(cg::this_thread_block());
-  // auto tile                 = hip_cooperative_groups_ext::tiled_partition<tile_size>();
+  auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 
@@ -371,8 +370,7 @@ template <uint32_t block_size,
 CUCO_KERNEL void count(
   InputIt first, int64_t n, atomicT* num_matches, viewT view, KeyEqual key_equal)
 {
-  auto tile = cg::tiled_partition<tile_size>(cg::this_thread_block());
-  // auto tile                 = hip_cooperative_groups_ext::tiled_partition<tile_size>();
+  auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 
@@ -628,8 +626,6 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
   auto probing_cg           = cg::tiled_partition<probing_cg_size>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / probing_cg_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / probing_cg_size;
-
-  // auto hip_flushing_cg = hip_cooperative_groups_ext::tiled_partition(flushing_cg.size());
 
   __shared__ pair_type probe_output_buffer[num_flushing_cgs][buffer_size];
   __shared__ pair_type contained_output_buffer[num_flushing_cgs][buffer_size];

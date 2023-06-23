@@ -113,7 +113,7 @@ void static_map<Key, Value, Scope, Allocator>::insert(
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE; //4 for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = HIP_TILE_SIZE;
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_mutable_view();
 
@@ -156,7 +156,7 @@ void static_map<Key, Value, Scope, Allocator>::insert_if(InputIt first,
 
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE; //4 for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = HIP_TILE_SIZE; 
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -194,7 +194,7 @@ void static_map<Key, Value, Scope, Allocator>::erase(
 
   auto constexpr block_size = 128;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE; //4 for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = HIP_TILE_SIZE; 
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -233,7 +233,7 @@ void static_map<Key, Value, Scope, Allocator>::find(InputIt first,
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE; //4 for CUDA todo(HIP): investigate best value;
+  auto constexpr tile_size  = HIP_TILE_SIZE;
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_view();
 
@@ -314,7 +314,7 @@ void static_map<Key, Value, Scope, Allocator>::contains(InputIt first,
 
   auto const block_size = 128;
   auto const stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE; //4; for CUDA, todo(HIP): investigate best value
+  auto constexpr tile_size  = HIP_TILE_SIZE;
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_view();
 
@@ -570,7 +570,6 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
   CG const& g, value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
 {
   auto current_slot = this->initial_slot(g, insert_pair.first, hash);
-  // auto hip_g        = cooperative_groups::tiled_partition_ext(g.size());
 
   while (true) {
     key_type const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -582,7 +581,6 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::i
       cuco::detail::bitwise_compare(existing_key, this->get_erased_key_sentinel());
 
     // the key we are trying to insert is already in the map, so we return with failure to insert
-    //todo(HIP): we need a workaround for any which is missing in HIP cg
     if (g.any(not slot_is_available and key_equal(existing_key, insert_pair.first))) {
      return false;
     }
@@ -683,7 +681,6 @@ template <typename CG, typename Hash, typename KeyEqual>
 __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::erase(
   CG const& g, key_type const& k, Hash hash, KeyEqual key_equal) noexcept
 {
-  // auto hip_g        = hip_cooperative_groups_ext::tiled_partition_ext(g.size());
   auto current_slot = this->initial_slot(g, k, hash);
   value_type const insert_pair =
     make_pair<Key, Value>(this->get_erased_key_sentinel(), this->get_empty_value_sentinel());
@@ -699,12 +696,10 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
     auto const slot_is_empty =
       cuco::detail::bitwise_compare(existing_key, this->get_empty_key_sentinel());
 
-    //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now
     auto const exists = g.ballot(not slot_is_empty and key_equal(existing_key, k));
 
     // Key exists, return true if successfully deleted
     if (exists) {
-      //Todo(HIP): check if casting is fine?
       uint32_t src_lane = __ffsll((unsigned long long)exists) - 1;
 
       bool status = false;
@@ -733,7 +728,6 @@ __device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::e
     }
 
     // empty slot found, but key not found, must not be in the map
-    //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now
     if (g.ballot(slot_is_empty)) { return false; }
 
     current_slot = this->next_slot(g, current_slot);
@@ -795,10 +789,8 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
                                                             KeyEqual key_equal) noexcept
 {
   auto current_slot = this->initial_slot(g, k, hash);
-  // auto hip_g        = hip_cooperative_groups_ext::tiled_partition_ext(g.size());
 
   while (true) {
-    //todo(HIP): activate again
     auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
 
     // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
@@ -808,7 +800,6 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
 
     // the key we were searching for was found by one of the threads,
     // so we return an iterator to the entry
-    //todo(HIP): we need a workaround for ballot which is missing in HIP cg
     auto const exists = g.ballot(not slot_is_empty and key_equal(existing_key, k));
     if (exists) {
       uint32_t src_lane = __ffsll((unsigned long long)exists) - 1;
@@ -819,7 +810,6 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
     }
 
     // we found an empty slot, meaning that the key we're searching for isn't present
-    //todo(HIP): we need a workaround for ballot which is missing in HIP cg
     if (g.ballot(slot_is_empty)) { return this->end(); }
 
     // otherwise, all slots in the current bucket are full with other keys, so we move onto the
@@ -837,7 +827,6 @@ static_map<Key, Value, Scope, Allocator>::device_view::find(CG g,
                                                             KeyEqual key_equal) const noexcept
 {
   auto current_slot = initial_slot(g, k, hash);
-  // auto hip_g        = hip_cooperative_groups_ext::tiled_partition_ext(g.size());
 
   while (true) {
     auto const existing_key = current_slot->first.load(hip::std::memory_order_relaxed);
@@ -895,7 +884,6 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
                                                                 Hash hash,
                                                                 KeyEqual key_equal) const noexcept
 {
-  //todo(HIP): activate again
   auto current_slot = this->initial_slot(g, k, hash);
 
   while (true) {
@@ -908,11 +896,9 @@ static_map<Key, Value, Scope, Allocator>::device_view::contains(CG const& g,
 
     // the key we were searching for was found by one of the threads, so we return an iterator to
     // the entry
-    // todo(HIP): HIP CG does not have ballot, we need a workaround
     if (g.ballot(not slot_is_empty and key_equal(existing_key, k))) { return true; }
 
     // we found an empty slot, meaning that the key we're searching for isn't present
-    // todo(HIP): HIP CG does not have ballot, we need a workaround
     if (g.ballot(slot_is_empty)) { return false; }
 
     // otherwise, all slots in the current window are full with other keys, so we move onto the
