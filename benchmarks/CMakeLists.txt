@@ -85,6 +85,14 @@ ConfigureBench(STATIC_SET_BENCH
   static_set/rehash_bench.cu)
 
 ###################################################################################################
+# - static_set benchmarks -------------------------------------------------------------------------
+ConfigureBench(STATIC_SET_CG_BENCH
+hash_table/static_set_cg/contains_bench.cu.cpp
+hash_table/static_set_cg/insert_bench.cu.cpp
+hash_table/static_set_cg/retrieve_all_bench.cu.cpp
+hash_table/static_set_cg/size_bench.cu.cpp)
+
+###################################################################################################
 # - static_map benchmarks -------------------------------------------------------------------------
 ConfigureBench(STATIC_MAP_BENCH
   static_map/insert_bench.cu
