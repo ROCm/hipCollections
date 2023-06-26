@@ -103,12 +103,12 @@ class cooperative_groups_based_warp_primitives {
   }
 };
 
-template<uint32_t CGSIZE>
+template <uint32_t CGSIZE>
 class tiled_partition_internal_ext : public cooperative_groups_based_warp_primitives {
  public:
-  __device__ tiled_partition_internal_ext()//cooperative_groups::tiled_group& parent
+  __device__ tiled_partition_internal_ext()  // cooperative_groups::tiled_group& parent
     : cooperative_groups_based_warp_primitives(CGSIZE, ~0)
-  {  // Include all threads
+  {                                          // Include all threads
     compute_groups();
   }
   __device__ inline void compute_groups()
@@ -121,15 +121,14 @@ class tiled_partition_internal_ext : public cooperative_groups_based_warp_primit
 
 class coalesced_group_ext : public cooperative_groups_based_warp_primitives {
  public:
-  __attribute__((optnone)) __device__ coalesced_group_ext(lane_mask lm)
+  __device__ coalesced_group_ext(lane_mask lm)
     : cooperative_groups_based_warp_primitives(__popcll(lm), lm)
   {
     set_mask(lm);
   }
 };
 
-
-template<uint32_t CGSIZE>
+template <uint32_t CGSIZE>
 __device__ inline coalesced_group_ext binary_partition(
   tiled_partition_internal_ext<CGSIZE>& parent_g, bool pred)
 {
@@ -141,19 +140,21 @@ __device__ inline coalesced_group_ext binary_partition(
   }
 }
 
-template<uint32_t CGSIZE>
-class thread_block_tile: public tiled_partition_internal_ext<CGSIZE>{
-  public:
-  __device__ thread_block_tile() : tiled_partition_internal_ext<CGSIZE>(){}
+template <uint32_t CGSIZE>
+class thread_block_tile : public tiled_partition_internal_ext<CGSIZE> {
+ public:
+  __device__ thread_block_tile() : tiled_partition_internal_ext<CGSIZE>() {}
 };
 
-template<uint32_t CGSIZE>
- __device__ thread_block_tile<CGSIZE> tiled_partition(cooperative_groups::thread_block tb){
+template <uint32_t CGSIZE>
+__device__ thread_block_tile<CGSIZE> tiled_partition(cooperative_groups::thread_block tb)
+{
   return thread_block_tile<CGSIZE>();
 }
 
-__device__ cooperative_groups::thread_block this_thread_block(){
-//Todo(HIP): complete the implementation
+__device__ cooperative_groups::thread_block this_thread_block()
+{
+  // Todo(HIP): complete the implementation
   return cooperative_groups::this_thread_block();
 }
 
