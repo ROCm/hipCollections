@@ -119,6 +119,14 @@ ConfigureBench(STATIC_MAP_TILE_BENCH
   hash_table/static_map_tile/erase_bench.cu.cpp)
 
 ###################################################################################################
+# - static_map benchmarks -------------------------------------------------------------------------
+ConfigureBench(STATIC_MAP_BLOCK_BENCH
+hash_table/static_map_block/insert_bench.cu.cpp
+hash_table/static_map_block/find_bench.cu.cpp
+hash_table/static_map_block/contains_bench.cu.cpp
+hash_table/static_map_block/erase_bench.cu.cpp)
+
+###################################################################################################
 # - static_multimap benchmarks --------------------------------------------------------------------
 ConfigureBench(STATIC_MULTIMAP_BENCH
   static_multimap/insert_bench.cu
