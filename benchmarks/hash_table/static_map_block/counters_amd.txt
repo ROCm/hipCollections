@@ -1,0 +1,26 @@
+# MIT License
+#
+# Copyright (c) 2025 Advanced Micro Devices, Inc.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+ pmc :  FETCH_SIZE WRITE_SIZE TCC_EA_RDREQ_sum TCC_EA_WRREQ_sum TCP_TCC_READ_REQ_sum TCP_TCC_WRITE_REQ_sum TCP_TCC_READ_REQ_LATENCY_sum TCP_TCC_WRITE_REQ_LATENCY_sum
+ pmc :  TCC_EA_WRREQ_DRAM_sum TCC_EA_RDREQ_DRAM_sum TCC_READ_sum TCC_WRITE_sum
+ pmc :  TCC_HIT_sum TCC_MISS_sum TCC_NORMAL_EVICT_sum TCC_ALL_TC_OP_INV_EVICT_sum
+ kernel : probe_benchmark
