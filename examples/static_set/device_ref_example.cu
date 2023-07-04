@@ -38,6 +38,7 @@
 #include <thrust/logical.h>
 #include <thrust/sequence.h>
 
+#include "cuco/amd_cooperative_groups_ext.h"
 #include <hip/hip_cooperative_groups.h>
 
 #include <cstddef>
@@ -55,7 +56,8 @@
 template <typename SetRef, typename InputIterator>
 __global__ void custom_cooperative_insert(SetRef set, InputIterator keys, std::size_t n)
 {
-  namespace cg = cooperative_groups;
+  namespace cg =
+    hip_cooperative_groups_ext;  // todo (hip): change back to ROCm CG when API has been extended
 
   constexpr auto cg_size = SetRef::cg_size;
 
