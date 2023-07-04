@@ -115,6 +115,10 @@ target_link_libraries(cuco INTERFACE libhipcxx::libhipcxx hip::device roc::rocth
 target_compile_features(cuco INTERFACE cxx_std_17 cuda_std_17)
 set(HIP_CG_SIZE "8" CACHE STRING "Size of cooperative groups")
 target_compile_options(cuco INTERFACE "-DHIP_CG_SIZE=${HIP_CG_SIZE}")
+set(HIP_TILE_SIZE "4" CACHE STRING "Size of cooperative groups")
+target_compile_options(cuco INTERFACE "-DHIP_TILE_SIZE=${HIP_TILE_SIZE}")
+set(STATIC_SET_CG_SIZE "1" CACHE STRING "Size of cooperative groups for static_set")
+target_compile_options(cuco INTERFACE "-DSTATIC_SET_CG_SIZE=${STATIC_SET_CG_SIZE}")
 ###################################################################################################
 # - optionally build tests ------------------------------------------------------------------------
 

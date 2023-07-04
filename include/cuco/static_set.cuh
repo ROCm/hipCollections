@@ -108,7 +108,7 @@ template <class Key,
           class Extent             = cuco::extent<std::size_t>,
           hip::thread_scope Scope  = hip::thread_scope_device,
           class KeyEqual           = thrust::equal_to<Key>,
-          class ProbingScheme      = cuco::double_hashing<4,  // CG size
+          class ProbingScheme      = cuco::double_hashing<STATIC_SET_CG_SIZE,  // CG size
                                                           cuco::default_hash_function<Key>>,
           class Allocator          = cuco::cuda_allocator<Key>,
           class Storage            = cuco::storage<1>>
