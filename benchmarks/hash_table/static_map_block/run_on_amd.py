@@ -125,7 +125,7 @@ df = pd.DataFrame(columns=['Problem_size','Time (s)','TCC_HIT_rate'] + metrics)
 #     writer = csv.writer(file)
 
 for i, value in enumerate(input):
-    cloneCmd = "rocprof --basenames on --timestamp on -i /home/projects/7/hipCollections/benchmarks/hash_table/static_multimap_probing_bench/counters_amd.txt /home/projects/7/hipCollections/build/benchmarks/STATIC_MULTIMAP_PROBING_BENCH --devices 0 -a Multiplicity=1  -a Key=I32 -a Value=I32 -a INPUTSize={0}".format(value)
+    cloneCmd = "rocprof --basenames on --timestamp on -i ./counters_amd.txt ../../../build/benchmarks/STATIC_MULTIMAP_PROBING_BENCH --devices 0 -a Multiplicity=1  -a Key=I32 -a Value=I32 -a INPUTSize={0}".format(value)
     out = runCommand(cloneCmd)
     # print(out)
     elapsed_time = extract_substring(out, "% | ","s | ")
