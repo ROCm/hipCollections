@@ -230,9 +230,9 @@ __device__ inline coalesced_group_ext binary_partition(
 {
   lane_mask pred_mask = __ballot(pred);
   if (pred) {
-    return coalesced_group_ext(pred_mask & parent_g.get_mask());
+    return coalesced_group_ext(pred_mask & parent_tile.get_mask());
   } else {
-    return coalesced_group_ext(~(pred_mask & parent_g.get_mask()));
+    return coalesced_group_ext(~(pred_mask & parent_tile.get_mask()));
   }
 }
 
