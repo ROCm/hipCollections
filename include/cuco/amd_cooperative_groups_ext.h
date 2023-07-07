@@ -41,32 +41,80 @@
 using namespace hip_warp_primitives;
 namespace hip_cooperative_groups_ext {
 
+/**
+ * @brief A base class that represents a cooperative group with some extensions
+ * to the HIP-native implementation.
+ *
+ * This is a variant of cooperative groups that adds some
+ * additional APIs that are presently not part of HIP cooperative groups
+ * (e.g., any() and ballot()).
+ *
+ * All extended cooperative groups are convertible into this base class.
+ *
+ * CAUTION: currently, only cooperative groups of size <=64 are supported.
+ **/
 class cooperative_groups_based_warp_primitives {
  private:
-  uint32_t __size;
-  lane_mask __group_mask;
+  uint32_t __size;         ///< size of cooperative group
+  lane_mask __group_mask;  ///< mask of the cooperative group
 
  public:
-  __device__ cooperative_groups_based_warp_primitives(uint32_t s, lane_mask m)
+  /**
+   * @brief Constructs a cooperative group base class instance.
+   * 
+   * @param size Number of work items in the cooperative group.
+   * @param mask Lane mask with Nth bit set to 1 if and only if the Nth work item
+   * in the calling wavefront belongs to the cooperative group.
+  */
+  __device__ cooperative_groups_based_warp_primitives(uint32_t size, lane_mask mask)
   {
-    __size       = s;
-    __group_mask = m;
+    __size       = size;
+    __group_mask = mask;
   }
 
-  __device__ void set_size(uint32_t s) { __size = s; }
+  /**
+   * @brief Sets the size (number of work items) of the cooperative group.
+   * @param size Size (number of work items) of the cooperative group.
+   */
+  __device__ void set_size(uint32_t size) { __size = size; }
 
+  /**
+   * @brief Gets the size (number of work items) of the cooperative group.
+   * @return Size (number of work items) of the cooperative group.
+   */
   __device__ uint32_t size() const { return __size; }
 
+  /**
+   * @brief Gets the lane mask of the cooperative group.
+   * @return The lane mask of the cooperative group.
+   */
   __device__ lane_mask get_mask() const { return __group_mask; }
 
+  /**
+   * @brief Sets the lane mask of the cooperative group.
+   * @param lm The lane mask of the cooperative group.
+   */
   __device__ void set_mask(lane_mask lm) { __group_mask = lm; }
 
+  /**
+   * @brief Evaluate predicate for all work items in the cooperative group and returns non-zero if
+   * and only if predicate evaluates to non-zero for any of them.
+   * @param pred The predicate to evaluate.
+   * @return True if the predicate evaluates to true in any work item in the cooperative group.
+   */
   __device__ inline bool any(int pred) const
   {
     assert(__is_thread_in_mask(__group_mask));
     return __any_sync(__group_mask, pred);
   }
 
+  /**
+   * @brief Evaluate predicate for all work items in the cooperative group and returns an integer
+   * whose Nth bit is set if and only if predicate evaluates to non-zero for the Nth work item.
+   * @param pred The predicate to evaluate.
+   * @return An integer whose Nth bit is set if and only if predicate evaluates to non-zero for the
+   * Nth work item.
+   */
   __device__ inline lane_mask ballot(int pred) const
   {
     auto result_ballot_sync = __ballot_sync(__group_mask, pred);
@@ -76,6 +124,10 @@ class cooperative_groups_based_warp_primitives {
     return result_ballot_sync;
   }
 
+  /**
+   * @brief Returns the thread rank of the calling work item in [0,size()-1]
+   * @return The thread rank of the calling work item in [0,size()-1]
+   */
   __device__ inline int thread_rank() const
   {
     auto lane_id = __lane_id();
@@ -85,8 +137,21 @@ class cooperative_groups_based_warp_primitives {
     return rank;
   }
 
+  /**
+   * @brief Synchronizes the threads in the cooperative group.
+   */
   __device__ inline void sync() const { return __sync_active_threads(); }
 
+  /**
+   * @brief Copies a variable from a source rank to all other ranks in the cooperative group.
+   *
+   * @tparam T the type of the variable that should be shuffled.
+   *
+   * @param var The variable to broadcast (from source rank)
+   * @param srcRank The rank in the cooperative group from which the variable is broadcasted.
+   *
+   * @return The value of var from the work item with rank srcRank.
+   */
   template <class T>
   __device__ inline T shfl(T var, int srcRank) const
   {
@@ -95,30 +160,51 @@ class cooperative_groups_based_warp_primitives {
     return __shfl_sync(__group_mask, var, srcLane);
   }
 
+  /**
+   * @brief Sets the group mask for creating a tiled partition.
+   */
   __device__ inline void compute_groups()
   {
-    lane_mask __group_mask =
-      __match_any_sync(get_mask(), threadIdx.x / size());  // pass __group_mask instead of ~0
+    lane_mask __group_mask = __match_any_sync(get_mask(), threadIdx.x / size());
     set_mask(__group_mask);
   }
 };
 
-template <uint32_t CGSIZE>
+/**
+ * @brief A tiled cooperative group.
+ *
+ * @tparam Size The size of the tile. Currently, only sizes <=64 are supported.
+ */
+template <uint32_t Size>
 class tiled_partition_internal_ext : public cooperative_groups_based_warp_primitives {
  public:
-  __device__ tiled_partition_internal_ext()  // cooperative_groups::tiled_group& parent
-    : cooperative_groups_based_warp_primitives(CGSIZE, ~0)
-  {                                          // Include all threads
+  __device__ tiled_partition_internal_ext() : cooperative_groups_based_warp_primitives(Size, ~0)
+  {  // Include all threads
     compute_groups();
   }
+
+  /**
+   * @brief Computes and sets the group mask for creating a tiled partition.
+   */
   __device__ inline void compute_groups()
   {
-    lane_mask __group_mask =
-      __match_any_sync(get_mask(), threadIdx.x / size());  // pass __group_mask instead of ~0
+    lane_mask __group_mask = __match_any_sync(get_mask(), threadIdx.x / size());
     set_mask(__group_mask);
   }
 };
 
+/**
+ * @brief A coalesced cooperative group type.
+ *
+ * We follow the CUDA documentation and define a coalesced group as follows:
+ * "If there exists a data-dependent conditional branch in the application code such
+ *  that threads within a warp diverge, then the warp serially executes each branch disabling
+ *  threads not on that path. The threads that remain active on the path are referred to as
+ * coalesced." (Quote from:
+ * https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#coalesced-groups)
+ *
+ * CAUTION: currently, only cooperative groups of size <=64 are supported.
+ */
 class coalesced_group_ext : public cooperative_groups_based_warp_primitives {
  public:
   __device__ coalesced_group_ext(lane_mask lm)
@@ -128,9 +214,19 @@ class coalesced_group_ext : public cooperative_groups_based_warp_primitives {
   }
 };
 
-template <uint32_t CGSIZE>
+/**
+ * @brief Partitions the parent thread block tile into coalesced subgroups.
+ *
+ * The binary partition is created depending on a predicate: work items will be
+ * grouped into the same group if and only if they have the same predicate value.
+ *
+ * @param parent_tile The parent thread block tile to be partitioned.
+ * @param pred The predicate to evaluate. Work items with the same predicate value will
+ * be assigned to the same partition.
+ */
+template <uint32_t Size>
 __device__ inline coalesced_group_ext binary_partition(
-  tiled_partition_internal_ext<CGSIZE>& parent_g, bool pred)
+  tiled_partition_internal_ext<Size>& parent_tile, bool pred)
 {
   lane_mask pred_mask = __ballot(pred);
   if (pred) {
@@ -140,18 +236,36 @@ __device__ inline coalesced_group_ext binary_partition(
   }
 }
 
-template <uint32_t CGSIZE>
-class thread_block_tile : public tiled_partition_internal_ext<CGSIZE> {
+/**
+ * @brief A cooperative group that represents a tiled thread block.
+ *
+ * @tparam Size The size of the thread block tile. CAUTION: Currently, only cooperative groups of
+ * size <=64 are supported.
+ */
+template <uint32_t Size>
+class thread_block_tile : public tiled_partition_internal_ext<Size> {
  public:
-  __device__ thread_block_tile() : tiled_partition_internal_ext<CGSIZE>() {}
+  __device__ thread_block_tile() : tiled_partition_internal_ext<Size>() {}
 };
 
-template <uint32_t CGSIZE>
-__device__ thread_block_tile<CGSIZE> tiled_partition(cooperative_groups::thread_block tb)
+/**
+ * @brief Creates a thread_block_tile from a parent cooperative group (HIP implementation).
+ *
+ * @tparam Size The size of the thread block tile. CAUTION: Currently, only cooperative groups of
+ * size <=64 are supported.
+ *
+ * @return The thread_block_tile cooperative group, which the calling work item belongs to.
+ */
+template <uint32_t Size>
+__device__ thread_block_tile<Size> tiled_partition(cooperative_groups::thread_block tb)
 {
-  return thread_block_tile<CGSIZE>();
+  return thread_block_tile<Size>();
 }
 
+/**
+ * @brief Wrapper for return a HIP cooperative group for the active thread block.
+ * @return The cooperative group that represents the active thread block.
+ */
 __device__ cooperative_groups::thread_block this_thread_block()
 {
   // Todo(HIP): complete the implementation
