@@ -39,6 +39,10 @@
 #endif
 #endif
 using namespace hip_warp_primitives;
+
+/**
+ * @brief Namespace containing extensions to HIP cooperative groups.
+ **/
 namespace hip_cooperative_groups_ext {
 
 /**
