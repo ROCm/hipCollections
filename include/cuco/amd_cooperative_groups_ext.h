@@ -211,6 +211,10 @@ class tiled_partition_internal_ext : public cooperative_groups_based_warp_primit
  */
 class coalesced_group_ext : public cooperative_groups_based_warp_primitives {
  public:
+  /**
+   * @brief Creates a coalesced group with the given input lane mask.
+   * @param lm Lane mask in which bit N is set if and only if the Nth thread belongs to the coalesced group.
+  */
   __device__ coalesced_group_ext(lane_mask lm)
     : cooperative_groups_based_warp_primitives(__popcll(lm), lm)
   {
