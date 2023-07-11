@@ -43,7 +43,7 @@
 #include "../amd_cooperative_groups_ext.h"
 namespace cuco::legacy::detail {
 //Todo(HIP): Change to "namespace cg = cooperative_groups;" once we have CG workaround in ROCm.
-namespace cg = hip_cooperative_groups_ext;
+namespace cg = hip_extensions::hip_cooperative_groups_ext;
 
 CUCO_SUPPRESS_KERNEL_WARNINGS
 /**

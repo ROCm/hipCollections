@@ -45,8 +45,8 @@
 #endif
 
 namespace cuco {
-// Todo(HIP): Remove the alias once we have the CG workaround in ROCm
-namespace cooperative_groups = hip_cooperative_groups_ext;
+//Todo(HIP): Remove the alias once we have the CG workaround in ROCm
+namespace cooperative_groups = hip_extensions::hip_cooperative_groups_ext;
 template <typename Key,
           typename Value,
           hip::thread_scope Scope,

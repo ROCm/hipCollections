@@ -38,6 +38,9 @@
 #error "WAVEFRONT_SIZE 64 required"
 #endif
 #endif
+
+namespace hip_extensions {
+
 using namespace hip_warp_primitives;
 
 /**
@@ -266,4 +269,5 @@ __device__ cooperative_groups::thread_block this_thread_block()
 
 }  // namespace hip_cooperative_groups_ext
 
+}  // namespace hip_extensions
 #endif

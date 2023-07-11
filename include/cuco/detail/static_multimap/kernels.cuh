@@ -273,13 +273,12 @@ __global__ void contains(InputIt first, int64_t n, OutputIt output_begin, viewT 
      * to global, we no longer rely on L1, preventing the increase in sector stores from
      * L2 to global and improving performance.
      */
-    writeBuffer[threadIdx.x] = found; 
+    writeBuffer[threadIdx.x] = found;
     __syncthreads();
-    *(output_begin + idx) = writeBuffer[threadIdx.x]; 
+    *(output_begin + idx) = writeBuffer[threadIdx.x];
     idx += loop_stride;
   }
 }
-
 
 /**
  * @brief Counts the occurrences of keys in `[first, last)` contained in the multimap.

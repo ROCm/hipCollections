@@ -44,7 +44,7 @@
 namespace cuco {
 
 // Todo(HIP): change once we have the workarounds in ROCm.
-namespace cooperative_groups = hip_cooperative_groups_ext;
+namespace cooperative_groups = hip_extensions::hip_cooperative_groups_ext ;
 
 template <typename Key,
           hip::thread_scope Scope,

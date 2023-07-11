@@ -43,7 +43,7 @@
 
 namespace cuco {
 // todo(HIP): change back to default HIP cooperative groups if it is available
-namespace cooperative_groups = hip_cooperative_groups_ext;
+namespace cooperative_groups = hip_extensions::hip_cooperative_groups_ext;
 /**
  * @brief Public linear probing scheme class.
  *

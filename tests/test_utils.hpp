@@ -51,7 +51,7 @@ namespace cuco {
 namespace test {
 
 //Todo(HIP): Change to "namespace cg = cooperative_groups;" once we have CG workaround implemented in ROCm
-namespace cg = hip_cooperative_groups_ext;
+namespace cg = hip_extensions::hip_cooperative_groups_ext;
 
 constexpr int32_t block_size = 128;
 
