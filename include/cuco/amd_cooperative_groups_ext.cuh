@@ -23,7 +23,7 @@
 #ifndef AMD_COOPERATIVE_GROUPS_EXT
 #define AMD_COOPERATIVE_GROUPS_EXT
 
-#include "amd_warp_primitives.h"
+#include "amd_warp_primitives.cuh"
 #include <hip/device_functions.h>
 #include <hip/hip_cooperative_groups.h>
 #include <hip/hip_runtime.h>

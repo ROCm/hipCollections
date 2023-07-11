@@ -1701,13 +1701,12 @@ class static_multimap {
       ProbeKey const& k,
       KeyEqual key_equal = KeyEqual{}) const noexcept;
 
-
     /**
      * @brief Indicates whether the key `k` exists in the map.
      *
      * If the key `k` was inserted into the map, `contains` returns
-     * true. Otherwise, it returns false. 
-     * 
+     * true. Otherwise, it returns false.
+     *
      * ProbeSequence hashers should be callable with both ProbeKey and Key type.
      * `std::invoke_result<KeyEqual, ProbeKey, Key>` must be well-formed.
      *
@@ -1724,9 +1723,8 @@ class static_multimap {
      * containing `k` was inserted
      */
     template <typename ProbeKey, typename KeyEqual = thrust::equal_to<key_type>>
-    __device__ __forceinline__ bool contains(
-      ProbeKey const& k,
-      KeyEqual key_equal = KeyEqual{}) const noexcept;
+    __device__ __forceinline__ bool contains(ProbeKey const& k,
+                                             KeyEqual key_equal = KeyEqual{}) const noexcept;
 
     /**
      * @brief Indicates whether the pair `p` exists in the map.
