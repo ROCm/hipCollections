@@ -119,6 +119,8 @@ set(HIP_TILE_SIZE "4" CACHE STRING "Size of cooperative groups")
 target_compile_options(cuco INTERFACE "-DHIP_TILE_SIZE=${HIP_TILE_SIZE}")
 set(STATIC_SET_CG_SIZE "1" CACHE STRING "Size of cooperative groups for static_set")
 target_compile_options(cuco INTERFACE "-DSTATIC_SET_CG_SIZE=${STATIC_SET_CG_SIZE}")
+set(HIP_STATIC_MAP_OPT "0" CACHE STRING "Optimize cg/block size for static_map")
+target_compile_options(cuco INTERFACE "-DHIP_STATIC_MAP_OPT=${HIP_STATIC_MAP_OPT}")
 ###################################################################################################
 # - optionally build tests ------------------------------------------------------------------------
 

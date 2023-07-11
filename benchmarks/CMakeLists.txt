@@ -38,7 +38,7 @@ cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 # GIT_TAG main
 CPMAddPackage(
   NAME nvbench
-  SOURCE_DIR "/mnt/beegfs/home/mnorouzi/nodes/shared/hipBench" 
+  SOURCE_DIR "/home/projects/7/bench/hipBench" 
   GIT_TAG feature/cmake
   GIT_SHALLOW TRUE
   EXCLUDE_FROM_ALL YES
@@ -109,22 +109,6 @@ ConfigureBench(STATIC_MULTISET_BENCH
   static_multiset/count_bench.cu
   static_multiset/find_bench.cu
   static_multiset/insert_bench.cu)
-
-###################################################################################################
-# - static_map benchmarks -------------------------------------------------------------------------
-ConfigureBench(STATIC_MAP_TILE_BENCH
-  hash_table/static_map_tile/insert_bench.cu.cpp
-  hash_table/static_map_tile/find_bench.cu.cpp
-  hash_table/static_map_tile/contains_bench.cu.cpp
-  hash_table/static_map_tile/erase_bench.cu.cpp)
-
-###################################################################################################
-# - static_map benchmarks -------------------------------------------------------------------------
-ConfigureBench(STATIC_MAP_BLOCK_BENCH
-hash_table/static_map_block/insert_bench.cu.cpp
-hash_table/static_map_block/find_bench.cu.cpp
-hash_table/static_map_block/contains_bench.cu.cpp
-hash_table/static_map_block/erase_bench.cu.cpp)
 
 ###################################################################################################
 # - static_multimap benchmarks --------------------------------------------------------------------
