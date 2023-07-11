@@ -38,9 +38,8 @@
 #include <cub/block/block_reduce.cuh>
 #include <cuda/std/atomic>
 
-#include "../../hip_extensions/amd_cooperative_groups_ext.cuh"
 #include <hip/hip_cooperative_groups.h>
-#include "../amd_cooperative_groups_ext.h"
+#include "../../hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh"
 namespace cuco::legacy::detail {
 //Todo(HIP): Change to "namespace cg = cooperative_groups;" once we have CG workaround in ROCm.
 namespace cg = hip_extensions::hip_cooperative_groups_ext;

@@ -38,7 +38,7 @@
 #include <thrust/logical.h>
 #include <thrust/sequence.h>
 
-#include "hip_extensions/amd_cooperative_groups_ext.cuh"
+#include <hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh>
 #include <hip/hip_cooperative_groups.h>
 
 #include <cstddef>

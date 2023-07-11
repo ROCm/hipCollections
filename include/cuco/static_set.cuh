@@ -56,7 +56,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "../hip_extensions/amd_cooperative_groups_ext.cuh"
+#include "../hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh"
 
 namespace cuco {
 // Todo(HIP): Remove once we have the CG workaround implemented in ROCm

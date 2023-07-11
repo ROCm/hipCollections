@@ -46,7 +46,7 @@
 #include <iterator>
 
 //Todo(HIP): Remove the header once we have CG workaround implemented in ROCm
-#include "../include/hip_extensions/amd_cooperative_groups_ext.cuh"
+#include <hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh>
 namespace cuco {
 namespace test {
 

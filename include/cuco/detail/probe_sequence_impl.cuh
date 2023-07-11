@@ -40,7 +40,7 @@
 
 #include <hip/hip_cooperative_groups.h>
 
-#include "../../hip_extensions/amd_cooperative_groups_ext.cuh"
+#include "../../hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh"
 #include <utility>
 #include "../amd_cooperative_groups_ext.h"
 #include "../amd_warp_primitives.h"

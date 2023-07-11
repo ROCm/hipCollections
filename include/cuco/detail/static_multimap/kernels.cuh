@@ -49,8 +49,7 @@ namespace detail {
   
 namespace cg = cooperative_groups;
 
-//TODO(HIP/AMD): enable
-//CUCO_SUPPRESS_KERNEL_WARNINGS
+CUCO_SUPPRESS_KERNEL_WARNINGS
 /**
  * @brief Initializes each slot in the flat `slots` storage to contain `k` and `v`.
  *
