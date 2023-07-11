@@ -40,6 +40,7 @@
 
 #include <hip/hip_cooperative_groups.h>
 
+#include "../../hip_extensions/amd_cooperative_groups_ext.cuh"
 #include <utility>
 #include "../amd_cooperative_groups_ext.h"
 #include "../amd_warp_primitives.h"
@@ -90,9 +91,9 @@ template <typename Key,
           uint32_t CGSize>
 class probe_sequence_impl_base {
  protected:
-  using value_type         = cuco::pair<Key, Value>;            ///< Type of key/value pairs
-  using key_type           = Key;                               ///< Key type
-  using mapped_type        = Value;                             ///< Type of mapped values
+  using value_type         = cuco::pair_type<Key, Value>;      ///< Type of key/value pairs
+  using key_type           = Key;                              ///< Key type
+  using mapped_type        = Value;                            ///< Type of mapped values
   using atomic_key_type    = hip::atomic<key_type, Scope>;     ///< Type of atomic keys
   using atomic_mapped_type = hip::atomic<mapped_type, Scope>;  ///< Type of atomic mapped values
   /// Pair type of atomic key and atomic mapped value

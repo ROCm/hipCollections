@@ -38,7 +38,7 @@
 #include <cub/block/block_reduce.cuh>
 #include <cuda/std/atomic>
 
-#include "../amd_cooperative_groups_ext.cuh"
+#include "../../hip_extensions/amd_cooperative_groups_ext.cuh"
 #include <hip/hip_cooperative_groups.h>
 #include "../amd_cooperative_groups_ext.h"
 namespace cuco::legacy::detail {

@@ -57,7 +57,7 @@ namespace hip_cooperative_groups_ext {
  *
  * CAUTION: currently, only cooperative groups of size <=64 are supported.
  **/
-class cooperative_groups_based_warp_primitives {
+class cooperative_group_base {
  private:
   uint32_t __size;         ///< size of cooperative group
   lane_mask __group_mask;  ///< mask of the cooperative group
@@ -65,12 +65,12 @@ class cooperative_groups_based_warp_primitives {
  public:
   /**
    * @brief Constructs a cooperative group base class instance.
-   * 
+   *
    * @param size Number of work items in the cooperative group.
    * @param mask Lane mask with Nth bit set to 1 if and only if the Nth work item
    * in the calling wavefront belongs to the cooperative group.
-  */
-  __device__ cooperative_groups_based_warp_primitives(uint32_t size, lane_mask mask)
+   */
+  __device__ cooperative_group_base(uint32_t size, lane_mask mask)
   {
     __size       = size;
     __group_mask = mask;
@@ -87,18 +87,6 @@ class cooperative_groups_based_warp_primitives {
    * @return Size (number of work items) of the cooperative group.
    */
   __device__ uint32_t size() const { return __size; }
-
-  /**
-   * @brief Gets the lane mask of the cooperative group.
-   * @return The lane mask of the cooperative group.
-   */
-  __device__ lane_mask get_mask() const { return __group_mask; }
-
-  /**
-   * @brief Sets the lane mask of the cooperative group.
-   * @param lm The lane mask of the cooperative group.
-   */
-  __device__ void set_mask(lane_mask lm) { __group_mask = lm; }
 
   /**
    * @brief Evaluate predicate for all work items in the cooperative group and returns non-zero if
@@ -164,14 +152,18 @@ class cooperative_groups_based_warp_primitives {
     return __shfl_sync(__group_mask, var, srcLane);
   }
 
+  // protected:
   /**
-   * @brief Sets the group mask for creating a tiled partition.
+   * @brief Gets the lane mask of the cooperative group.
+   * @return The lane mask of the cooperative group.
    */
-  __device__ inline void compute_groups()
-  {
-    lane_mask __group_mask = __match_any_sync(get_mask(), threadIdx.x / size());
-    set_mask(__group_mask);
-  }
+  __device__ lane_mask get_mask() const { return __group_mask; }
+
+  /**
+   * @brief Sets the lane mask of the cooperative group.
+   * @param lm The lane mask of the cooperative group.
+   */
+  __device__ void set_mask(lane_mask lm) { __group_mask = lm; }
 };
 
 /**
@@ -180,18 +172,10 @@ class cooperative_groups_based_warp_primitives {
  * @tparam Size The size of the tile. Currently, only sizes <=64 are supported.
  */
 template <uint32_t Size>
-class tiled_partition_internal_ext : public cooperative_groups_based_warp_primitives {
+class tiled_partition_internal_ext : public cooperative_group_base {
  public:
-  __device__ tiled_partition_internal_ext() : cooperative_groups_based_warp_primitives(Size, ~0)
+  __device__ tiled_partition_internal_ext() : cooperative_group_base(Size, ~0)
   {  // Include all threads
-    compute_groups();
-  }
-
-  /**
-   * @brief Computes and sets the group mask for creating a tiled partition.
-   */
-  __device__ inline void compute_groups()
-  {
     lane_mask __group_mask = __match_any_sync(get_mask(), threadIdx.x / size());
     set_mask(__group_mask);
   }
@@ -209,14 +193,14 @@ class tiled_partition_internal_ext : public cooperative_groups_based_warp_primit
  *
  * CAUTION: currently, only cooperative groups of size <=64 are supported.
  */
-class coalesced_group_ext : public cooperative_groups_based_warp_primitives {
- public:
+class coalesced_group_ext : public cooperative_group_base {
+ public:  // todo(hip): hide constructor
   /**
    * @brief Creates a coalesced group with the given input lane mask.
-   * @param lm Lane mask in which bit N is set if and only if the Nth thread belongs to the coalesced group.
-  */
-  __device__ coalesced_group_ext(lane_mask lm)
-    : cooperative_groups_based_warp_primitives(__popcll(lm), lm)
+   * @param lm Lane mask in which bit N is set if and only if the Nth thread belongs to the
+   * coalesced group.
+   */
+  __device__ coalesced_group_ext(lane_mask lm) : cooperative_group_base(__popcll(lm), lm)
   {
     set_mask(lm);
   }
