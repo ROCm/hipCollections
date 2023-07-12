@@ -1209,28 +1209,35 @@ namespace legacy {
  * individual threads.
  * @tparam Allocator Type of allocator used for device storage
  */
-#if HIP_STATIC_MAP_OPT == 0
 #ifndef HIP_TILE_SIZE
 #define HIP_TILE_SIZE 4
 #endif
 #ifndef HIP_BLOCK_SIZE
 #define HIP_BLOCK_SIZE 128
 #endif
-#elif HIP_STATIC_MAP_OPT == 1  // optimize tile size
-#ifndef HIP_TILE_SIZE
-#define HIP_TILE_SIZE HIP_OPT_TILE_OR_BLOCK_SIZE
-#endif
-#ifndef HIP_BLOCK_SIZE
-#define HIP_BLOCK_SIZE 128
-#endif
-#elif HIP_STATIC_MAP_OPT == 2  // optimize block size
-#ifndef HIP_TILE_SIZE
-#define HIP_TILE_SIZE 4
-#endif
-#ifndef HIP_BLOCK_SIZE
-#define HIP_BLOCK_SIZE HIP_OPT_TILE_OR_BLOCK_SIZE
-#endif
-#endif
+
+// #if HIP_STATIC_MAP_OPT == 0
+// #ifndef HIP_TILE_SIZE
+// #define HIP_TILE_SIZE 4
+// #endif
+// #ifndef HIP_BLOCK_SIZE
+// #define HIP_BLOCK_SIZE 128
+// #endif
+// #elif HIP_STATIC_MAP_OPT == 1  // optimize tile size
+// #ifndef HIP_TILE_SIZE
+// #define HIP_TILE_SIZE HIP_OPT_TILE_OR_BLOCK_SIZE
+// #endif
+// #ifndef HIP_BLOCK_SIZE
+// #define HIP_BLOCK_SIZE 128
+// #endif
+// #elif HIP_STATIC_MAP_OPT == 2  // optimize block size
+// #ifndef HIP_TILE_SIZE
+// #define HIP_TILE_SIZE 4
+// #endif
+// #ifndef HIP_BLOCK_SIZE
+// #define HIP_BLOCK_SIZE HIP_OPT_TILE_OR_BLOCK_SIZE
+// #endif
+// #endif
 template <typename Key,
           typename Value,
           cuda::thread_scope Scope = cuda::thread_scope_device,

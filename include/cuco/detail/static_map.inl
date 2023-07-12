@@ -43,20 +43,8 @@
 
 namespace cuco::legacy {
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::static_map(std::size_t capacity,
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::static_map(std::size_t capacity,
                                                      empty_key<Key> empty_key_sentinel,
                                                      empty_value<Value> empty_value_sentinel,
                                                      Allocator const& alloc,
@@ -71,7 +59,7 @@ static_map<Key,
   slots_         = std::allocator_traits<slot_allocator_type>::allocate(slot_allocator_, capacity_);
   num_successes_ = std::allocator_traits<counter_allocator_type>::allocate(counter_allocator_, 1);
 
-  auto constexpr block_size = HIP_BLOCK_SIZE;
+  auto constexpr block_size = BlockSize;
   auto constexpr stride     = 4;
   auto const grid_size      = (capacity_ + stride * block_size - 1) / (stride * block_size);
   detail::initialize<block_size, atomic_key_type, atomic_mapped_type>
@@ -79,20 +67,8 @@ static_map<Key,
       slots_, empty_key_sentinel_, empty_value_sentinel_, capacity_);
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::static_map(std::size_t capacity,
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::static_map(std::size_t capacity,
                                                      empty_key<Key> empty_key_sentinel,
                                                      empty_value<Value> empty_value_sentinel,
                                                      erased_key<Key> erased_key_sentinel,
@@ -112,7 +88,7 @@ static_map<Key,
   slots_         = std::allocator_traits<slot_allocator_type>::allocate(slot_allocator_, capacity_);
   num_successes_ = std::allocator_traits<counter_allocator_type>::allocate(counter_allocator_, 1);
 
-  auto constexpr block_size = HIP_BLOCK_SIZE;
+  auto constexpr block_size = BlockSize;
   auto constexpr stride     = 4;
   auto const grid_size      = (capacity_ + stride * block_size - 1) / (stride * block_size);
   detail::initialize<block_size, atomic_key_type, atomic_mapped_type>
@@ -120,51 +96,24 @@ static_map<Key,
       slots_, empty_key_sentinel_, empty_value_sentinel_, capacity_);
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::~static_map()
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::~static_map()
 {
   std::allocator_traits<slot_allocator_type>::deallocate(slot_allocator_, slots_, capacity_);
   std::allocator_traits<counter_allocator_type>::deallocate(counter_allocator_, num_successes_, 1);
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename InputIt, typename Hash, typename KeyEqual>
-void static_map<Key,
-                Value,
-#if HIP_STATIC_MAP_OPT > 0
-                HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                Scope,
-                Allocator>::insert(InputIt first,
-                                   InputIt last,
-                                   Hash hash,
-                                   KeyEqual key_equal,
-                                   hipStream_t stream)
+void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::insert(
+  InputIt first, InputIt last, Hash hash, KeyEqual key_equal, hipStream_t stream)
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
 
-  auto const block_size    = HIP_BLOCK_SIZE;
+  auto const block_size    = BlockSize;
   auto const stride        = 1;
-  auto constexpr tile_size = HIP_TILE_SIZE;
+  auto constexpr tile_size = TileSize;
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -187,25 +136,13 @@ void static_map<Key,
   size_ += h_num_successes;
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename InputIt,
           typename StencilIt,
           typename Predicate,
           typename Hash,
           typename KeyEqual>
-void static_map<Key,
-                Value,
-#if HIP_STATIC_MAP_OPT > 0
-                HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                Scope,
-                Allocator>::insert_if(InputIt first,
+void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::insert_if(InputIt first,
                                                          InputIt last,
                                                          StencilIt stencil,
                                                          Predicate pred,
@@ -216,9 +153,9 @@ void static_map<Key,
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
 
-  auto constexpr block_size = HIP_BLOCK_SIZE;
+  auto constexpr block_size = BlockSize;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE;
+  auto constexpr tile_size  = TileSize;
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -241,25 +178,10 @@ void static_map<Key,
   size_ += h_num_successes;
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename InputIt, typename Hash, typename KeyEqual>
-void static_map<Key,
-                Value,
-#if HIP_STATIC_MAP_OPT > 0
-                HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                Scope,
-                Allocator>::erase(InputIt first,
-                                  InputIt last,
-                                  Hash hash,
-                                  KeyEqual key_equal,
-                                  hipStream_t stream)
+void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::erase(
+  InputIt first, InputIt last, Hash hash, KeyEqual key_equal, hipStream_t stream)
 {
   CUCO_EXPECTS(get_empty_key_sentinel() != get_erased_key_sentinel(),
                "You must provide a unique erased key sentinel value at map construction.",
@@ -268,9 +190,9 @@ void static_map<Key,
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
 
-  auto constexpr block_size = HIP_BLOCK_SIZE;
+  auto constexpr block_size = BlockSize;
   auto constexpr stride     = 1;
-  auto constexpr tile_size  = HIP_TILE_SIZE;
+  auto constexpr tile_size  = TileSize;
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_mutable_view();
 
@@ -294,21 +216,9 @@ void static_map<Key,
   size_ -= h_num_successes;
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename InputIt, typename OutputIt, typename Hash, typename KeyEqual>
-void static_map<Key,
-                Value,
-#if HIP_STATIC_MAP_OPT > 0
-                HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                Scope,
-                Allocator>::find(InputIt first,
+void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::find(InputIt first,
                                                     InputIt last,
                                                     OutputIt output_begin,
                                                     Hash hash,
@@ -318,11 +228,11 @@ void static_map<Key,
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
 
-  auto const block_size    = HIP_BLOCK_SIZE;
-  auto const stride        = 1;
-  auto constexpr tile_size = HIP_TILE_SIZE;
-  auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
-  auto view            = get_device_view();
+  auto const block_size = BlockSize;
+  auto const stride     = 1;
+  auto constexpr tile_size  = TileSize;
+  auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
+  auto view             = get_device_view();
 
   if constexpr (tile_size == 1) {
     detail::find<block_size, Value>
@@ -333,21 +243,9 @@ void static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename KeyOut, typename ValueOut>
-std::pair<KeyOut, ValueOut> static_map<Key,
-                                       Value,
-#if HIP_STATIC_MAP_OPT > 0
-                                       HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                                       Scope,
-                                       Allocator>::retrieve_all(KeyOut keys_out,
+std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::retrieve_all(KeyOut keys_out,
                                                                 ValueOut values_out,
                                                                 hipStream_t stream) const
 {
@@ -399,21 +297,9 @@ std::pair<KeyOut, ValueOut> static_map<Key,
   return std::make_pair(keys_out + h_num_out, values_out + h_num_out);
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename InputIt, typename OutputIt, typename Hash, typename KeyEqual>
-void static_map<Key,
-                Value,
-#if HIP_STATIC_MAP_OPT > 0
-                HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                Scope,
-                Allocator>::contains(InputIt first,
+void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::contains(InputIt first,
                                                         InputIt last,
                                                         OutputIt output_begin,
                                                         Hash hash,
@@ -423,9 +309,9 @@ void static_map<Key,
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
 
-  auto const block_size    = HIP_BLOCK_SIZE;
+  auto const block_size    = BlockSize;
   auto const stride        = 1;
-  auto constexpr tile_size = HIP_TILE_SIZE;
+  auto constexpr tile_size = TileSize;
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_view();
 
@@ -438,28 +324,10 @@ void static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename KeyEqual>
-__device__ typename static_map<Key,
-                               Value,
-#if HIP_STATIC_MAP_OPT > 0
-                               HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                               Scope,
-                               Allocator>::device_mutable_view::insert_result
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::device_mutable_view::packed_cas(
+__device__ typename static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::insert_result
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::packed_cas(
   iterator current_slot,
   value_type const& insert_pair,
   KeyEqual key_equal,
@@ -488,28 +356,10 @@ static_map<Key,
   return insert_result::CONTINUE;
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename KeyEqual>
-__device__ typename static_map<Key,
-                               Value,
-#if HIP_STATIC_MAP_OPT > 0
-                               HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                               Scope,
-                               Allocator>::device_mutable_view::insert_result
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::device_mutable_view::back_to_back_cas(
+__device__ typename static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::insert_result
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::back_to_back_cas(
   iterator current_slot,
   value_type const& insert_pair,
   KeyEqual key_equal,
@@ -546,28 +396,10 @@ static_map<Key,
   return insert_result::CONTINUE;
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename KeyEqual>
-__device__ typename static_map<Key,
-                               Value,
-#if HIP_STATIC_MAP_OPT > 0
-                               HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                               Scope,
-                               Allocator>::device_mutable_view::insert_result
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::device_mutable_view::cas_dependent_write(
+__device__ typename static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::insert_result
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::cas_dependent_write(
   iterator current_slot,
   value_type const& insert_pair,
   KeyEqual key_equal,
@@ -592,21 +424,10 @@ static_map<Key,
   return insert_result::CONTINUE;
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename Hash, typename KeyEqual>
-__device__ bool static_map<Key,
-                           Value,
-#if HIP_STATIC_MAP_OPT > 0
-                           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                           Scope,
-                           Allocator>::device_mutable_view::insert(value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
+__device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::insert(
+  value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
 {
   auto current_slot{this->initial_slot(insert_pair.first, hash)};
 
@@ -649,30 +470,13 @@ __device__ bool static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename Hash, typename KeyEqual>
 __device__
-  thrust::pair<typename static_map<Key, Value,
-#if HIP_STATIC_MAP_OPT > 0
-                                            HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                                            Scope, Allocator>::device_mutable_view::iterator,
+  thrust::pair<typename static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::iterator,
                bool>
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::device_mutable_view::insert_and_find(value_type const& insert_pair,
-                                                            Hash hash,
-                                                            KeyEqual key_equal) noexcept
+  static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::insert_and_find(
+    value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
 {
 #if __CUDA_ARCH__ < 700
   // Spinning to ensure that the write to the value part took place requires
@@ -756,24 +560,10 @@ static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename CG, typename Hash, typename KeyEqual>
-__device__ bool static_map<Key,
-                           Value,
-#if HIP_STATIC_MAP_OPT > 0
-                           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                           Scope,
-                           Allocator>::device_mutable_view::insert(CG const& g,
-                                                                   value_type const& insert_pair,
-                                                                   Hash hash,
-                                                                   KeyEqual key_equal) noexcept
+__device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::insert(
+  CG const& g, value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
 {
   auto current_slot = this->initial_slot(g, insert_pair.first, hash);
 
@@ -790,7 +580,7 @@ __device__ bool static_map<Key,
     if (g.any(not slot_is_available and key_equal(existing_key, insert_pair.first))) {
       return false;
     }
-    
+
     auto const bucket_contains_available = g.ballot(slot_is_available);
 
     // we found an empty slot, but not the key we are inserting, so this must
@@ -834,23 +624,10 @@ __device__ bool static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename Hash, typename KeyEqual>
-__device__ bool static_map<Key,
-                           Value,
-#if HIP_STATIC_MAP_OPT > 0
-                           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                           Scope,
-                           Allocator>::device_mutable_view::erase(key_type const& k,
-                                                                  Hash hash,
-                                                                  KeyEqual key_equal) noexcept
+__device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::erase(
+  key_type const& k, Hash hash, KeyEqual key_equal) noexcept
 {
   auto current_slot{this->initial_slot(k, hash)};
 
@@ -895,24 +672,10 @@ __device__ bool static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename CG, typename Hash, typename KeyEqual>
-__device__ bool static_map<Key,
-                           Value,
-#if HIP_STATIC_MAP_OPT > 0
-                           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                           Scope,
-                           Allocator>::device_mutable_view::erase(CG const& g,
-                                                                  key_type const& k,
-                                                                  Hash hash,
-                                                                  KeyEqual key_equal) noexcept
+__device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::erase(
+  CG const& g, key_type const& k, Hash hash, KeyEqual key_equal) noexcept
 {
   auto current_slot = this->initial_slot(g, k, hash);
   value_type const insert_pair =
@@ -967,28 +730,12 @@ __device__ bool static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename Hash, typename KeyEqual>
-__device__ typename static_map<Key,
-                               Value,
-#if HIP_STATIC_MAP_OPT > 0
-                               HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                               Scope,
-                               Allocator>::device_view::iterator
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::device_view::find(Key const& k, Hash hash, KeyEqual key_equal) noexcept
+__device__ typename static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::iterator
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::find(Key const& k,
+                                                            Hash hash,
+                                                            KeyEqual key_equal) noexcept
 {
   auto current_slot = this->initial_slot(k, hash);
 
@@ -1006,28 +753,12 @@ static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename Hash, typename KeyEqual>
-__device__ typename static_map<Key,
-                               Value,
-#if HIP_STATIC_MAP_OPT > 0
-                               HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                               Scope,
-                               Allocator>::device_view::const_iterator
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::device_view::find(Key const& k, Hash hash, KeyEqual key_equal) const noexcept
+__device__ typename static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::const_iterator
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::find(Key const& k,
+                                                            Hash hash,
+                                                            KeyEqual key_equal) const noexcept
 {
   auto current_slot = this->initial_slot(k, hash);
 
@@ -1045,28 +776,13 @@ static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename CG, typename Hash, typename KeyEqual>
-__device__ typename static_map<Key,
-                               Value,
-#if HIP_STATIC_MAP_OPT > 0
-                               HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                               Scope,
-                               Allocator>::device_view::iterator
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::device_view::find(CG g, Key const& k, Hash hash, KeyEqual key_equal) noexcept
+__device__ typename static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::iterator
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::find(CG g,
+                                                            Key const& k,
+                                                            Hash hash,
+                                                            KeyEqual key_equal) noexcept
 {
   auto current_slot = this->initial_slot(g, k, hash);
 
@@ -1098,28 +814,10 @@ static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename CG, typename Hash, typename KeyEqual>
-__device__ typename static_map<Key,
-                               Value,
-#if HIP_STATIC_MAP_OPT > 0
-                               HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                               Scope,
-                               Allocator>::device_view::const_iterator
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::device_view::find(CG g,
+__device__ typename static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::const_iterator
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::find(CG g,
                                                             Key const& k,
                                                             Hash hash,
                                                             KeyEqual key_equal) const noexcept
@@ -1156,23 +854,10 @@ static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename ProbeKey, typename Hash, typename KeyEqual>
-__device__ bool static_map<Key,
-                           Value,
-#if HIP_STATIC_MAP_OPT > 0
-                           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-                           Scope,
-                           Allocator>::device_view::contains(ProbeKey const& k,
-                                                             Hash hash,
-                                                             KeyEqual key_equal) const noexcept
+__device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::contains(
+  ProbeKey const& k, Hash hash, KeyEqual key_equal) const noexcept
 {
   auto current_slot = this->initial_slot(k, hash);
 
@@ -1187,22 +872,10 @@ __device__ bool static_map<Key,
   }
 }
 
-template <typename Key,
-          typename Value,
-#if HIP_STATIC_MAP_OPT > 0
-          uint32_t HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-          hip::thread_scope Scope,
-          typename Allocator>
+template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename CG, typename ProbeKey, typename Hash, typename KeyEqual>
 __device__ std::enable_if_t<std::is_invocable_v<KeyEqual, ProbeKey, Key>, bool>
-static_map<Key,
-           Value,
-#if HIP_STATIC_MAP_OPT > 0
-           HIP_OPT_TILE_OR_BLOCK_SIZE,
-#endif
-           Scope,
-           Allocator>::device_view::contains(CG const& g,
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::contains(CG const& g,
                                                                 ProbeKey const& k,
                                                                 Hash hash,
                                                                 KeyEqual key_equal) const noexcept
