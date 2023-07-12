@@ -155,13 +155,13 @@ class cooperative_group_base {
     return __shfl_sync(__group_mask, var, srcLane);
   }
 
-  // protected:
   /**
    * @brief Gets the lane mask of the cooperative group.
    * @return The lane mask of the cooperative group.
    */
   __device__ lane_mask get_mask() const { return __group_mask; }
 
+  protected:
   /**
    * @brief Sets the lane mask of the cooperative group.
    * @param lm The lane mask of the cooperative group.
