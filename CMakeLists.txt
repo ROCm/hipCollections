@@ -149,14 +149,14 @@ install(TARGETS cuco EXPORT cuco-exports)
 
 set(doc_string
     [=[
-Provide targets for cuCollections.
+Provide targets for hipCollections.
 
-cuCollections (cuco) is an open-source, header-only library of GPU-accelerated,
+hipCollections (hipco) is an open-source, header-only library of GPU-accelerated,
 concurrent data structures.
 
 Similar to how Thrust and CUB provide STL-like, GPU accelerated algorithms and
-primitives, cuCollections provides STL-like concurrent data structures.
-cuCollections is not a one-to-one, drop-in replacement for STL data structures
+primitives, hipCollections provides STL-like concurrent data structures.
+hipCollections is not a one-to-one, drop-in replacement for STL data structures
 like std::unordered_map. Instead, it provides functionally similar data
 structures tailored for efficient use with GPUs.
 
