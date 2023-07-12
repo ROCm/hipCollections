@@ -14,22 +14,39 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <defaults.hpp>
 #include <utils.hpp>
 
-#include <cuco/static_map.cuh>
-#include <cuco/utility/key_generator.hpp>
+#include <hipco/static_map.cuh>
+#include <hipco/utility/key_generator.hpp>
 
 #include <nvbench/nvbench.cuh>
 
 #include <thrust/device_vector.h>
 #include <thrust/transform.h>
 
-using namespace cuco::benchmark;
-using namespace cuco::utility;
+using namespace hipco::benchmark;
+using namespace hipco::utility;
 
 /**
- * @brief A benchmark evaluating `cuco::static_map::erase` performance
+ * @brief A benchmark evaluating `hipco::static_map::erase` performance
  */
 template <typename Key,
           typename Value,
@@ -42,7 +59,7 @@ std::enable_if_t<(sizeof(Key) == sizeof(Value)), void> static_map_erase(
                      Dist,
                      nvbench::enum_type<TileSize>>)
 {
-  using pair_type = cuco::pair_type<Key, Value>;
+  using pair_type = hipco::pair_type<Key, Value>;
 
   auto const num_keys      = state.get_int64_or_default("NumInputs", defaults::N);
   auto const occupancy     = state.get_float64_or_default("Occupancy", defaults::OCCUPANCY);
@@ -66,14 +83,14 @@ std::enable_if_t<(sizeof(Key) == sizeof(Value)), void> static_map_erase(
   state.exec(
     nvbench::exec_tag::sync | nvbench::exec_tag::timer, [&](nvbench::launch& launch, auto& timer) {
       // static map with erase support
-      cuco::static_map<Key,
+      hipco::static_map<Key,
                        Value,
                        hip::thread_scope_device,
-                       cuco::cuda_allocator<char>,
+                       hipco::cuda_allocator<char>,
                        TileSize,
                        HIP_BLOCK_SIZE>
         map{
-          size, cuco::empty_key<Key>{-1}, cuco::empty_value<Value>{-1}, cuco::erased_key<Key>{-2}};
+          size, hipco::empty_key<Key>{-1}, hipco::empty_value<Value>{-1}, hipco::erased_key<Key>{-2}};
       map.insert(pairs.begin(), pairs.end(), {}, {}, launch.get_stream());
 
       timer.start();
