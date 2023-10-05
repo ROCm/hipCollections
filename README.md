@@ -23,7 +23,7 @@ This is a port of the original CUDA version at https://github.com/NVIDIA/cuColle
 
 # Requirements
 - ROCm and HIP 5.6.0 or higher
-- CMake 3.9 or higher (for building the tests)
+- CMake 3.23.1 or higher (for building the tests)
 - AMD MI100/MI200 GPU (other architectures are not supported)
 - Linux distribution (tested presently with Ubuntu 20.04)
 
