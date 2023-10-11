@@ -31,9 +31,9 @@ This is a port of the original CUDA version at https://github.com/NVIDIA/cuColle
 
 To get started, please have a look at the build script we use for CI at `ci/gpu/build_hip.sh`.
 As hipCo is a header-only library, you will usually configure your build system to include the hipCo headers.
-In order to build some standalone tests, please run the following from the root directory (to build for MI200):
+In order to build some standalone tests, please run the following from the root directory (to build for MI100 + MI200):
 
-`mkdir build && cd build && cmake -DCMAKE_CXX_COMPILER=hipcc -DAMDGPU_TARGETS=gfx90a .. `
+`mkdir build && cd build && cmake .. `
 
 # Current Limitations
 - No support for Windows.
