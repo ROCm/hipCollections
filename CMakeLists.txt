@@ -45,8 +45,19 @@ include(rapids-hip)
 include(rapids-export)
 include(rapids-find)
 
-# * Determine GPU architectures
-# * Enable the CMake CUDA language
+# WAR for not supporting all architectures yet
+# build only for supported architectures per default
+if(NOT (DEFINED CMAKE_HIP_ARCHITECTURES))
+  set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx908")
+else()
+  foreach(arch ${CMAKE_HIP_ARCHITECTURES})
+    if(NOT(${arch} STREQUAL "gfx90a") AND NOT(${arch} STREQUAL "gfx908"))
+      message(FATAL_ERROR "Aborting, as the provided architecture ${arch} is not supported")
+     endif()
+  endforeach()
+endif()
+
+# * Enable the HIP language
 rapids_hip_init_architectures(CUCO "NATIVE")
 
 project(CUCO VERSION 0.0.1 LANGUAGES CXX HIP)
