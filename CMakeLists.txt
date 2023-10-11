@@ -50,10 +50,8 @@ include(rapids-find)
 rapids_hip_init_architectures(CUCO "NATIVE")
 
 project(CUCO VERSION 0.0.1 LANGUAGES CXX HIP)
-
 ###################################################################################################
 # - build options ---------------------------------------------------------------------------------
-
 set(default_build_option_state OFF)
 if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}")
   set(default_build_option_state ON)
@@ -71,7 +69,6 @@ rapids_cmake_write_version_file(include/cuco/version_config.hpp)
 
 ##############################################################################
 # - build type ---------------------------------------------------------------
-
 # Set a default build type if none was specified
 rapids_cmake_build_type(Release)
 
@@ -91,7 +88,6 @@ rapids_find_package(
 
 ###################################################################################################
 # - find packages we depend on --------------------------------------------------------------------
-
 rapids_cpm_init()
 
 include(cmake/thirdparty/get_rocthrust.cmake)
@@ -125,21 +121,18 @@ set(HIP_STATIC_MAP_OPT "0" CACHE STRING "Optimize cg/block size for static_map")
 target_compile_options(cuco INTERFACE "-DHIP_STATIC_MAP_OPT=${HIP_STATIC_MAP_OPT}")
 ###################################################################################################
 # - optionally build tests ------------------------------------------------------------------------
-
 if(BUILD_TESTS)
     add_subdirectory(tests)
 endif(BUILD_TESTS)
 
 ###################################################################################################
 # - Optionally build google benchmarks ------------------------------------------------------------
-
 if(BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif(BUILD_BENCHMARKS)
 
 ###################################################################################################
 # - Optionally build examples ---------------------------------------------------------------------
-
 if(BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif(BUILD_EXAMPLES)
@@ -154,9 +147,9 @@ set(doc_string
 Provide targets for hipCollections.
 
 hipCollections (hipco) is an open-source, header-only library of GPU-accelerated,
-concurrent data structures.
+concurrent data structures. 
 
-Similar to how Thrust and CUB provide STL-like, GPU accelerated algorithms and
+Similar to how Thrust and hipCUB provide STL-like, GPU accelerated algorithms and
 primitives, hipCollections provides STL-like concurrent data structures.
 hipCollections is not a one-to-one, drop-in replacement for STL data structures
 like std::unordered_map. Instead, it provides functionally similar data
