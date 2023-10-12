@@ -1390,7 +1390,13 @@ class static_multimap {
   /**
    * @brief Returns the warp size.
    */
-  static __host__ __device__ constexpr uint32_t warp_size() noexcept { return 64u; } // TODO(HIP/AMD): adapt this to 32 or 64 if needed
+  static __host__ __device__ constexpr uint32_t warp_size() noexcept { 
+#ifdef CUCO_USE_WARPSIZE_32
+    return 32u;
+#else
+    return 64u;
+#endif
+  }
 
   /**
    * @brief Custom deleter for unique pointer of slots.

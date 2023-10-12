@@ -37,12 +37,6 @@
 #include <cuco/operator.hpp>
 #include <cuco/static_set_ref.cuh>
 
-#include <thrust/iterator/counting_iterator.h>
-#include <thrust/iterator/transform_iterator.h>
-
-#include <hipcub/device/device_reduce.hpp>
-#include <hipcub/device/device_select.hpp>
-
 #include <cstddef>
 
 namespace cuco {
@@ -114,7 +108,7 @@ constexpr static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Sto
 
 template <class Key,
           class Extent,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -127,7 +121,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -184,7 +178,7 @@ static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::ins
 
 template <class Key,
           class Extent,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -294,7 +288,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -314,7 +308,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -333,7 +327,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -348,7 +342,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,

@@ -39,7 +39,7 @@
 #include <cuda/std/type_traits>
 #include <cuda/std/utility>
 
-#include <cooperative_groups.h>
+#include <hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh>
 
 namespace cuco {
 
@@ -416,7 +416,7 @@ class operator_impl<op::insert_tag,
 };
 
 template <typename Key,
-          cuda::thread_scope Scope,
+          hip::thread_scope Scope,
           typename KeyEqual,
           typename ProbingScheme,
           typename StorageRef,

@@ -13,20 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
+
+#include "hip/hip_runtime.h"
 
 #include <cuco/detail/utility/cuda.cuh>
 
 #include <cub/block/block_reduce.cuh>
 #include <cuda/atomic>
-#include <cuda/functional>
 
-#include <cooperative_groups.h>
+#ifndef __HIP_PLATFORM_AMD__
+#include <cuda/functional>
+#endif
+
+#include <hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh>
 
 #include <iterator>
 
 namespace cuco::detail::open_addressing_ns {
 CUCO_SUPPRESS_KERNEL_WARNINGS
+
+namespace cooperative_groups = hip_extensions::hip_cooperative_groups_ext;
 
 /**
  * @brief Inserts all elements in the range `[first, first + n)` and returns the number of
@@ -68,7 +93,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void insert_if_n(InputIt first,
                                                           AtomicT* num_successes,
                                                           Ref ref)
 {
-  using BlockReduce = cub::BlockReduce<typename Ref::size_type, BlockSize>;
+  using BlockReduce = hipcub::BlockReduce<typename Ref::size_type, BlockSize>;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   typename Ref::size_type thread_num_successes = 0;
 
@@ -93,7 +118,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void insert_if_n(InputIt first,
   // and atomically add to the grand total
   auto const block_num_successes = BlockReduce(temp_storage).Sum(thread_num_successes);
   if (threadIdx.x == 0) {
-    num_successes->fetch_add(block_num_successes, cuda::std::memory_order_relaxed);
+    num_successes->fetch_add(block_num_successes, hip::std::memory_order_relaxed);
   }
 }
 
@@ -675,10 +700,10 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void size(StorageRef storage,
     idx += loop_stride;
   }
 
-  using BlockReduce = cub::BlockReduce<size_type, BlockSize>;
+  using BlockReduce = hipcub::BlockReduce<size_type, BlockSize>;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   auto const block_count = BlockReduce(temp_storage).Sum(thread_count);
-  if (threadIdx.x == 0) { count->fetch_add(block_count, cuda::std::memory_order_relaxed); }
+  if (threadIdx.x == 0) { count->fetch_add(block_count, hip::std::memory_order_relaxed); }
 }
 
 template <int32_t BlockSize, typename ContainerRef, typename Predicate>

@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <cuco/detail/__config>
@@ -33,9 +50,9 @@ namespace cuco::utility {
  */
 template <typename T>
 struct fast_int {
-  static_assert(cuda::std::is_same_v<T, std::int32_t> or cuda::std::is_same_v<T, std::uint32_t>
+  static_assert(hip::std::is_same_v<T, std::int32_t> or hip::std::is_same_v<T, std::uint32_t>
 #if defined(CUCO_HAS_INT128)
-                  or cuda::std::is_same_v<T, std::int64_t> or cuda::std::is_same_v<T, std::uint64_t>
+                  or hip::std::is_same_v<T, std::int64_t> or hip::std::is_same_v<T, std::uint64_t>
 #endif
                 ,
                 "Unsupported integer type");
@@ -68,11 +85,11 @@ struct fast_int {
 
  private:
   using intermediate_type =
-    cuda::std::conditional_t<sizeof(value_type) == 4,
+    hip::std::conditional_t<sizeof(value_type) == 4,
                              std::uint64_t,
                              unsigned __int128>;  ///< Intermediate type for multiplication
-  using unsigned_value_type = cuda::std::make_unsigned_t<value_type>;  ///< Unsigned value type
-  using signed_value_type   = cuda::std::make_signed_t<value_type>;    ///< Signed value type
+  using unsigned_value_type = hip::std::make_unsigned_t<value_type>;  ///< Unsigned value type
+  using signed_value_type   = hip::std::make_signed_t<value_type>;    ///< Signed value type
 
   static constexpr value_type value_bits =
     CHAR_BIT * sizeof(value_type);  ///< Number of bits required to represent the value
@@ -108,7 +125,7 @@ struct fast_int {
    */
   __host__ __device__ constexpr value_type log2(value_type v) const noexcept
   {
-    return cuda::std::bit_width(unsigned_value_type(v)) - 1;
+    return hip::std::bit_width(unsigned_value_type(v)) - 1;
   }
 
   /**
@@ -120,7 +137,7 @@ struct fast_int {
     auto const val_log2 = this->log2(value_);
 
     // if value_ is a power of 2, we can use a simple shift
-    if (cuda::std::has_single_bit(unsigned_value_type(value_))) {
+    if (hip::std::has_single_bit(unsigned_value_type(value_))) {
       magic_ = 0;
       shift_ = val_log2;
     } else {
@@ -143,11 +160,11 @@ struct fast_int {
   template <typename Lhs>
   friend __host__ __device__ constexpr value_type operator/(Lhs lhs, fast_int const& rhs) noexcept
   {
-    static_assert(cuda::std::is_same_v<Lhs, value_type>,
+    static_assert(hip::std::is_same_v<Lhs, value_type>,
                   "Left-hand side operand must be of type value_type.");
     if (rhs.value_ == 1) { return lhs; }                // edge case for value_ == 1
     if (rhs.magic_ == 0) { return lhs >> rhs.shift_; }  // edge case for value_ == pow2
-    auto const mul = (lhs == cuda::std::numeric_limits<T>::max()) ? lhs : lhs + 1;
+    auto const mul = (lhs == hip::std::numeric_limits<T>::max()) ? lhs : lhs + 1;
     return rhs.mulhi(rhs.magic_, mul) >> rhs.shift_;
   }
 

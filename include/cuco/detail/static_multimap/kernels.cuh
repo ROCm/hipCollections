@@ -427,8 +427,7 @@ template <uint32_t block_size,
 CUCO_KERNEL void pair_count(
   InputIt first, int64_t n, atomicT* num_matches, viewT view, PairEqual pair_equal)
 {
-  auto tile = cg::tiled_partition<tile_size>(cg::this_thread_block());
-  // auto tile                 = cooperative_groups::tiled_partition<tile_size>();
+  auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 

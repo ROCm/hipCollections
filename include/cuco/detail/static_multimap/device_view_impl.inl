@@ -454,7 +454,6 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
 
         // successful insert
         if (g.any(status == insert_result::SUCCESS)) { return; }
-        // if (g.any(status == insert_result::SUCCESS)) { return; }
         // if we've gotten this far, a different key took our spot
         // before we could insert. We need to retry the insert on the
         // same bucket
@@ -1352,8 +1351,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     OutputIt4 contained_val_begin,
     PairEqual pair_equal) noexcept
   {
-    auto const lane_id  = probing_cg.thread_rank();
-    auto current_slot   = this->initial_slot(probing_cg, pair.first);
+    auto const lane_id                = probing_cg.thread_rank();
+    auto current_slot                 = this->initial_slot(probing_cg, pair.first);
     [[maybe_unused]] auto found_match = false;
 
     auto num_matches = 0;
@@ -1368,7 +1367,6 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         detail::bitwise_compare(arr[1].first, this->get_empty_key_sentinel());
       auto const first_equals  = (not first_slot_is_empty and pair_equal(arr[0], pair));
       auto const second_equals = (not second_slot_is_empty and pair_equal(arr[1], pair));
-
       auto const first_exists  = probing_cg.ballot(first_equals);
       auto const second_exists = probing_cg.ballot(second_equals);
 
@@ -1397,7 +1395,6 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         }
         num_matches += (num_first_matches + __popcll(second_exists));
       }
-
       if (probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) and lane_id == 0) {
@@ -1481,7 +1478,6 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const slot_is_empty =
         detail::bitwise_compare(slot_contents.first, this->get_empty_key_sentinel());
       auto const equals = (not slot_is_empty and pair_equal(slot_contents, pair));
-
       auto const exists = probing_cg.ballot(equals);
 
       if (exists) {
@@ -1761,4 +1757,4 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   }
 };  // class device_view_impl
 
-}  // namespace hipco
+}  // namespace cuco

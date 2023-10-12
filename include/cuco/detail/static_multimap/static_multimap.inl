@@ -786,15 +786,8 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::contains(
   auto const grid_size = (cg_size() * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_view();
 
-  // todo: add implementation with cg_size = 1
-  if constexpr (cg_size() == 1) {
-    detail::contains<is_pair_contains, block_size>
-      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, key_equal);
-  } else {
-    detail::contains<is_pair_contains, block_size, cg_size()>
-      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, key_equal);
-  }
-  
+  detail::contains<is_pair_contains, block_size, cg_size()>
+    <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, key_equal);
   CUCO_CUDA_TRY(hipStreamSynchronize(stream));
 }
 
@@ -817,7 +810,6 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_contains
   auto const grid_size = (cg_size() * num_pairs + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_view();
 
-  // todo: add implementation with cg_size = 1
   detail::contains<is_pair_contains, block_size, cg_size()>
     <<<grid_size, block_size, 0, stream>>>(first, num_pairs, output_begin, view, pair_equal);
   CUCO_CUDA_TRY(hipStreamSynchronize(stream));
@@ -901,7 +893,6 @@ std::size_t static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_c
   auto counter = detail::counter_storage<size_type, Scope, allocator_type>{allocator_};
   counter.reset(stream);
 
-  // todo: add implementation with cg_size = 1
   detail::pair_count<block_size, cg_size(), is_outer>
     <<<grid_size, block_size, 0, stream>>>(first, num_pairs, counter.data(), view, pair_equal);
 
@@ -930,7 +921,6 @@ std::size_t static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_c
   auto counter = detail::counter_storage<size_type, Scope, allocator_type>{allocator_};
   counter.reset(stream);
 
-  // todo: add implementation with cg_size = 1
   detail::pair_count<block_size, cg_size(), is_outer>
     <<<grid_size, block_size, 0, stream>>>(first, num_pairs, counter.data(), view, pair_equal);
 
@@ -1351,9 +1341,6 @@ template <typename Key,
           typename Value,
           hip::thread_scope Scope,
           typename Allocator,
-          class ProbeSequence>
-template <uint32_t buffer_size,
-          typename FlushingCG,
           typename atomicT,
           typename OutputIt,
           typename KeyEqual>
