@@ -169,7 +169,7 @@ template <class Key,
           class Allocator,
           class Storage>
 template <typename InputIt, typename StencilIt, typename Predicate>
-static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size_type
+typename static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size_type
 static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::insert_if(
   InputIt first, InputIt last, StencilIt stencil, Predicate pred, cuda::stream_ref stream)
 {

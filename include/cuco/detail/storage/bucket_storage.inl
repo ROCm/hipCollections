@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <cuco/detail/storage/kernels.cuh>
@@ -42,21 +59,21 @@ constexpr bucket_storage<T, BucketSize, Extent, Allocator>::bucket_storage(
 }
 
 template <typename T, int32_t BucketSize, typename Extent, typename Allocator>
-constexpr bucket_storage<T, BucketSize, Extent, Allocator>::bucket_type*
+constexpr typename bucket_storage<T, BucketSize, Extent, Allocator>::bucket_type*
 bucket_storage<T, BucketSize, Extent, Allocator>::data() const noexcept
 {
   return buckets_.get();
 }
 
 template <typename T, int32_t BucketSize, typename Extent, typename Allocator>
-constexpr bucket_storage<T, BucketSize, Extent, Allocator>::allocator_type
+constexpr typename bucket_storage<T, BucketSize, Extent, Allocator>::allocator_type
 bucket_storage<T, BucketSize, Extent, Allocator>::allocator() const noexcept
 {
   return allocator_;
 }
 
 template <typename T, int32_t BucketSize, typename Extent, typename Allocator>
-constexpr bucket_storage<T, BucketSize, Extent, Allocator>::ref_type
+constexpr typename bucket_storage<T, BucketSize, Extent, Allocator>::ref_type
 bucket_storage<T, BucketSize, Extent, Allocator>::ref() const noexcept
 {
   return ref_type{this->bucket_extent(), this->data()};
@@ -167,35 +184,35 @@ struct bucket_storage_ref<T, BucketSize, Extent>::iterator {
 };
 
 template <typename T, int32_t BucketSize, typename Extent>
-__device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::iterator
+__device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::iterator
 bucket_storage_ref<T, BucketSize, Extent>::end() noexcept
 {
   return iterator{reinterpret_cast<value_type*>(this->data() + this->capacity())};
 }
 
 template <typename T, int32_t BucketSize, typename Extent>
-__device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::const_iterator
+__device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::const_iterator
 bucket_storage_ref<T, BucketSize, Extent>::end() const noexcept
 {
   return const_iterator{reinterpret_cast<value_type*>(this->data() + this->capacity())};
 }
 
 template <typename T, int32_t BucketSize, typename Extent>
-__device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::bucket_type*
+__device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::bucket_type*
 bucket_storage_ref<T, BucketSize, Extent>::data() noexcept
 {
   return buckets_;
 }
 
 template <typename T, int32_t BucketSize, typename Extent>
-__device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::bucket_type*
+__device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::bucket_type*
 bucket_storage_ref<T, BucketSize, Extent>::data() const noexcept
 {
   return buckets_;
 }
 
 template <typename T, int32_t BucketSize, typename Extent>
-__device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::bucket_type
+__device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::bucket_type
 bucket_storage_ref<T, BucketSize, Extent>::operator[](size_type index) const noexcept
 {
   return *reinterpret_cast<bucket_type*>(
