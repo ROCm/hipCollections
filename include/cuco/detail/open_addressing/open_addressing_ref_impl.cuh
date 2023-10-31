@@ -942,7 +942,7 @@ class open_addressing_ref_impl {
       // Find a match for the probe key, thus return an iterator to the entry
       auto const group_finds_match = group.ballot(state == detail::equal_result::EQUAL);
       if (group_finds_match) {
-        auto const src_lane = __ffs(group_finds_match) - 1;
+        auto const src_lane = __ffsll((unsigned long long)group_finds_match) - 1; //Todo(HIP): added (unsigned long long)
         auto const res      = group.shfl(
           reinterpret_cast<intptr_t>(&(*(storage_ref_.data() + *probing_iter))[intra_bucket_index]),
           src_lane);
