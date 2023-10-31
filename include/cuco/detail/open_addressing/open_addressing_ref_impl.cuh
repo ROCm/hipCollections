@@ -438,6 +438,10 @@ class open_addressing_ref_impl {
     }
   }
 
+  template <typename T>
+  constexpr typename std::underlying_type<T>::type to_underlying_t(T t) noexcept {
+    return static_cast<typename std::underlying_type<T>::type>(t);
+  }
   /**
    * @brief Inserts an element.
    *
@@ -487,15 +491,15 @@ class open_addressing_ref_impl {
 
       auto const group_contains_available = group.ballot(state == detail::equal_result::AVAILABLE);
       if (group_contains_available) {
-        auto const src_lane = __ffs(group_contains_available) - 1;
+        auto const src_lane = __ffsll((unsigned long long)group_contains_available) - 1;
         auto const status =
           (group.thread_rank() == src_lane)
             ? attempt_insert((storage_ref_.data() + *probing_iter)->data() + intra_bucket_index,
                              bucket_slots[intra_bucket_index],
                              val)
             : insert_result::CONTINUE;
-
-        switch (group.shfl(status, src_lane)) {
+        // Todo(HIP): 
+        switch (static_cast<insert_result>(group.shfl(to_underlying_t(status), src_lane))) {
           case insert_result::SUCCESS: return true;
           case insert_result::DUPLICATE: {
             if constexpr (allows_duplicates) {
@@ -1511,7 +1515,7 @@ class open_addressing_ref_impl {
   [[nodiscard]] __host__ __device__ constexpr auto const& extract_key(
     Value const& value) const noexcept
   {
-    if constexpr (this->has_payload) {
+    if /*constexpr*/ (this->has_payload) { //TODO(HIP): no constexpr
       return thrust::raw_reference_cast(value).first;
     } else {
       return thrust::raw_reference_cast(value);
