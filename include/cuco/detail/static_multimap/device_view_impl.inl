@@ -38,8 +38,8 @@
 #include <thrust/tuple.h>
 #include <thrust/type_traits/is_contiguous_iterator.h>
 
-#include <hip/hip_cooperative_groups.h>
-
+// #include <hip/hip_cooperative_groups.h>
+#include "hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh"
 #ifndef __HIP_PLATFORM_AMD__
 #include <cooperative_groups/memcpy_async.h>
 #endif
@@ -913,11 +913,11 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     std::size_t count = 0;
     auto current_slot = this->initial_slot(g, k);
 
-    [[maybe_unused]] bool found_match = false;
+  //   [[maybe_unused]] bool found_match = false;
 
-    while (true) {
-      value_type arr[2];
-      this->load_pair_array(&arr[0], current_slot);
+  //   while (true) {
+  //     value_type arr[2];
+  //     this->load_pair_array(&arr[0], current_slot);
 
       auto const first_slot_is_empty =
         detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -932,16 +932,16 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       count += (first_equals + second_equals);
 
-      if (g.any(first_slot_is_empty or second_slot_is_empty)) {
-        if constexpr (is_outer) {
-          if ((not found_match) && (g.thread_rank() == 0)) { count++; }
-        }
-        return count;
-      }
+  //     if (g.any(first_slot_is_empty or second_slot_is_empty)) {
+  //       if constexpr (is_outer) {
+  //         if ((not found_match) && (g.thread_rank() == 0)) { count++; }
+  //       }
+  //       return count;
+  //     }
 
-      current_slot = this->next_slot(current_slot);
-    }
-  } 
+  //     current_slot = this->next_slot(current_slot);
+  //   }
+  // }
 
   /**
    * @brief Counts the occurrence of a given key contained in multimap using scalar loads.

@@ -1235,7 +1235,7 @@ class static_map {
                 "cuco::is_bitwise_comparable_v<Value>.");
 
   friend class dynamic_map<Key, Value, Scope, Allocator>;  ///< Dynamic map as friend class
-
+  
  public:
   using value_type         = cuco::pair<Key, Value>;            ///< Type of key/value pairs
   using key_type           = Key;                               ///< Key type

@@ -1341,6 +1341,9 @@ template <typename Key,
           typename Value,
           hip::thread_scope Scope,
           typename Allocator,
+          class ProbeSequence>
+template <uint32_t buffer_size,
+          typename FlushingCG,
           typename atomicT,
           typename OutputIt,
           typename KeyEqual>
