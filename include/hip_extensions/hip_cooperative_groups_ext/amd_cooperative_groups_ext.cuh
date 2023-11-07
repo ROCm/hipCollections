@@ -133,6 +133,17 @@ class cooperative_group_base {
   }
 
   /**
+   * @brief Returns the group id of the calling work item in [0,size()-1]
+   * @return The group rank of the calling work item in [0,size()-1]
+   */
+  __device__ inline int meta_group_rank() const
+  {
+    auto const block = cooperative_groups::this_thread_block();
+    auto const id    = block.thread_rank();
+    return (int)id/size();
+  }
+
+  /**
    * @brief Synchronizes the threads in the cooperative group.
    */
   __device__ inline void sync() const { return __sync_active_threads(); }

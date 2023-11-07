@@ -776,7 +776,7 @@ class open_addressing_ref_impl {
                 this->erased_slot_sentinel())
             : insert_result::CONTINUE;
 
-        switch (group.shfl(status, src_lane)) {
+        switch (static_cast<insert_result>(group.shfl(to_underlying_t(status), src_lane))) {
           case insert_result::SUCCESS: return true;
           case insert_result::DUPLICATE: return false;
           default: continue;
