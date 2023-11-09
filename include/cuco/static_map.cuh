@@ -60,6 +60,9 @@
 #include <utility>
 
 namespace cuco {
+#ifndef CUCO_TILE_SIZE
+#define CUCO_TILE_SIZE 4
+#endif
 /**
  * @brief A GPU-accelerated, unordered, associative container of key-value pairs with unique keys.
  *
@@ -109,7 +112,7 @@ template <class Key,
           class Extent             = cuco::extent<std::size_t>,
           cuda::thread_scope Scope = cuda::thread_scope_device,
           class KeyEqual           = thrust::equal_to<Key>,
-          class ProbingScheme      = cuco::linear_probing<4,  // CG size
+          class ProbingScheme      = cuco::linear_probing<CUCO_TILE_SIZE,  // CG size
                                                           cuco::default_hash_function<Key>>,
           class Allocator          = cuco::cuda_allocator<cuco::pair<Key, T>>,
           class Storage            = cuco::storage<1>>
@@ -1210,11 +1213,11 @@ namespace legacy {
  * @tparam Allocator Type of allocator used for device storage
  */
 
-#ifndef HIP_TILE_SIZE
-#define HIP_TILE_SIZE 4
+#ifndef HIPCO_TILE_SIZE
+#define HIPCO_TILE_SIZE 4
 #endif
-#ifndef HIP_BLOCK_SIZE
-#define HIP_BLOCK_SIZE 128
+#ifndef HIPCO_BLOCK_SIZE
+#define HIPCO_BLOCK_SIZE 128
 #endif
 
 template <typename Key,

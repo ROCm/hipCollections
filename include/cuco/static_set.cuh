@@ -102,13 +102,13 @@ namespace cooperative_groups = hip_extensions::hip_cooperative_groups_ext;
  * @tparam Storage Slot bucket storage type
  */
 #ifndef CUCO_STATIC_SET_CG_SIZE
-#define CUCO_STATIC_SET_CG_SIZE 4  // TODO(HIP/AMD): CG size, default for NVIDIA: 4, investigate these parameters
+#define CUCO_STATIC_SET_CG_SIZE 1  // TODO(HIP/AMD): CG size, default for NVIDIA: 4, investigate these parameters
 #endif
 template <class Key,
           class Extent             = cuco::extent<std::size_t>,
           hip::thread_scope Scope  = hip::thread_scope_device,
           class KeyEqual           = thrust::equal_to<Key>,
-          class ProbingScheme      = cuco::double_hashing<STATIC_SET_CG_SIZE,  // CG size
+          class ProbingScheme      = cuco::double_hashing<CUCO_STATIC_SET_CG_SIZE,  // CG size
                                                           cuco::default_hash_function<Key>>,
           class Allocator          = cuco::cuda_allocator<Key>,
           class Storage            = cuco::storage<1>>

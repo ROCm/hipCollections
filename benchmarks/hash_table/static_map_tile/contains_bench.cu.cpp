@@ -82,7 +82,7 @@ std::enable_if_t<(sizeof(Key) == sizeof(Value)), void> static_map_contains(
                    hip::thread_scope_device,
                    hipco::cuda_allocator<char>,
                    TileSize,
-                   HIP_BLOCK_SIZE>
+                   HIPCO_BLOCK_SIZE>
     map{size, hipco::empty_key<Key>{-1}, hipco::empty_value<Value>{-1}};
   map.insert(pairs.begin(), pairs.end());
 
