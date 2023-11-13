@@ -59,7 +59,7 @@ std::enable_if_t<(sizeof(Key) == sizeof(Value)), void> static_map_erase(
                      Dist,
                      nvbench::enum_type<TileSize>>)
 {
-  using pair_type = hipco::pair_type<Key, Value>;
+  using pair_type = hipco::pair<Key, Value>;
 
   auto const num_keys      = state.get_int64_or_default("NumInputs", defaults::N);
   auto const occupancy     = state.get_float64_or_default("Occupancy", defaults::OCCUPANCY);
