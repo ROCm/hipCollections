@@ -38,8 +38,8 @@ cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 # GIT_TAG main
 CPMAddPackage(
   NAME nvbench
-  SOURCE_DIR "/home/hipBench"
-  GIT_TAG dev
+  GIT_REPOSITORY https://$ENV{GITHUB_USER}:$ENV{GITHUB_PASS}@github.com/AMD-AI/hipBench
+  GIT_TAG main
   GIT_SHALLOW TRUE
   EXCLUDE_FROM_ALL YES
 )
