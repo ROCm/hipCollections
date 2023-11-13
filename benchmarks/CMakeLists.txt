@@ -145,13 +145,13 @@ ConfigureBench(STATIC_MULTIMAP_CG_BENCH
 
 ###################################################################################################
 # - dynamic_map benchmarks ------------------------------------------------------------------------
-ConfigureBench(DYNAMIC_MAP_BENCH
-  dynamic_map/insert_bench.cu
-  dynamic_map/find_bench.cu
-  dynamic_map/contains_bench.cu
-  dynamic_map/erase_bench.cu)
+# ConfigureBench(DYNAMIC_MAP_BENCH
+#  dynamic_map/insert_bench.cu
+#  dynamic_map/find_bench.cu
+#  dynamic_map/contains_bench.cu
+#  dynamic_map/erase_bench.cu)
 
-###################################################################################################
+# ###################################################################################################
 # - hash function benchmarks ----------------------------------------------------------------------
 ConfigureBench(HASH_FUNCTION_BENCH
   hash_function/hash_function_bench.cu)
