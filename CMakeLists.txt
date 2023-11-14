@@ -69,7 +69,7 @@ if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}")
 endif()
 
 option(BUILD_TESTS "Configure CMake to build tests" ON)
-option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ON)
+option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" OFF)
 #Todo(hip): Enable building benchmarks, NVbench is required
 option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ON)
 option(BUILD_EXAMPLES "Configure CMake to build examples" ${default_build_option_state})
