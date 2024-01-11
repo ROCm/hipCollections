@@ -135,13 +135,12 @@ ConfigureBench(STATIC_MULTIMAP_BENCH
   static_multimap/count_bench.cu)
 
 ###################################################################################################
-# - static_multimap benchmarks testing different CG sizes for probing -----------------------------
-ConfigureBench(STATIC_MULTIMAP_CG_BENCH
-  hash_table/static_multimap_cg/insert_bench.hip
-  hash_table/static_multimap_cg/retrieve_bench.hip
-  hash_table/static_multimap_cg/query_bench.hip
-  hash_table/static_multimap_cg/count_bench.hip
-  )
+# - dynamic_map benchmarks ------------------------------------------------------------------------
+# ConfigureBench(DYNAMIC_MAP_BENCH
+#  hash_table/dynamic_map/insert_bench.cu
+#  hash_table/dynamic_map/find_bench.cu
+#  hash_table/dynamic_map/contains_bench.cu
+#  hash_table/dynamic_map/erase_bench.cu)
 
 ###################################################################################################
 # - dynamic_map benchmarks ------------------------------------------------------------------------

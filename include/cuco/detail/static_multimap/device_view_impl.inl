@@ -907,56 +907,6 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
    * @return Number of matches found by the current thread
    */
   template <bool uses_vector_load, bool is_outer, typename CG, typename KeyEqual>
-  __device__ __forceinline__ std::enable_if_t<uses_vector_load, std::size_t> count(
-    CG const& g, Key const& k, KeyEqual key_equal) noexcept
-  {
-    std::size_t count = 0;
-    auto current_slot = this->initial_slot(g, k);
-
-  //   [[maybe_unused]] bool found_match = false;
-
-  //   while (true) {
-  //     value_type arr[2];
-  //     this->load_pair_array(&arr[0], current_slot);
-
-      auto const first_slot_is_empty =
-        detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
-      auto const second_slot_is_empty =
-        detail::bitwise_compare(arr[1].first, this->get_empty_key_sentinel());
-      auto const first_equals  = (not first_slot_is_empty and key_equal(arr[0].first, k));
-      auto const second_equals = (not second_slot_is_empty and key_equal(arr[1].first, k));
-
-      if constexpr (is_outer) {
-        if (g.any(first_equals or second_equals)) { found_match = true; }
-      }
-
-      count += (first_equals + second_equals);
-
-  //     if (g.any(first_slot_is_empty or second_slot_is_empty)) {
-  //       if constexpr (is_outer) {
-  //         if ((not found_match) && (g.thread_rank() == 0)) { count++; }
-  //       }
-  //       return count;
-  //     }
-
-  //     current_slot = this->next_slot(current_slot);
-  //   }
-  // }
-
-  /**
-   * @brief Counts the occurrence of a given key contained in multimap using scalar loads.
-   *
-   * @tparam uses_vector_load Boolean flag indicating whether vector loads are used
-   * @tparam is_outer Boolean flag indicating whether outer join is peformed
-   * @tparam CG Cooperative Group type
-   * @tparam KeyEqual Binary callable type
-   * @param g The Cooperative Group used to perform the count operation
-   * @param k The key to search for
-   * @param key_equal The binary callable used to compare two keys
-   * for equality
-   * @return Number of matches found by the current thread
-   */
-  template <bool uses_vector_load, bool is_outer, typename CG, typename KeyEqual>
   __device__ __forceinline__ std::enable_if_t<not uses_vector_load, std::size_t> count(
     CG const& g, Key const& k, KeyEqual key_equal) noexcept
   {
