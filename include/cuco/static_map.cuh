@@ -1571,8 +1571,10 @@ class static_map {
      * @param hash The unary callable used to hash the key
      * @return Pointer to the initial slot for `k`
      */
+    // FIXME(HIP): Need __attribute__((noinline)) as workaround for invalid modulo results.
+    // See https://ontrack-internal.amd.com/browse/SWDEV-436805.
     template <typename ProbeKey, typename Hash>
-    __device__ iterator initial_slot(ProbeKey const& k, Hash hash) noexcept
+    __attribute__((noinline)) __device__ iterator initial_slot(ProbeKey const& k, Hash hash) noexcept
     {
       return &slots_[hash(k) % capacity_];
     }
@@ -1587,8 +1589,10 @@ class static_map {
      * @param hash The unary callable used to hash the key
      * @return Pointer to the initial slot for `k`
      */
+    // FIXME(HIP): Need __attribute__((noinline)) as workaround for invalid modulo results.
+    // See https://ontrack-internal.amd.com/browse/SWDEV-436805.
     template <typename ProbeKey, typename Hash>
-    __device__ const_iterator initial_slot(ProbeKey const& k, Hash hash) const noexcept
+    __attribute__((noinline)) __device__ const_iterator initial_slot(ProbeKey const& k, Hash hash) const noexcept
     {
       return &slots_[hash(k) % capacity_];
     }
