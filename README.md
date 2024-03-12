@@ -22,9 +22,9 @@ Header-only library of GPU-accelerated, concurrent data structures.
 This is a port of the original CUDA version at https://github.com/NVIDIA/cuCollections to HIP in order to enable support for AMD GPUs.
 
 # Requirements
-- ROCm and HIP 5.7.0 or higher
+- ROCm and HIP 6.1.0 or higher
 - CMake 3.23.1 or higher (for building the tests)
-- AMD MI100/MI200 GPU (other architectures are not supported)
+- AMD MI100/MI200/MI300 GPU (other architectures are not supported)
 - Linux distribution (tested presently with Ubuntu 20.04)
 
 # How to build the tests
