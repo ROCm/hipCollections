@@ -164,13 +164,8 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::insert_if(In
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
 
-  if constexpr (tile_size == 1) {
-    detail::insert_if_n<block_size><<<grid_size, block_size, 0, stream>>>(
-      first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
-  } else {
-    detail::insert_if_n<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
-      first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
-  }
+  detail::insert_if_n<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
+    first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
   CUCO_CUDA_TRY(hipMemcpyAsync(
     &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
   CUCO_CUDA_TRY(hipStreamSynchronize(stream));
