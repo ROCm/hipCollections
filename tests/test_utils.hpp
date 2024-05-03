@@ -42,15 +42,12 @@
 #include <thrust/functional.h>
 
 #include <hip/hip_cooperative_groups.h>
-
-#include <iterator>
-
-//Todo(HIP): Remove the header once we have CG workaround implemented in ROCm
+//Todo(HIP/AMD): Remove the header once we have CG workaround implemented in ROCm
 #include <hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh>
 namespace cuco {
 namespace test {
 
-//Todo(HIP): Change to "namespace cg = cooperative_groups;" once we have CG workaround implemented in ROCm
+//Todo(HIP/AMD): Change to "namespace cg = cooperative_groups;" once we have CG workaround implemented in ROCm
 namespace cg = hip_extensions::hip_cooperative_groups_ext;
 
 constexpr int32_t block_size = 128;
