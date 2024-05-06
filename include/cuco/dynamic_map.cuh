@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Modifications Copyright (c) 2024-2025 Advanced Micro Devices, Inc.
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -257,7 +257,7 @@ class dynamic_map {
   using value_type      = cuco::pair<Key, Value>;            ///< Type of key/value pairs
   using key_type        = Key;                               ///< Key type
   using mapped_type     = Value;                             ///< Type of mapped values
-  using atomic_ctr_type = hip::atomic<std::size_t, Scope>;  ///< Atomic counter type
+  using atomic_ctr_type = cuda::atomic<std::size_t, Scope>;  ///< Atomic counter type
   using view_type =
     typename cuco::legacy::static_map<Key, Value, Scope>::device_view;  ///< Type for submap device
                                                                         ///< view
