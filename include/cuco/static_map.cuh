@@ -59,10 +59,13 @@
 #include <type_traits>
 #include <utility>
 
-namespace cuco {
 #ifndef CUCO_TILE_SIZE
 #define CUCO_TILE_SIZE 4
 #endif
+#ifndef CUCO_BLOCK_SIZE
+#define CUCO_BLOCK_SIZE 128
+#endif
+namespace cuco {
 /**
  * @brief A GPU-accelerated, unordered, associative container of key-value pairs with unique keys.
  *
@@ -1212,13 +1215,6 @@ namespace legacy {
  * individual threads.
  * @tparam Allocator Type of allocator used for device storage
  */
-
-#ifndef HIPCO_TILE_SIZE
-#define HIPCO_TILE_SIZE 4
-#endif
-#ifndef HIPCO_BLOCK_SIZE
-#define HIPCO_BLOCK_SIZE 128
-#endif
 
 template <typename Key,
           typename Value,

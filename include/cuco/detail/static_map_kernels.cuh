@@ -535,7 +535,11 @@ CUCO_KERNEL void find(
 #pragma nv_diagnostic push
 #pragma nv_diag_suppress static_var_with_dynamic_init
   // Get rid of a false-positive build warning with ARM
-  __shared__ Value writeBuffer[block_size / tile_size];
+  // NOTE(HIP/AMD): We need to change "block_size / tile_size" to this one to avoid the following error for STATIC_MAP_BLOCK_BENCH
+  // clang-17: llvm/include/llvm/Support/OptimizedStructLayout.h:53: 
+  // llvm::OptimizedStructLayoutField::OptimizedStructLayoutField(const void*, uint64_t, llvm::Align, uint64_t): 
+  // Assertion `Size > 0 && "adding an empty field to the layout"' failed.
+  __shared__ Value writeBuffer[(block_size + tile_size - 1) / tile_size];
 #pragma nv_diagnostic pop
 
   while (idx < n) {
@@ -650,7 +654,11 @@ CUCO_KERNEL void contains(
   auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
-  __shared__ bool writeBuffer[block_size / tile_size];
+  // NOTE(HIP/AMD): We need to change "block_size / tile_size" to this one to avoid the following error for STATIC_MAP_BLOCK_BENCH
+  // clang-17: llvm/include/llvm/Support/OptimizedStructLayout.h:53: 
+  // llvm::OptimizedStructLayoutField::OptimizedStructLayoutField(const void*, uint64_t, llvm::Align, uint64_t): 
+  // Assertion `Size > 0 && "adding an empty field to the layout"' failed.
+  __shared__ bool writeBuffer[(block_size + tile_size - 1) / tile_size];
 
   while (idx < n) {
     auto key   = *(first + idx);
