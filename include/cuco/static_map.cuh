@@ -1215,7 +1215,6 @@ namespace legacy {
  * individual threads.
  * @tparam Allocator Type of allocator used for device storage
  */
-
 template <typename Key,
           typename Value,
           cuda::thread_scope Scope = cuda::thread_scope_device,
@@ -1234,7 +1233,7 @@ class static_map {
                 "cuco::is_bitwise_comparable_v<Value>.");
 
   friend class dynamic_map<Key, Value, Scope, Allocator>;  ///< Dynamic map as friend class
-  
+
  public:
   using value_type         = cuco::pair<Key, Value>;            ///< Type of key/value pairs
   using key_type           = Key;                               ///< Key type
