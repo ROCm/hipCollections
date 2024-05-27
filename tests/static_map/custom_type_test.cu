@@ -49,7 +49,7 @@
 
 // User-defined key type
 template <typename T>
-struct alignas(8) key_pair_type { //no hip support for unaligned atomics https://ontrack-internal.amd.com/browse/SWDEV-393058
+struct alignas(8) key_pair_type { // NOTE(HIP/AMD): no hip support for unaligned atomics SWDEV-393058
   T a;
   T b;
 
@@ -66,7 +66,7 @@ struct alignas(8) key_pair_type { //no hip support for unaligned atomics https:/
 
 // User-defined key type
 template <typename T>
-struct alignas(8) large_key_type { //no hip support for unaligned atomics https://ontrack-internal.amd.com/browse/SWDEV-393058
+struct alignas(8) large_key_type { // NOTE(HIP/AMD): no hip support for unaligned atomics SWDEV-393058
   T a;
   T b;
   T c;
@@ -84,7 +84,7 @@ struct alignas(8) large_key_type { //no hip support for unaligned atomics https:
 
 // User-defined value type
 template <typename T>
-struct alignas(8) value_pair_type { //no hip support for unaligned atomics https://ontrack-internal.amd.com/browse/SWDEV-393058
+struct alignas(8) value_pair_type { // NOTE(HIP/AMD): no hip support for unaligned atomics SWDEV-393058
   T f;
   T s;
 

@@ -1567,7 +1567,7 @@ class static_map {
      * @return Pointer to the initial slot for `k`
      */
     // FIXME(HIP): Need __attribute__((noinline)) as workaround for invalid modulo results.
-    // See https://ontrack-internal.amd.com/browse/SWDEV-436805.
+    // SWDEV-436805.
     template <typename ProbeKey, typename Hash>
     __attribute__((noinline)) __device__ iterator initial_slot(ProbeKey const& k, Hash hash) noexcept
     {
@@ -1585,7 +1585,7 @@ class static_map {
      * @return Pointer to the initial slot for `k`
      */
     // FIXME(HIP): Need __attribute__((noinline)) as workaround for invalid modulo results.
-    // See https://ontrack-internal.amd.com/browse/SWDEV-436805.
+    // SWDEV-436805.
     template <typename ProbeKey, typename Hash>
     __attribute__((noinline)) __device__ const_iterator initial_slot(ProbeKey const& k, Hash hash) const noexcept
     {
