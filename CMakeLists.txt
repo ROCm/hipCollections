@@ -208,7 +208,7 @@ rapids_export(
 if(INSTALL_HIPCO)
     install(DIRECTORY include/hipco/ DESTINATION include/hipco)
     install(DIRECTORY include/hip_extensions/ DESTINATION include/hip_extensions)
-    install(FILES ${CMAKE_BINARY_DIR}/include/hipco/version_config.hpp DESTINATION include/hipco)
+    install(FILES ${HIPCO_BINARY_DIR}/include/hipco/version_config.hpp DESTINATION include/hipco)
     # install directory hipco-config generation
     rapids_export(
         INSTALL hipco
