@@ -33,7 +33,7 @@
 function(find_and_configure_thrust)
     include(${rapids-cmake-dir}/cpm/thrust.cmake)
     rapids_cpm_thrust(NAMESPACE cuco
-                      BUILD_EXPORT_SET cuco-exports)
+                      BUILD_EXPORT_SET hipco-exports)
 endfunction()
 
 find_and_configure_thrust()

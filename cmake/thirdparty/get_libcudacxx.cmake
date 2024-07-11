@@ -33,9 +33,9 @@
 function(find_and_configure_libcudacxx)
     include(${rapids-cmake-dir}/cpm/libcudacxx.cmake)
 
-    set(exports BUILD_EXPORT_SET cuco-exports)
+    set(exports BUILD_EXPORT_SET hipco-exports)
     if(INSTALL_CUCO)
-      list(APPEND exports INSTALL_EXPORT_SET cuco-exports)
+      list(APPEND exports INSTALL_EXPORT_SET hipco-exports)
     endif()
 
     rapids_cpm_libcudacxx(${exports})
