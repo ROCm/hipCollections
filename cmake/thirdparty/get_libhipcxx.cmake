@@ -34,7 +34,7 @@ function(find_and_configure_libhipcxx)
     include(${rapids-cmake-dir}/cpm/libhipcxx.cmake)
 
     set(exports BUILD_EXPORT_SET hipco-exports)
-    if(INSTALL_CUCO)
+    if(INSTALL_HIPCO)
       list(APPEND exports INSTALL_EXPORT_SET hipco-exports)
     endif()
 
