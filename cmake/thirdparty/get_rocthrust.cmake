@@ -33,7 +33,7 @@
 function(find_and_configure_rocthrust)
     include(${rapids-cmake-dir}/cpm/rocthrust.cmake)
     rapids_cpm_rocthrust(NAMESPACE cuco
-                      BUILD_EXPORT_SET cuco-exports)
+                      BUILD_EXPORT_SET hipco-exports)
 endfunction()
 
 find_and_configure_rocthrust()
