@@ -207,7 +207,7 @@ rapids_export(
 
 if(INSTALL_HIPCO)
     install(DIRECTORY include/hipco/ DESTINATION include/hipco)
-    install(DIRECTORY include/hip_extensions/ DESTINATION include/hip_extensions)
+    install(DIRECTORY include/hip_extensions/ DESTINATION include/hipco/hip_extensions)
     install(FILES ${HIPCO_BINARY_DIR}/include/hipco/version_config.hpp DESTINATION include/hipco)
     # install directory hipco-config generation
     rapids_export(
