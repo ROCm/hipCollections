@@ -203,7 +203,7 @@ rapids_export(
 
 if(INSTALL_CUCO)
     install(DIRECTORY include/cuco/ DESTINATION include/cuco)
-    install(DIRECTORY include/hip_extensions/ DESTINATION include/hip_extensions)
+    install(DIRECTORY include/hip_extensions/ DESTINATION include/cuco/hip_extensions)
     install(FILES ${CUCO_BINARY_DIR}/include/cuco/version_config.hpp DESTINATION include/cuco)
     # install directory cuco-config generation
     rapids_export(
