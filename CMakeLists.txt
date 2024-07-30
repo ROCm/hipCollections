@@ -69,7 +69,9 @@ include(rapids-find)
 list(APPEND SUPPORTED_ARCHS "gfx90a" "gfx908" "gfx940" "gfx941" "gfx942" 
                             "gfx90a:sramecc+:xnack-" "gfx908:sramecc+:xnack-"
                             "gfx940:sramecc+:xnack-" "gfx941:sramecc+:xnack-"
-                            "gfx942:sramecc+:xnack-")
+                            "gfx942:sramecc+:xnack-"
+			    "gfx90a:xnack+" "gfx940:xnack+" "gfx941:xnack+"
+			    "gfx942:xnack+")
 # WAR for not supporting all architectures yet
 # build only for supported architectures per default
 if(NOT (DEFINED CMAKE_HIP_ARCHITECTURES))
