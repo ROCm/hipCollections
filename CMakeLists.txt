@@ -40,7 +40,7 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/HIPCO_RAPIDS.cmake)
     set(RAPIDS_CMAKE_BRANCH branch-24.06)
   endif()
 
-  set(URL "https://github.com/ROCm/rapids-cmake/${RAPIDS_CMAKE_BRANCH}/RAPIDS.cmake")
+  set(URL "https://raw.githubusercontent.com/ROCm/rapids-cmake/${RAPIDS_CMAKE_BRANCH}/RAPIDS.cmake")
   file(DOWNLOAD ${URL}
        ${CMAKE_CURRENT_BINARY_DIR}/HIPCO_RAPIDS.cmake
        STATUS DOWNLOAD_STATUS
