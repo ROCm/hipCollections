@@ -38,15 +38,12 @@
 #include <thrust/tuple.h>
 #include <thrust/type_traits/is_contiguous_iterator.h>
 
-// #include <hip/hip_cooperative_groups.h>
-#include "hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh"
+#include <hip/hip_cooperative_groups.h>
 #ifndef __HIP_PLATFORM_AMD__
 #include <cooperative_groups/memcpy_async.h>
 #endif
 
 namespace cuco {
-//Todo(HIP): Remove the alias once we have the CG workaround in ROCm
-namespace cooperative_groups = hip_extensions::hip_cooperative_groups_ext;
 template <typename Key,
           typename Value,
           hip::thread_scope Scope,

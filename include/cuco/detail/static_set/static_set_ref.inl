@@ -39,12 +39,9 @@
 #include <cuda/std/type_traits>
 #include <cuda/std/utility>
 
-#include <hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh>
+#include <hip/hip_cooperative_groups.h>
 
 namespace cuco {
-
-// Todo(HIP): change once we have the workarounds in ROCm.
-namespace cooperative_groups = hip_extensions::hip_cooperative_groups_ext ;
 
 template <typename Key,
           hip::thread_scope Scope,
@@ -407,7 +404,7 @@ class operator_impl<op::insert_tag,
    * @return True if the given element is successfully inserted
    */
   template <typename Value>
-  __device__ bool insert(cooperative_groups::thread_block_tile<cg_size> const& group,
+  __device__ bool insert(cooperative_groups::thread_block_tile<cg_size, cooperative_groups::thread_block> const& group,
                          Value const& value) noexcept
   {
     auto& ref_ = static_cast<ref_type&>(*this);

@@ -162,6 +162,7 @@ set(CUCO_BLOCK_SIZE "128" CACHE STRING "Size of thread blocks")
 target_compile_options(cuco INTERFACE "-DCUCO_BLOCK_SIZE=${CUCO_BLOCK_SIZE}")
 set(CUCO_STATIC_SET_CG_SIZE "1" CACHE STRING "Size of cooperative groups for static_set")
 target_compile_options(cuco INTERFACE "-DCUCO_STATIC_SET_CG_SIZE=${CUCO_STATIC_SET_CG_SIZE}")
+target_compile_options(cuco INTERFACE "-DHIP_ENABLE_WARP_SYNC_BUILTINS=1")
 # TODO(HIP): This is a hotfix and does not address the underlying weakness in the code, to
 # be revisited later.
 target_compile_options(cuco INTERFACE "-Wno-c++11-narrowing-const-reference")
@@ -213,7 +214,6 @@ rapids_export(
 
 if(INSTALL_CUCO)
     install(DIRECTORY include/cuco/ DESTINATION include/cuco)
-    install(DIRECTORY include/hip_extensions/ DESTINATION include/cuco/hip_extensions)
     install(FILES ${CUCO_BINARY_DIR}/include/cuco/version_config.hpp DESTINATION include/cuco)
     # install directory cuco-config generation
     rapids_export(

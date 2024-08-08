@@ -51,9 +51,6 @@
 #include <cuda/barrier>
 #endif
 
-#include <hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh>
-//#include <hip/cooperative_groups.h>
-
 #include <hip/hip_cooperative_groups.h>
 
 #include <cstdint>
@@ -61,8 +58,6 @@
 
 namespace cuco {
 namespace detail {
-
-namespace cooperative_groups = hip_extensions::hip_cooperative_groups_ext;
 
 /// Three-way insert result enum
 enum class insert_result : int32_t { CONTINUE = 0, SUCCESS = 1, DUPLICATE = 2 };

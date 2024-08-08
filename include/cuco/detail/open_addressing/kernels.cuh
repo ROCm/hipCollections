@@ -44,14 +44,12 @@
 #include <cuda/functional>
 #endif
 
-#include <hip_extensions/hip_cooperative_groups_ext/amd_cooperative_groups_ext.cuh>
+#include <hip/hip_cooperative_groups.h>
 
 #include <iterator>
 
 namespace cuco::detail::open_addressing_ns {
 CUCO_SUPPRESS_KERNEL_WARNINGS
-
-namespace cooperative_groups = hip_extensions::hip_cooperative_groups_ext;
 
 /**
  * @brief Inserts all elements in the range `[first, first + n)` and returns the number of
