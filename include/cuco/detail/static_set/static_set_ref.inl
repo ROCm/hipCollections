@@ -404,7 +404,7 @@ class operator_impl<op::insert_tag,
    * @return True if the given element is successfully inserted
    */
   template <typename Value>
-  __device__ bool insert(cooperative_groups::thread_block_tile<cg_size, cooperative_groups::thread_block> const& group,
+  __device__ bool insert(cooperative_groups::thread_block_tile<cg_size> const& group,
                          Value const& value) noexcept
   {
     auto& ref_ = static_cast<ref_type&>(*this);
