@@ -34,16 +34,16 @@
 cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/HIPCO_RAPIDS.cmake)
-  if (DEFINED ENV{RAPIDS_CMAKE_BRANCH})
-    set(RAPIDS_CMAKE_BRANCH "$ENV{RAPIDS_CMAKE_BRANCH}")
+  if(DEFINED ENV{RAPIDS_CMAKE_SCRIPT_BRANCH})
+    set(RAPIDS_CMAKE_SCRIPT_BRANCH "$ENV{RAPIDS_CMAKE_SCRIPT_BRANCH}")
   else()
-    set(RAPIDS_CMAKE_BRANCH branch-24.06)
+    set(RAPIDS_CMAKE_SCRIPT_BRANCH branch-24.06)
   endif()
 
-  set(URL "https://raw.githubusercontent.com/ROCm/rapids-cmake/${RAPIDS_CMAKE_BRANCH}/RAPIDS.cmake")
+  set(URL "https://raw.githubusercontent.com/ROCm/rapids-cmake/${RAPIDS_CMAKE_SCRIPT_BRANCH}/RAPIDS.cmake")
   file(DOWNLOAD ${URL}
-       ${CMAKE_CURRENT_BINARY_DIR}/HIPCO_RAPIDS.cmake
-       STATUS DOWNLOAD_STATUS
+    ${CMAKE_CURRENT_BINARY_DIR}/HIPCO_RAPIDS.cmake
+    STATUS DOWNLOAD_STATUS
   )
   list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
   list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
@@ -56,6 +56,11 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/HIPCO_RAPIDS.cmake)
     message(FATAL_ERROR "Failed to download 'HIPCO_RAPIDS.cmake'. Reason: ${ERROR_MESSAGE}")
   endif()
 endif()
+
+if(DEFINED ENV{RAPIDS_CMAKE_BRANCH})
+  set(rapids-cmake-branch $ENV{RAPIDS_CMAKE_BRANCH})
+endif()
+
 include(${CMAKE_CURRENT_BINARY_DIR}/HIPCO_RAPIDS.cmake)
 
 include(rapids-cmake)
