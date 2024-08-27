@@ -65,6 +65,17 @@
 #ifndef HIPCO_BLOCK_SIZE
 #define HIPCO_BLOCK_SIZE 128
 #endif
+
+#ifndef NOINLINE_WAR
+// A compiler bug in older ROCm versions requires this WAR to
+// avoid invalid hash table slot computations (that result in segfaults).
+#if HIP_VERSION <= 60200000
+#define NOINLINE_WAR __attribute__((noinline))
+#else
+#define NOINLINE_WAR
+#endif
+#endif
+
 namespace hipco {
 
 // #ifndef HIPCO_TILE_SIZE
@@ -1188,7 +1199,7 @@ class static_map {
      * @return Pointer to the initial slot for `k`
      */
     template <typename ProbeKey, typename Hash>
-    __device__ iterator initial_slot(ProbeKey const& k, Hash hash) noexcept
+    NOINLINE_WAR __device__ iterator initial_slot(ProbeKey const& k, Hash hash) noexcept
     {
       return &slots_[hash(k) % capacity_];
     }
@@ -1204,7 +1215,7 @@ class static_map {
      * @return Pointer to the initial slot for `k`
      */
     template <typename ProbeKey, typename Hash>
-    __device__ const_iterator initial_slot(ProbeKey const& k, Hash hash) const noexcept
+    NOINLINE_WAR __device__ const_iterator initial_slot(ProbeKey const& k, Hash hash) const noexcept
     {
       return &slots_[hash(k) % capacity_];
     }
