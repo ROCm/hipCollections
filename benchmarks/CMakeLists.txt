@@ -33,16 +33,8 @@
 
 cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 
-# Todo(HIP): change SOURCE_DIR to GITHUB_REPOSITORY and use the correct URL and GIT_TAG
-# GITHUB_REPOSITORY NVIDIA/nvbench
-# GIT_TAG main
-CPMAddPackage(
-  NAME nvbench
-  GIT_REPOSITORY https://$ENV{GITHUB_USER}:$ENV{GITHUB_PASS}@github.com/AMD-AI/hipBench
-  GIT_TAG main
-  GIT_SHALLOW TRUE
-  EXCLUDE_FROM_ALL YES
-)
+include(${rapids-cmake-dir}/cpm/nvbench.cmake)
+rapids_cpm_nvbench()
 
 ###################################################################################################
 ### compiler function #############################################################################
