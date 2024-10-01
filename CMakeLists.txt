@@ -131,6 +131,10 @@ rapids_find_package(
 # - find packages we depend on --------------------------------------------------------------------
 rapids_cpm_init()
 
+# prescribe dependencies (must come after `rapids_cpm_init()`)
+include(cpm/package_override)
+rapids_cpm_package_override(${CMAKE_CURRENT_LIST_DIR}/versions.json)
+
 include(cmake/thirdparty/get_rocthrust.cmake)
 include(cmake/thirdparty/get_libhipcxx.cmake)
 
