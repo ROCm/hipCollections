@@ -39,6 +39,8 @@
 #include <hipco/pair.cuh>
 #include <hipco/probing_scheme.cuh>
 
+#include <hipco/detail/utils.cuh>
+
 #include <thrust/distance.h>
 #include <thrust/pair.h>
 #include <thrust/tuple.h>
@@ -371,7 +373,7 @@ class open_addressing_ref_impl {
       auto const group_contains_available =
         group.ballot(state == detail::equal_result::EMPTY or state == detail::equal_result::ERASED);
       if (group_contains_available) {
-        auto const src_lane = __ffsll((unsigned long long)group_contains_available) - 1;
+        auto const src_lane = hipco::detail::__FFS((lane_mask)group_contains_available) - 1;
         auto const status =
           (group.thread_rank() == src_lane)
             ? attempt_insert((storage_ref_.data() + *probing_iter)->data() + intra_window_index,
@@ -496,7 +498,7 @@ class open_addressing_ref_impl {
       // If the key is already in the container, return false
       auto const group_finds_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_finds_equal) {
-        auto const src_lane = __ffsll((unsigned long long)group_finds_equal) - 1;
+        auto const src_lane = hipco::detail::__FFS((lane_mask)group_finds_equal) - 1;
         auto const res      = group.shfl(reinterpret_cast<intptr_t>(slot_ptr), src_lane);
         return {iterator{reinterpret_cast<value_type*>(res)}, false};
       }
@@ -504,7 +506,7 @@ class open_addressing_ref_impl {
       auto const group_contains_available =
         group.ballot(state == detail::equal_result::EMPTY or state == detail::equal_result::ERASED);
       if (group_contains_available) {
-        auto const src_lane = __ffsll((unsigned long long)group_contains_available) - 1;
+        auto const src_lane = hipco::detail::__FFS((lane_mask)group_contains_available) - 1;
         auto const res      = group.shfl(reinterpret_cast<intptr_t>(slot_ptr), src_lane);
         auto const status   = [&, target_idx = intra_window_index]() {
           if (group.thread_rank() != src_lane) { return insert_result::CONTINUE; }
@@ -605,7 +607,7 @@ class open_addressing_ref_impl {
 
       auto const group_contains_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_contains_equal) {
-        auto const src_lane = __ffsll((unsigned long long)group_contains_equal) - 1;
+        auto const src_lane = hipco::detail::__FFS((lane_mask)group_contains_equal) - 1;
         auto const status =
           (group.thread_rank() == src_lane)
             ? attempt_insert((storage_ref_.data() + *probing_iter)->data() + intra_window_index,
@@ -777,7 +779,7 @@ class open_addressing_ref_impl {
       // Find a match for the probe key, thus return an iterator to the entry
       auto const group_finds_match = group.ballot(state == detail::equal_result::EQUAL);
       if (group_finds_match) {
-        auto const src_lane = __ffsll((unsigned long long)group_finds_match) - 1; //Todo(HIP): added (unsigned long long)
+        auto const src_lane = hipco::detail::__FFS((lane_mask)group_finds_match) - 1;
         auto const res      = group.shfl(
           reinterpret_cast<intptr_t>(&(*(storage_ref_.data() + *probing_iter))[intra_window_index]),
           src_lane);

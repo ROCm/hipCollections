@@ -33,6 +33,7 @@
 
 #pragma once
 
+#include <hipco/detail/utils.cuh>
 #include <hipco/operator.hpp>
 
 #include <hip/atomic>
@@ -345,7 +346,7 @@ class operator_impl<
 
       auto const group_contains_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_contains_equal) {
-        auto const src_lane = __ffsll((unsigned long long)group_contains_equal) - 1;
+        auto const src_lane = hipco::detail::__FFS((lane_mask)group_contains_equal) - 1;
         if (group.thread_rank() == src_lane) {
           ref_.impl_.atomic_store(
             &((storage_ref.data() + *probing_iter)->data() + intra_window_index)->second,
@@ -358,7 +359,7 @@ class operator_impl<
       auto const group_contains_available =
         group.ballot(state == detail::equal_result::EMPTY or state == detail::equal_result::ERASED);
       if (group_contains_available) {
-        auto const src_lane = __ffsll((unsigned long long)group_contains_available) - 1;
+        auto const src_lane = hipco::detail::__FFS((lane_mask)group_contains_available) - 1;
         auto const status =
           (group.thread_rank() == src_lane)
             ? attempt_insert_or_assign(
