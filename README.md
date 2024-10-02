@@ -5,7 +5,7 @@ This is a port of the original CUDA version at https://github.com/NVIDIA/cuColle
 # Requirements
 - ROCm and HIP 6.2 or higher
 - CMake 3.23.1 or higher (for building the tests)
-- AMD MI100/MI200/MI300 GPU (other architectures are not supported)
+- AMD MI100, MI200, MI300, RDNA3/gfx1100 GPU (other architectures are not supported)
 - Linux distribution (tested presently with Ubuntu 20.04)
 
 # How to build the tests
