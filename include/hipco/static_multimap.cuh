@@ -583,7 +583,14 @@ class static_multimap {
   /**
    * @brief Returns the warp size.
    */
-  static constexpr uint32_t warp_size() noexcept { return 64u; }
+  static uint32_t warp_size() {
+    hipDeviceProp_t props{};
+    int currDevice;
+    HIPCO_HIP_TRY(hipGetDevice(&currDevice));
+    HIPCO_HIP_TRY(hipGetDeviceProperties(&props, currDevice));
+    auto result = static_cast<uint32_t>(props.warpSize);
+    return result;    
+  }
 
   /**
    * @brief Custom deleter for unique pointer of device counter.
@@ -611,6 +618,73 @@ class static_multimap {
     slot_allocator_type& allocator;
     size_t& capacity;
   };
+
+  /**
+   * @brief See \ref retrieve().
+   * @note On some AMD GPU architectures (RDNA3), warp sizes 32 and 64 are supported.
+   * The actual warp size of the currently used device is not known at compile time.
+   * Thus, we need to query the warp size used by the current device at runtime
+   * and invoke the correct template specialization for the currently used warp size.
+   * This method was added to allow for this dynamic invocation while minimizing 
+   * changes to existing code/APIs.
+   */
+  template <typename InputIt, typename OutputIt, typename KeyEqual = thrust::equal_to<key_type>, int WarpSize=64>
+  OutputIt retrieve_invoke_for_warp_size(
+                    InputIt first,
+                    InputIt last,
+                    OutputIt output_begin,
+                    hipStream_t stream = 0,
+                    KeyEqual key_equal = KeyEqual{}) const;   
+
+  /**
+  * @brief See \ref retrieve_outer().
+  * @note On some AMD GPU architectures (RDNA3), warp sizes 32 and 64 are supported.
+  * The actual warp size of the currently used device is not known at compile time.
+  * Thus, we need to query the warp size used by the current device at runtime
+  * and invoke the correct template specialization for the currently used warp size.
+  * This method was added to allow for this dynamic invocation while minimizing 
+  * changes to existing code/APIs.
+  */
+  template <typename InputIt, typename OutputIt, typename KeyEqual = thrust::equal_to<key_type>, int WarpSize=64>
+  OutputIt retrieve_outer_invoke_for_warp_size(InputIt first,
+                          InputIt last,
+                          OutputIt output_begin,
+                          hipStream_t stream = 0,
+                          KeyEqual key_equal = KeyEqual{}) const;
+
+  /**
+  * @brief See \ref pair_retrieve().
+  * @note On some AMD GPU architectures (RDNA3), warp sizes 32 and 64 are supported.
+  * The actual warp size of the currently used device is not known at compile time.
+  * Thus, we need to query the warp size used by the current device at runtime
+  * and invoke the correct template specialization for the currently used warp size.
+  * This method was added to allow for this dynamic invocation while minimizing 
+  * changes to existing code/APIs.
+  */
+  template <typename InputIt, typename OutputIt1, typename OutputIt2, typename PairEqual, int WarpSize=64>
+  std::pair<OutputIt1, OutputIt2> pair_retrieve_invoke_for_warp_size(InputIt first,
+                                                InputIt last,
+                                                OutputIt1 probe_output_begin,
+                                                OutputIt2 contained_output_begin,
+                                                PairEqual pair_equal,
+                                                hipStream_t stream = 0) const;
+
+  /**
+  * @brief See \ref pair_retrieve_outer().
+  * @note On some AMD GPU architectures (RDNA3), warp sizes 32 and 64 are supported.
+  * The actual warp size of the currently used device is not known at compile time.
+  * Thus, we need to query the warp size used by the current device at runtime
+  * and invoke the correct template specialization for the currently used warp size.
+  * This method was added to allow for this dynamic invocation while minimizing 
+  * changes to existing code/APIs.
+  */
+  template <typename InputIt, typename OutputIt1, typename OutputIt2, typename PairEqual, int WarpSize=64>
+  std::pair<OutputIt1, OutputIt2> pair_retrieve_outer_invoke_for_warp_size(InputIt first,
+                                                      InputIt last,
+                                                      OutputIt1 probe_output_begin,
+                                                      OutputIt2 contained_output_begin,
+                                                      PairEqual pair_equal,
+                                                      hipStream_t stream = 0) const;
 
   class device_view_impl_base;
   class device_mutable_view_impl;

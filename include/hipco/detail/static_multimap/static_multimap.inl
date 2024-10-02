@@ -296,20 +296,20 @@ template <typename Key,
           hip::thread_scope Scope,
           typename Allocator,
           class ProbeSequence>
-template <typename InputIt, typename OutputIt, typename KeyEqual>
-OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve(
+template <typename InputIt, typename OutputIt, typename KeyEqual, int WarpSize>
+OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve_invoke_for_warp_size(
   InputIt first, InputIt last, OutputIt output_begin, hipStream_t stream, KeyEqual key_equal) const
 {
   auto const num_keys = hipco::detail::distance(first, last);
   if (num_keys == 0) { return output_begin; }
 
-  // Using per-warp buffer for vector loads and per-CG buffer for scalar loads
-  constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
+    // Using per-warp buffer for vector loads and per-CG buffer for scalar loads
+  constexpr auto buffer_size = uses_vector_load() ? (WarpSize * 3u) : (cg_size() * 3u);
   constexpr auto is_outer    = false;
 
   auto view                   = get_device_view();
   auto const flushing_cg_size = [&]() {
-    if constexpr (uses_vector_load()) { return warp_size(); }
+    if constexpr (uses_vector_load()) { return (uint32_t) WarpSize; }
     return cg_size();
   }();
 
@@ -336,19 +336,63 @@ template <typename Key,
           typename Allocator,
           class ProbeSequence>
 template <typename InputIt, typename OutputIt, typename KeyEqual>
+OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve(
+  InputIt first, InputIt last, OutputIt output_begin, hipStream_t stream, KeyEqual key_equal) const
+{
+  // FIXME(HIP): For ROCm/HIP, warpSize and __AMDGCN_WAVEFRONT_SIZE__ are defaulted to 64.
+  // "Note that some architecture specific AMDGPU macros will have default values when used from the HIP host compilation.
+  // Other AMDGPU macros like __AMDGCN_WAVEFRONT_SIZE__ will default to 64 for example."
+  // (see https://github.com/ROCm/llvm-project/blob/f49f43078ea7fc8a6c1db63b40b10c652689e39c/clang/docs/HIPSupport.rst#L180).
+  // As a single hipCo binary might be compiled for multiple architectures with different wavefront sizes
+  // 32/64, we need to query the wavefront size at runtime and select/invoke the correct template here.
+  if(warp_size()==32){
+    return retrieve_invoke_for_warp_size<InputIt, OutputIt, KeyEqual, 32>(first, last, output_begin, stream, key_equal);
+  } else {
+    return retrieve_invoke_for_warp_size<InputIt, OutputIt, KeyEqual, 64>(first, last, output_begin, stream, key_equal);
+  }
+}
+
+template <typename Key,
+          typename Value,
+          hip::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+template <typename InputIt, typename OutputIt, typename KeyEqual>
 OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve_outer(
+  InputIt first, InputIt last, OutputIt output_begin, hipStream_t stream, KeyEqual key_equal) const
+{
+  // FIXME(HIP): For ROCm/HIP, warpSize and __AMDGCN_WAVEFRONT_SIZE__ are defaulted to 64.
+  // "Note that some architecture specific AMDGPU macros will have default values when used from the HIP host compilation.
+  // Other AMDGPU macros like __AMDGCN_WAVEFRONT_SIZE__ will default to 64 for example."
+  // (see https://github.com/ROCm/llvm-project/blob/f49f43078ea7fc8a6c1db63b40b10c652689e39c/clang/docs/HIPSupport.rst#L180).
+  // As a single hipCo binary might be compiled for multiple architectures with different wavefront sizes
+  // 32/64, we need to query the wavefront size at runtime and select/invoke the correct template here.
+  if(warp_size()==32){
+    return retrieve_outer_invoke_for_warp_size<InputIt, OutputIt, KeyEqual, 32>(first, last, output_begin, stream, key_equal);
+  } else {
+    return retrieve_outer_invoke_for_warp_size<InputIt, OutputIt, KeyEqual, 64>(first, last, output_begin, stream, key_equal);
+  }
+}
+
+template <typename Key,
+          typename Value,
+          hip::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+template <typename InputIt, typename OutputIt, typename KeyEqual, int WarpSize>
+OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve_outer_invoke_for_warp_size(
   InputIt first, InputIt last, OutputIt output_begin, hipStream_t stream, KeyEqual key_equal) const
 {
   auto const num_keys = hipco::detail::distance(first, last);
   if (num_keys == 0) { return output_begin; }
 
   // Using per-warp buffer for vector loads and per-CG buffer for scalar loads
-  constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
+  constexpr auto buffer_size = uses_vector_load() ? (WarpSize * 3u) : (cg_size() * 3u);
   constexpr auto is_outer    = true;
 
   auto view                   = get_device_view();
-  auto const flushing_cg_size = [&]() {
-    if constexpr (uses_vector_load()) { return warp_size(); }
+  int const flushing_cg_size = [&]() {
+    if constexpr (uses_vector_load()) { return (uint32_t) WarpSize; }
     return cg_size();
   }();
 
@@ -384,18 +428,98 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve(
   PairEqual pair_equal,
   hipStream_t stream) const
 {
+  // FIXME(HIP): For ROCm/HIP, warpSize and __AMDGCN_WAVEFRONT_SIZE__ are defaulted to 64.
+  // "Note that some architecture specific AMDGPU macros will have default values when used from the HIP host compilation.
+  // Other AMDGPU macros like __AMDGCN_WAVEFRONT_SIZE__ will default to 64 for example."
+  // (see https://github.com/ROCm/llvm-project/blob/f49f43078ea7fc8a6c1db63b40b10c652689e39c/clang/docs/HIPSupport.rst#L180).
+  // As a single hipCo binary might be compiled for multiple architectures with different wavefront sizes
+  // 32/64, we need to query the wavefront size at runtime and select/invoke the correct template here.
+  if(warp_size()==32) {
+    return pair_retrieve_invoke_for_warp_size<InputIt, OutputIt1, OutputIt2, PairEqual, 32>(first, last, probe_output_begin, contained_output_begin, pair_equal, stream);
+  }
+  else {
+    return pair_retrieve_invoke_for_warp_size<InputIt, OutputIt1, OutputIt2, PairEqual, 64>(first, last, probe_output_begin, contained_output_begin, pair_equal, stream);
+  }
+}
+
+template <typename Key,
+          typename Value,
+          hip::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+template <typename InputIt, typename OutputIt1, typename OutputIt2, typename PairEqual, int WarpSize>
+std::pair<OutputIt1, OutputIt2>
+static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve_invoke_for_warp_size(
+  InputIt first,
+  InputIt last,
+  OutputIt1 probe_output_begin,
+  OutputIt2 contained_output_begin,
+  PairEqual pair_equal,
+  hipStream_t stream) const
+{
   auto const num_pairs = hipco::detail::distance(first, last);
   if (num_pairs == 0) { return std::make_pair(probe_output_begin, contained_output_begin); }
 
   // Using per-warp buffer for vector loads and per-CG buffer for scalar loads
-  constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
+  constexpr auto buffer_size = uses_vector_load() ? (WarpSize * 3u) : (cg_size() * 3u);
   constexpr auto block_size  = 128;
   constexpr auto is_outer    = false;
   constexpr auto stride      = 1;
 
   auto view                   = get_device_view();
   auto const flushing_cg_size = [&]() {
-    if constexpr (uses_vector_load()) { return warp_size(); }
+    if constexpr (uses_vector_load()) { return (uint32_t) WarpSize; }
+    return cg_size();
+  }();
+  auto const grid_size = (cg_size() * num_pairs + stride * block_size - 1) / (stride * block_size);
+
+  HIPCO_HIP_TRY(hipMemsetAsync(d_counter_.get(), 0, sizeof(atomic_ctr_type), stream));
+  std::size_t h_counter;
+
+  // todo: add variants without flushing and without cg for probing
+  detail::pair_retrieve<block_size, flushing_cg_size, cg_size(), buffer_size, is_outer>
+    <<<grid_size, block_size, 0, stream>>>(first,
+                                           num_pairs,
+                                           probe_output_begin,
+                                           contained_output_begin,
+                                           d_counter_.get(),
+                                           view,
+                                           pair_equal);
+
+  HIPCO_HIP_TRY(hipMemcpyAsync(
+    &h_counter, d_counter_.get(), sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
+  HIPCO_HIP_TRY(hipStreamSynchronize(stream));
+
+  return std::make_pair(probe_output_begin + h_counter, contained_output_begin + h_counter);
+}
+
+template <typename Key,
+          typename Value,
+          hip::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+template <typename InputIt, typename OutputIt1, typename OutputIt2, typename PairEqual, int warp_size>
+std::pair<OutputIt1, OutputIt2>
+static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve_outer_invoke_for_warp_size(
+  InputIt first,
+  InputIt last,
+  OutputIt1 probe_output_begin,
+  OutputIt2 contained_output_begin,
+  PairEqual pair_equal,
+  hipStream_t stream) const
+{
+  auto const num_pairs = hipco::detail::distance(first, last);
+  if (num_pairs == 0) { return std::make_pair(probe_output_begin, contained_output_begin); }
+
+  // Using per-warp buffer for vector loads and per-CG buffer for scalar loads
+  constexpr auto buffer_size = uses_vector_load() ? (warp_size * 3u) : (cg_size() * 3u);
+  constexpr auto block_size  = 128;
+  constexpr auto is_outer    = true;
+  constexpr auto stride      = 1;
+
+  auto view                   = get_device_view();
+  auto const flushing_cg_size = [&]() {
+    if constexpr (uses_vector_load()) { return  (uint32_t) warp_size; }
     return cg_size();
   }();
   auto const grid_size = (cg_size() * num_pairs + stride * block_size - 1) / (stride * block_size);
@@ -435,40 +559,18 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve_oute
   PairEqual pair_equal,
   hipStream_t stream) const
 {
-  auto const num_pairs = hipco::detail::distance(first, last);
-  if (num_pairs == 0) { return std::make_pair(probe_output_begin, contained_output_begin); }
-
-  // Using per-warp buffer for vector loads and per-CG buffer for scalar loads
-  constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
-  constexpr auto block_size  = 128;
-  constexpr auto is_outer    = true;
-  constexpr auto stride      = 1;
-
-  auto view                   = get_device_view();
-  auto const flushing_cg_size = [&]() {
-    if constexpr (uses_vector_load()) { return warp_size(); }
-    return cg_size();
-  }();
-  auto const grid_size = (cg_size() * num_pairs + stride * block_size - 1) / (stride * block_size);
-
-  HIPCO_HIP_TRY(hipMemsetAsync(d_counter_.get(), 0, sizeof(atomic_ctr_type), stream));
-  std::size_t h_counter;
-
-  // todo: add variants without flushing and without cg for probing
-  detail::pair_retrieve<block_size, flushing_cg_size, cg_size(), buffer_size, is_outer>
-    <<<grid_size, block_size, 0, stream>>>(first,
-                                           num_pairs,
-                                           probe_output_begin,
-                                           contained_output_begin,
-                                           d_counter_.get(),
-                                           view,
-                                           pair_equal);
-
-  HIPCO_HIP_TRY(hipMemcpyAsync(
-    &h_counter, d_counter_.get(), sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
-  HIPCO_HIP_TRY(hipStreamSynchronize(stream));
-
-  return std::make_pair(probe_output_begin + h_counter, contained_output_begin + h_counter);
+  // FIXME(HIP): For ROCm/HIP, warpSize and __AMDGCN_WAVEFRONT_SIZE__ are defaulted to 64.
+  // "Note that some architecture specific AMDGPU macros will have default values when used from the HIP host compilation.
+  // Other AMDGPU macros like __AMDGCN_WAVEFRONT_SIZE__ will default to 64 for example."
+  // (see https://github.com/ROCm/llvm-project/blob/f49f43078ea7fc8a6c1db63b40b10c652689e39c/clang/docs/HIPSupport.rst#L180).
+  // As a single hipCo binary might be compiled for multiple architectures with different wavefront sizes
+  // 32/64, we need to query the wavefront size at runtime and select/invoke the correct template here.
+  if(warp_size()==32) {
+    return pair_retrieve_outer_invoke_for_warp_size<InputIt, OutputIt1, OutputIt2, PairEqual, 32>(first, last, probe_output_begin, contained_output_begin, pair_equal, stream);
+  }
+  else {
+    return pair_retrieve_outer_invoke_for_warp_size<InputIt, OutputIt1, OutputIt2, PairEqual, 64>(first, last, probe_output_begin, contained_output_begin, pair_equal, stream);
+  }
 }
 
 template <typename Key,
