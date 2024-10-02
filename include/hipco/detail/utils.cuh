@@ -43,6 +43,84 @@
 namespace hipco {
 namespace detail {
 
+#if __AMDGCN_WAVEFRONT_SIZE == 32
+using lane_mask = unsigned int;
+#else
+using lane_mask = unsigned long long int;
+#endif
+
+/**
+ * \brief Find First Set
+ * \return index of first set bit of lowest significance.
+ * \note Return value type matches that of the underlying device builtin.
+ * \note While `uint64_t` is defined as `unsigned long int` on x86_64,
+ *       the HIP `__ffsll` device function provides `__ffsll` with `unsigned long long int`
+ *       argument, which is also an 64-bit integer type on x86_64.
+ *       However, the compilers typically see both as different types.
+ *       We work with `uint64t` and `uint32t` here, so explicit instantiations
+ *       for both are added here.
+ */
+template <typename T>
+__device__ inline int __FFS(T v);
+
+template <>
+__device__ inline int __FFS<int32_t>(int32_t v) {
+  return __ffs(v);
+}
+
+template <>
+__device__ inline int __FFS<int64_t>(int64_t v) {
+  return __ffsll(static_cast<unsigned long long int>(v));
+}
+
+template <>
+__device__ inline int __FFS<uint32_t>(uint32_t v) {
+  return __ffs(v);
+}
+
+template <>
+__device__ inline int __FFS<unsigned long long>(unsigned long long v) {
+  return __ffsll(static_cast<unsigned long long int>(v));
+}
+
+template <>
+__device__ inline int __FFS<uint64_t>(uint64_t v) {
+  return __ffsll(static_cast<unsigned long long int>(v));
+}
+
+/**
+ * \return Number of bits set to 1.
+ * \note Return value type matches that of the underlying device builtin.
+ */
+template <typename T>
+__device__ inline int __POPC(T v);
+
+
+template <>
+__device__ inline int __POPC<int32_t>(int32_t v) {
+  return __popc(v);
+}
+
+template <>
+__device__ inline int __POPC<int64_t>(int64_t v) {
+  return __popcll(v);
+}
+
+template <>
+__device__ inline int __POPC<uint32_t>(uint32_t v) {
+  return __popc(v);
+}
+
+template <>
+__device__ inline int __POPC<uint64_t>(uint64_t v) {
+  return __popcll(v);
+}
+
+template <>
+__device__ inline int __POPC<unsigned long long>(unsigned long long v) {
+  return __popcll(v);
+}
+
 /**
  * @brief For the `n` least significant bits in the given unsigned 32-bit integer `x`,
  * returns the number of set bits.
