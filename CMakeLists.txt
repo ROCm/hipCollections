@@ -158,6 +158,9 @@ set(HIPCO_BLOCK_SIZE "128" CACHE STRING "Size of thread blocks")
 target_compile_options(hipco INTERFACE "-DHIPCO_BLOCK_SIZE=${HIPCO_BLOCK_SIZE}")
 set(HIPCO_STATIC_SET_CG_SIZE "1" CACHE STRING "Size of cooperative groups for static_set")
 target_compile_options(hipco INTERFACE "-DHIPCO_STATIC_SET_CG_SIZE=${HIPCO_STATIC_SET_CG_SIZE}")
+# TODO(HIP): This is a hotfix and does not address the underlying weakness in the code, to
+# be revisited later.
+target_compile_options(hipco INTERFACE "-Wno-c++11-narrowing-const-reference")
 ###################################################################################################
 # - optionally build tests ------------------------------------------------------------------------
 if(BUILD_TESTS)
