@@ -487,7 +487,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       if (window_contains_empty) {
         // the first lane in the group with an empty slot will attempt the insert
         insert_result status{insert_result::CONTINUE};
-        uint32_t src_lane = __ffsll((unsigned long long)window_contains_empty) - 1;
+        uint32_t src_lane = detail::__FFS((lane_mask)window_contains_empty) - 1;
         if (g.thread_rank() == src_lane) {
           auto insert_location = first_slot_is_empty ? current_slot : current_slot + 1;
           // One single CAS operation since vector loads are dedicated to packable pairs
@@ -537,7 +537,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       if (window_contains_empty) {
         // the first lane in the group with an empty slot will attempt the insert
         insert_result status{insert_result::CONTINUE};
-        uint32_t src_lane = __ffsll((unsigned long long)window_contains_empty) - 1;
+        uint32_t src_lane = detail::__FFS((lane_mask)window_contains_empty) - 1;
 
         if (g.thread_rank() == src_lane) {
 #if (__CUDA_ARCH__ < 700)
@@ -1204,8 +1204,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         if (first_exists or second_exists) {
           if constexpr (is_outer) { found_match = true; }
 
-          auto const num_first_matches  = __popcll(first_exists);
-          auto const num_second_matches = __popcll(second_exists);
+          auto const num_first_matches  = detail::__POPC(first_exists);
+          auto const num_second_matches = detail::__POPC(second_exists);
 
           uint32_t output_idx = 0;
           if (0 == cg_lane_id) {
@@ -1312,7 +1312,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       if (exists) {
         if constexpr (is_outer) { found_match = true; }
-        auto const num_matches = __popcll(exists);
+        auto const num_matches = detail::__POPC(exists);
         if (equals) {
           // Each match computes its lane-level offset
           auto const lane_offset = detail::count_least_significant_bits(exists, lane_id);
@@ -1737,7 +1737,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       if (first_exists or second_exists) {
         if constexpr (is_outer) { found_match = true; }
 
-        auto const num_first_matches = __popcll(first_exists);
+        auto const num_first_matches = detail::__POPC(first_exists);
 
         if (first_equals) {
           auto lane_offset      = detail::count_least_significant_bits(first_exists, lane_id);
@@ -1757,7 +1757,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
           *(contained_key_begin + output_idx) = arr[1].first;
           *(contained_val_begin + output_idx) = arr[1].second;
         }
-        num_matches += (num_first_matches + __popcll(second_exists));
+        num_matches += (num_first_matches + detail::__POPC(second_exists));
       }
 
       if (probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
@@ -1857,7 +1857,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
           *(contained_key_begin + output_idx) = slot_contents.first;
           *(contained_val_begin + output_idx) = slot_contents.second;
         }
-        num_matches += __popcll(exists);
+        num_matches += detail::__POPC(exists);
       }
 
       if (probing_cg.any(slot_is_empty)) {
@@ -1952,8 +1952,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         if (first_exists or second_exists) {
           if constexpr (is_outer) { found_match = true; }
 
-          auto const num_first_matches  = __popcll(first_exists);
-          auto const num_second_matches = __popcll(second_exists);
+          auto const num_first_matches  = detail::__POPC(first_exists);
+          auto const num_second_matches = detail::__POPC(second_exists);
 
           uint32_t output_idx = 0;
           if (0 == cg_lane_id) {
@@ -2078,7 +2078,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       if (exists) {
         if constexpr (is_outer) { found_match = true; }
-        auto const num_matches = __popcll(exists);
+        auto const num_matches = detail::__POPC(exists);
         if (equals) {
           // Each match computes its lane-level offset
           auto const lane_offset = detail::count_least_significant_bits(exists, lane_id);
