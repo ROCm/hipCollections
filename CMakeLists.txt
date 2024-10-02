@@ -154,16 +154,17 @@ target_include_directories(cuco INTERFACE
 #FIXME(hip): Fix target cuco::rocthrust and use CMake generator expression
 target_link_libraries(cuco INTERFACE libhipcxx::libhipcxx hip::device roc::rocthrust)
 target_compile_features(cuco INTERFACE cxx_std_17 cuda_std_17)
-set(HIP_CG_SIZE "8" CACHE STRING "Size of cooperative groups")
-target_compile_options(cuco INTERFACE "-DHIP_CG_SIZE=${HIP_CG_SIZE}")
-set(HIP_TILE_SIZE "4" CACHE STRING "Size of cooperative groups")
-target_compile_options(cuco INTERFACE "-DHIP_TILE_SIZE=${HIP_TILE_SIZE}")
-set(HIP_BLOCK_SIZE "128" CACHE STRING "Size of thread blocks")
-target_compile_options(cuco INTERFACE "-DHIP_BLOCK_SIZE=${HIP_BLOCK_SIZE}")
-set(STATIC_SET_CG_SIZE "1" CACHE STRING "Size of cooperative groups for static_set")
-target_compile_options(cuco INTERFACE "-DSTATIC_SET_CG_SIZE=${STATIC_SET_CG_SIZE}")
-set(HIP_STATIC_MAP_OPT "0" CACHE STRING "Optimize cg/block size for static_map")
-target_compile_options(cuco INTERFACE "-DHIP_STATIC_MAP_OPT=${HIP_STATIC_MAP_OPT}")
+set(CUCO_CG_SIZE "8" CACHE STRING "Size of cooperative groups")
+target_compile_options(cuco INTERFACE "-DCUCO_CG_SIZE=${CUCO_CG_SIZE}")
+set(CUCO_TILE_SIZE "4" CACHE STRING "Size of cooperative groups")
+target_compile_options(cuco INTERFACE "-DCUCO_TILE_SIZE=${CUCO_TILE_SIZE}")
+set(CUCO_BLOCK_SIZE "128" CACHE STRING "Size of thread blocks")
+target_compile_options(cuco INTERFACE "-DCUCO_BLOCK_SIZE=${CUCO_BLOCK_SIZE}")
+set(CUCO_STATIC_SET_CG_SIZE "1" CACHE STRING "Size of cooperative groups for static_set")
+target_compile_options(cuco INTERFACE "-DCUCO_STATIC_SET_CG_SIZE=${CUCO_STATIC_SET_CG_SIZE}")
+# TODO(HIP): This is a hotfix and does not address the underlying weakness in the code, to
+# be revisited later.
+target_compile_options(cuco INTERFACE "-Wno-c++11-narrowing-const-reference")
 ###################################################################################################
 # - optionally build tests ------------------------------------------------------------------------
 if(BUILD_TESTS)
