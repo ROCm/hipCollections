@@ -491,7 +491,7 @@ class open_addressing_ref_impl {
 
       auto const group_contains_available = group.ballot(state == detail::equal_result::AVAILABLE);
       if (group_contains_available) {
-        auto const src_lane = __ffsll((unsigned long long)group_contains_available) - 1;
+        auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_available) - 1;
         auto const status =
           (group.thread_rank() == src_lane)
             ? attempt_insert((storage_ref_.data() + *probing_iter)->data() + intra_bucket_index,
@@ -640,7 +640,7 @@ class open_addressing_ref_impl {
       // If the key is already in the container, return false
       auto const group_finds_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_finds_equal) {
-        auto const src_lane = __ffsll((unsigned long long)group_finds_equal) - 1;
+        auto const src_lane = cuco::detail::__FFS((lane_mask)group_finds_equal) - 1;
         auto const res      = group.shfl(reinterpret_cast<intptr_t>(slot_ptr), src_lane);
         if (group.thread_rank() == src_lane) {
           if constexpr (has_payload) {
@@ -654,7 +654,7 @@ class open_addressing_ref_impl {
 
       auto const group_contains_available = group.ballot(state == detail::equal_result::AVAILABLE);
       if (group_contains_available) {
-        auto const src_lane = __ffsll((unsigned long long)group_contains_available) - 1;
+        auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_available) - 1;
         auto const res      = group.shfl(reinterpret_cast<intptr_t>(slot_ptr), src_lane);
         auto const status   = [&, target_idx = intra_bucket_index]() {
           if (group.thread_rank() != src_lane) { return insert_result::CONTINUE; }
@@ -767,7 +767,7 @@ class open_addressing_ref_impl {
 
       auto const group_contains_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_contains_equal) {
-        auto const src_lane = __ffsll((unsigned long long)group_contains_equal) - 1;
+        auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_equal) - 1;
         auto const status =
           (group.thread_rank() == src_lane)
             ? attempt_insert_stable(
@@ -942,7 +942,7 @@ class open_addressing_ref_impl {
       // Find a match for the probe key, thus return an iterator to the entry
       auto const group_finds_match = group.ballot(state == detail::equal_result::EQUAL);
       if (group_finds_match) {
-        auto const src_lane = __ffsll((unsigned long long)group_finds_match) - 1; //Todo(HIP): added (unsigned long long)
+        auto const src_lane = detail::__FFS((lane_mask)group_finds_match) - 1;
         auto const res      = group.shfl(
           reinterpret_cast<intptr_t>(&(*(storage_ref_.data() + *probing_iter))[intra_bucket_index]),
           src_lane);
