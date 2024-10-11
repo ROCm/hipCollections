@@ -105,6 +105,8 @@ option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ON)
 option(BUILD_EXAMPLES "Configure CMake to build examples" ${default_build_option_state})
 option(INSTALL_CUCO "Enable CMake install rules for cuco" ${default_build_option_state})
 
+option(USE_WARPSIZE_32 "Use wave size 32, e.g., for gfx1100 devices." OFF)
+
 # Write the version header
 rapids_cmake_write_version_file(include/cuco/version_config.hpp)
 
@@ -163,6 +165,10 @@ target_compile_options(cuco INTERFACE "-DCUCO_BLOCK_SIZE=${CUCO_BLOCK_SIZE}")
 set(CUCO_STATIC_SET_CG_SIZE "1" CACHE STRING "Size of cooperative groups for static_set")
 target_compile_options(cuco INTERFACE "-DCUCO_STATIC_SET_CG_SIZE=${CUCO_STATIC_SET_CG_SIZE}")
 target_compile_options(cuco INTERFACE "-DHIP_ENABLE_WARP_SYNC_BUILTINS=1")
+
+if(USE_WARPSIZE_32)
+  target_compile_options(cuco INTERFACE "-DCUCO_USE_WARPSIZE_32")
+endif()
 # TODO(HIP): This is a hotfix and does not address the underlying weakness in the code, to
 # be revisited later.
 target_compile_options(cuco INTERFACE "-Wno-c++11-narrowing-const-reference")

@@ -58,7 +58,13 @@ namespace cuco {
 namespace detail {
 
 /// CUDA warp size
-__device__ constexpr int32_t warp_size() noexcept { return 32; }
+__device__ constexpr int32_t warp_size() noexcept {
+#ifdef CUCO_USE_WARPSIZE_32
+    return 32u;
+#else
+    return 64u;
+#endif  
+}
 
 /**
  * @brief Returns the global thread index in a 1D scalar grid
