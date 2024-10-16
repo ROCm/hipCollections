@@ -79,7 +79,7 @@ list(APPEND SUPPORTED_ARCHS "gfx90a" "gfx908" "gfx940" "gfx941" "gfx942" "gfx110
 # WAR for not supporting all architectures yet
 # build only for supported architectures per default
 if(NOT (DEFINED CMAKE_HIP_ARCHITECTURES))
-  set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx908;gfx940;gfx941;gfx942;gfx1100")
+  set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx908;gfx940;gfx941;gfx942")
 else()
   foreach(arch ${CMAKE_HIP_ARCHITECTURES})
     if(NOT ${arch} IN_LIST SUPPORTED_ARCHS) 
