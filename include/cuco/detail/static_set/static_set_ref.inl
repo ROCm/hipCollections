@@ -210,10 +210,10 @@ __host__ __device__ constexpr static_set_ref<Key,
                                              ProbingScheme,
                                              StorageRef,
                                              Operators...>::extent_type
-static_set_ref<Key, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::window_extent()
+static_set_ref<Key, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::bucket_extent()
   const noexcept
 {
-  return impl_.window_extent();
+  return impl_.bucket_extent();
 }
 
 template <typename Key,
@@ -314,7 +314,7 @@ template <typename CG, cuda::thread_scope NewScope>
 __device__ constexpr auto
 static_set_ref<Key, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::make_copy(
   CG const& tile,
-  window_type* const memory_to_use,
+  bucket_type* const memory_to_use,
   cuda_thread_scope<NewScope> scope) const noexcept
 {
   this->impl_.make_copy(tile, memory_to_use);
@@ -324,7 +324,7 @@ static_set_ref<Key, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::m
     this->key_eq(),
     this->probing_scheme(),
     scope,
-    storage_ref_type{this->window_extent(), memory_to_use}};
+    storage_ref_type{this->bucket_extent(), memory_to_use}};
 }
 
 template <typename Key,
@@ -357,7 +357,7 @@ class operator_impl<op::insert_tag,
   using value_type = typename base_type::value_type;
 
   static constexpr auto cg_size     = base_type::cg_size;
-  static constexpr auto window_size = base_type::window_size;
+  static constexpr auto bucket_size = base_type::bucket_size;
 
  public:
   /**
@@ -411,7 +411,7 @@ class operator_impl<op::insert_and_find_tag,
   using const_iterator = typename base_type::const_iterator;
 
   static constexpr auto cg_size     = base_type::cg_size;
-  static constexpr auto window_size = base_type::window_size;
+  static constexpr auto bucket_size = base_type::bucket_size;
 
  public:
   /**
@@ -473,7 +473,7 @@ class operator_impl<op::erase_tag,
   using value_type = typename base_type::value_type;
 
   static constexpr auto cg_size     = base_type::cg_size;
-  static constexpr auto window_size = base_type::window_size;
+  static constexpr auto bucket_size = base_type::bucket_size;
 
  public:
   /**
@@ -525,7 +525,7 @@ class operator_impl<op::contains_tag,
   using value_type = typename base_type::value_type;
 
   static constexpr auto cg_size     = base_type::cg_size;
-  static constexpr auto window_size = base_type::window_size;
+  static constexpr auto bucket_size = base_type::bucket_size;
 
  public:
   /**
@@ -585,7 +585,7 @@ class operator_impl<op::find_tag,
   using const_iterator = typename base_type::const_iterator;
 
   static constexpr auto cg_size     = base_type::cg_size;
-  static constexpr auto window_size = base_type::window_size;
+  static constexpr auto bucket_size = base_type::bucket_size;
 
  public:
   /**
@@ -646,7 +646,7 @@ class operator_impl<op::for_each_tag,
   using const_iterator = typename base_type::const_iterator;
 
   static constexpr auto cg_size     = base_type::cg_size;
-  static constexpr auto window_size = base_type::window_size;
+  static constexpr auto bucket_size = base_type::bucket_size;
 
  public:
   /**
@@ -713,7 +713,7 @@ class operator_impl<op::count_tag,
   using size_type  = typename base_type::size_type;
 
   static constexpr auto cg_size     = base_type::cg_size;
-  static constexpr auto window_size = base_type::window_size;
+  static constexpr auto bucket_size = base_type::bucket_size;
 
  public:
   /**
