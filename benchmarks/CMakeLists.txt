@@ -77,14 +77,6 @@ ConfigureBench(STATIC_SET_BENCH
   static_set/rehash_bench.cu)
 
 ###################################################################################################
-# - static_set benchmarks -------------------------------------------------------------------------
-ConfigureBench(STATIC_SET_CG_BENCH
-hash_table/static_set_cg/contains_bench.hip
-hash_table/static_set_cg/insert_bench.hip
-hash_table/static_set_cg/retrieve_all_bench.hip
-hash_table/static_set_cg/size_bench.hip)
-
-###################################################################################################
 # - static_map benchmarks -------------------------------------------------------------------------
 ConfigureBench(STATIC_MAP_BENCH
   static_map/insert_bench.cu
@@ -101,22 +93,6 @@ ConfigureBench(STATIC_MULTISET_BENCH
   static_multiset/count_bench.cu
   static_multiset/find_bench.cu
   static_multiset/insert_bench.cu)
-
-###################################################################################################
-# - static_map benchmarks -------------------------------------------------------------------------
-ConfigureBench(STATIC_MAP_TILE_BENCH
-  hash_table/static_map_tile/insert_bench.hip
-  hash_table/static_map_tile/find_bench.hip
-  hash_table/static_map_tile/contains_bench.hip
-  hash_table/static_map_tile/erase_bench.hip)
-
-###################################################################################################
-# - static_map benchmarks -------------------------------------------------------------------------
-ConfigureBench(STATIC_MAP_BLOCK_BENCH
-  hash_table/static_map_block/insert_bench.hip
-  hash_table/static_map_block/find_bench.hip
-  hash_table/static_map_block/contains_bench.hip
-  hash_table/static_map_block/erase_bench.hip)
 
 ###################################################################################################
 # - static_multimap benchmarks --------------------------------------------------------------------
