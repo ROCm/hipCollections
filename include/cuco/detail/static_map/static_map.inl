@@ -735,7 +735,7 @@ template <class Key,
           class ProbingScheme,
           class Allocator,
           class Storage>
-static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size_type
+typename static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size_type
 static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size(
   cuda::stream_ref stream) const
 {
@@ -796,7 +796,7 @@ template <class Key,
           class ProbingScheme,
           class Allocator,
           class Storage>
-constexpr static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::key_type
+constexpr typename static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::key_type
 static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::
   erased_key_sentinel() const noexcept
 {

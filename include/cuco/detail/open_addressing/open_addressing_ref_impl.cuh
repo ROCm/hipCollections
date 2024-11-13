@@ -410,7 +410,7 @@ class open_addressing_ref_impl {
 
       for (auto& slot_content : bucket_slots) {
         auto const eq_res =
-          this->predicate_.operator()<is_insert::YES>(key, this->extract_key(slot_content));
+          this->predicate_.template operator()<is_insert::YES>(key, this->extract_key(slot_content));
 
         if constexpr (not allows_duplicates) {
           // If the key is already in the container, return false
@@ -467,7 +467,7 @@ class open_addressing_ref_impl {
       auto const [state, intra_bucket_index] = [&]() {
         for (auto i = 0; i < bucket_size; ++i) {
           switch (
-            this->predicate_.operator()<is_insert::YES>(key, this->extract_key(bucket_slots[i]))) {
+            this->predicate_.template operator()<is_insert::YES>(key, this->extract_key(bucket_slots[i]))) {
             case detail::equal_result::AVAILABLE:
               return bucket_probing_results{detail::equal_result::AVAILABLE, i};
             case detail::equal_result::EQUAL: {
@@ -553,7 +553,7 @@ class open_addressing_ref_impl {
 
       for (auto i = 0; i < bucket_size; ++i) {
         auto const eq_res =
-          this->predicate_.operator()<is_insert::YES>(key, this->extract_key(bucket_slots[i]));
+          this->predicate_.template operator()<is_insert::YES>(key, this->extract_key(bucket_slots[i]));
         auto* bucket_ptr = (storage_ref_.data() + *probing_iter)->data();
 
         // If the key is already in the container, return false
@@ -628,7 +628,7 @@ class open_addressing_ref_impl {
         auto res = detail::equal_result::UNEQUAL;
         for (auto i = 0; i < bucket_size; ++i) {
           res =
-            this->predicate_.operator()<is_insert::YES>(key, this->extract_key(bucket_slots[i]));
+            this->predicate_.template operator()<is_insert::YES>(key, this->extract_key(bucket_slots[i]));
           if (res != detail::equal_result::UNEQUAL) { return bucket_probing_results{res, i}; }
         }
         // returns dummy index `-1` for UNEQUAL
@@ -713,7 +713,7 @@ class open_addressing_ref_impl {
 
       for (auto& slot_content : bucket_slots) {
         auto const eq_res =
-          this->predicate_.operator()<is_insert::NO>(key, this->extract_key(slot_content));
+          this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(slot_content));
 
         // Key doesn't exist, return false
         if (eq_res == detail::equal_result::EMPTY) { return false; }
@@ -758,7 +758,7 @@ class open_addressing_ref_impl {
       auto const [state, intra_bucket_index] = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto i = 0; i < bucket_size; ++i) {
-          res = this->predicate_.operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]));
+          res = this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]));
           if (res != detail::equal_result::UNEQUAL) { return bucket_probing_results{res, i}; }
         }
         // returns dummy index `-1` for UNEQUAL
@@ -815,7 +815,7 @@ class open_addressing_ref_impl {
       auto const bucket_slots = storage_ref_[*probing_iter];
 
       for (auto& slot_content : bucket_slots) {
-        switch (this->predicate_.operator()<is_insert::NO>(key, this->extract_key(slot_content))) {
+        switch (this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(slot_content))) {
           case detail::equal_result::UNEQUAL: continue;
           case detail::equal_result::EMPTY: return false;
           case detail::equal_result::EQUAL: return true;
@@ -852,7 +852,7 @@ class open_addressing_ref_impl {
       auto const state = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto& slot : bucket_slots) {
-          res = this->predicate_.operator()<is_insert::NO>(key, this->extract_key(slot));
+          res = this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(slot));
           if (res != detail::equal_result::UNEQUAL) { return res; }
         }
         return res;
@@ -891,7 +891,7 @@ class open_addressing_ref_impl {
 
       for (auto i = 0; i < bucket_size; ++i) {
         switch (
-          this->predicate_.operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]))) {
+          this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]))) {
           case detail::equal_result::EMPTY: {
             return this->end();
           }
@@ -932,7 +932,7 @@ class open_addressing_ref_impl {
       auto const [state, intra_bucket_index] = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto i = 0; i < bucket_size; ++i) {
-          res = this->predicate_.operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]));
+          res = this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]));
           if (res != detail::equal_result::UNEQUAL) { return bucket_probing_results{res, i}; }
         }
         // returns dummy index `-1` for UNEQUAL

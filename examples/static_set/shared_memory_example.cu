@@ -50,7 +50,7 @@ __global__ void shmem_set_kernel(typename SetRef::extent_type bucket_extent,
   __shared__ typename SetRef::bucket_type buckets[bucket_extent.value()];
 
   // Next, we construct the actual storage object from the raw array.
-  auto storage = SetRef::storage_ref_type(bucket_extent, buckets);
+  auto storage = typename SetRef::storage_ref_type(bucket_extent, buckets);
   // Now we can instantiate the set from the storage.
   auto set = SetRef(empty_key_sentinel, {}, {}, {}, storage);
 

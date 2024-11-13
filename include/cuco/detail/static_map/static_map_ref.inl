@@ -128,7 +128,7 @@ template <typename Key,
           typename ProbingScheme,
           typename StorageRef,
           typename... Operators>
-__host__ __device__ constexpr static_map_ref<Key,
+__host__ __device__ constexpr typename static_map_ref<Key,
                                              T,
                                              Scope,
                                              KeyEqual,
@@ -148,7 +148,7 @@ template <typename Key,
           typename ProbingScheme,
           typename StorageRef,
           typename... Operators>
-__host__ __device__ constexpr static_map_ref<Key,
+__host__ __device__ constexpr typename static_map_ref<Key,
                                              T,
                                              Scope,
                                              KeyEqual,
@@ -188,7 +188,7 @@ template <typename Key,
           typename ProbingScheme,
           typename StorageRef,
           typename... Operators>
-__host__ __device__ constexpr static_map_ref<Key,
+__host__ __device__ constexpr typename static_map_ref<Key,
                                              T,
                                              Scope,
                                              KeyEqual,
@@ -249,7 +249,7 @@ template <typename Key,
           typename ProbingScheme,
           typename StorageRef,
           typename... Operators>
-__host__ __device__ constexpr static_map_ref<Key,
+__host__ __device__ constexpr typename static_map_ref<Key,
                                              T,
                                              Scope,
                                              KeyEqual,
@@ -517,7 +517,7 @@ class operator_impl<
 
       for (auto& slot_content : bucket_slots) {
         auto const eq_res =
-          ref_.impl_.predicate_.operator()<is_insert::YES>(key, slot_content.first);
+          ref_.impl_.predicate_.template operator()<is_insert::YES>(key, slot_content.first);
         auto const intra_bucket_index = thrust::distance(bucket_slots.begin(), &slot_content);
         auto slot_ptr = (storage_ref.data() + *probing_iter)->data() + intra_bucket_index;
 
@@ -566,7 +566,7 @@ class operator_impl<
       auto const [state, intra_bucket_index] = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto i = 0; i < bucket_size; ++i) {
-          res = ref_.impl_.predicate_.operator()<is_insert::YES>(key, bucket_slots[i].first);
+          res = ref_.impl_.predicate_.template operator()<is_insert::YES>(key, bucket_slots[i].first);
           if (res != detail::equal_result::UNEQUAL) {
             return detail::bucket_probing_results{res, i};
           }
