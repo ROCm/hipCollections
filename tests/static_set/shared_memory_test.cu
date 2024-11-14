@@ -82,7 +82,7 @@ __global__ void shared_memory_test_kernel(Ref* sets,
 }
 
 TEMPLATE_TEST_CASE_SIG(
-  "static_set shared memory tests", "", ((typename Key), Key), (int32_t), (int64_t))
+  "static_set shared memory tests", "", ((typename Key, int dummy), Key, dummy), (int32_t, 1), (int64_t, 1))  // FIXME(HIP/AMD): dummy fixes ambiguous get_wrapper calls in catch2
 {
   constexpr std::size_t number_of_sets  = 1000;
   constexpr std::size_t elements_in_set = 500;
