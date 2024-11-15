@@ -46,7 +46,7 @@
 namespace cuco {
 template <typename Key,
           typename Value,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename Allocator,
           class ProbeSequence>
 class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_impl_base {
@@ -229,7 +229,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
 template <typename Key,
           typename Value,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename Allocator,
           class ProbeSequence>
 class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutable_view_impl
@@ -275,7 +275,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       current_slot);
 
     bool success = slot->compare_exchange_strong(
-      expected_pair.packed, new_pair.packed, hip::std::memory_order_relaxed);
+      expected_pair.packed, new_pair.packed, cuda::std::memory_order_relaxed);
     if (success) { return insert_result::SUCCESS; }
 
     return insert_result::CONTINUE;
@@ -291,7 +291,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
   __device__ __forceinline__ insert_result back_to_back_cas(iterator current_slot,
                                                             value_type const& insert_pair) noexcept
   {
-    using hip::std::memory_order_relaxed;
+    using cuda::std::memory_order_relaxed;
 
     auto expected_key   = this->get_empty_key_sentinel();
     auto expected_value = this->get_empty_value_sentinel();
@@ -331,7 +331,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
   __device__ __forceinline__ insert_result
   cas_dependent_write(iterator current_slot, value_type const& insert_pair) noexcept
   {
-    using hip::std::memory_order_relaxed;
+    using cuda::std::memory_order_relaxed;
     auto expected_key = this->get_empty_key_sentinel();
 
     auto& slot_key = current_slot->first;
@@ -465,7 +465,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
 
 template <typename Key,
           typename Value,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename Allocator,
           class ProbeSequence>
 class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_impl
@@ -513,7 +513,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     std::size_t offset = 0;
     const auto lane_id = g.thread_rank();
     if (0 == lane_id) {
-      offset = num_matches->fetch_add(num_outputs, hip::std::memory_order_relaxed);
+      offset = num_matches->fetch_add(num_outputs, cuda::std::memory_order_relaxed);
     }
     offset = g.shfl(offset, 0);
 
@@ -583,7 +583,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     std::size_t offset = 0;
     const auto lane_id = g.thread_rank();
     if (0 == lane_id) {
-      offset = num_matches->fetch_add(num_outputs, hip::std::memory_order_relaxed);
+      offset = num_matches->fetch_add(num_outputs, cuda::std::memory_order_relaxed);
     }
     offset = g.shfl(offset, 0);
 

@@ -33,7 +33,7 @@
 
 namespace cuco {
 
-template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
 dynamic_map<Key, Value, Scope, Allocator>::dynamic_map(std::size_t initial_capacity,
                                                        empty_key<Key> empty_key_sentinel,
                                                        empty_value<Value> empty_value_sentinel,
@@ -59,7 +59,7 @@ dynamic_map<Key, Value, Scope, Allocator>::dynamic_map(std::size_t initial_capac
   submap_num_successes_.push_back(submaps_[0]->num_successes_);
 }
 
-template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
 dynamic_map<Key, Value, Scope, Allocator>::dynamic_map(std::size_t initial_capacity,
                                                        empty_key<Key> empty_key_sentinel,
                                                        empty_value<Value> empty_value_sentinel,
@@ -91,7 +91,7 @@ dynamic_map<Key, Value, Scope, Allocator>::dynamic_map(std::size_t initial_capac
   submap_num_successes_.push_back(submaps_[0]->num_successes_);
 }
 
-template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
 void dynamic_map<Key, Value, Scope, Allocator>::reserve(std::size_t n, hipStream_t stream)
 {
   int64_t num_elements_remaining = n;
@@ -133,7 +133,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::reserve(std::size_t n, hipStream
   }
 }
 
-template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
 template <typename InputIt, typename Hash, typename KeyEqual>
 void dynamic_map<Key, Value, Scope, Allocator>::insert(
   InputIt first, InputIt last, Hash hash, KeyEqual key_equal, hipStream_t stream)
@@ -189,7 +189,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::insert(
   }
 }
 
-template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
 template <typename InputIt, typename Hash, typename KeyEqual>
 void dynamic_map<Key, Value, Scope, Allocator>::erase(
   InputIt first, InputIt last, Hash hash, KeyEqual key_equal, hipStream_t stream)
@@ -233,7 +233,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::erase(
   }
 }
 
-template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
 template <typename InputIt, typename OutputIt, typename Hash, typename KeyEqual>
 void dynamic_map<Key, Value, Scope, Allocator>::find(InputIt first,
                                                      InputIt last,
@@ -254,7 +254,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::find(InputIt first,
   CUCO_CUDA_TRY(hipDeviceSynchronize());
 }
 
-template <typename Key, typename Value, hip::thread_scope Scope, typename Allocator>
+template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
 template <typename InputIt, typename OutputIt, typename Hash, typename KeyEqual>
 void dynamic_map<Key, Value, Scope, Allocator>::contains(InputIt first,
                                                          InputIt last,

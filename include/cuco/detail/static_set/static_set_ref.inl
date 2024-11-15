@@ -44,7 +44,7 @@
 namespace cuco {
 
 template <typename Key,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename KeyEqual,
           typename ProbingScheme,
           typename StorageRef,
@@ -65,7 +65,7 @@ __host__ __device__ constexpr static_set_ref<
 }
 
 template <typename Key,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename KeyEqual,
           typename ProbingScheme,
           typename StorageRef,
@@ -190,7 +190,7 @@ static_set_ref<Key, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::c
 }
 
 template <typename Key,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename KeyEqual,
           typename ProbingScheme,
           typename StorageRef,
@@ -361,7 +361,7 @@ static_set_ref<Key, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::i
 namespace detail {
 
 template <typename Key,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename KeyEqual,
           typename ProbingScheme,
           typename StorageRef,
@@ -413,7 +413,7 @@ class operator_impl<op::insert_tag,
 };
 
 template <typename Key,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename KeyEqual,
           typename ProbingScheme,
           typename StorageRef,
@@ -529,7 +529,7 @@ class operator_impl<op::erase_tag,
 };
 
 template <typename Key,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename KeyEqual,
           typename ProbingScheme,
           typename StorageRef,
@@ -587,7 +587,7 @@ class operator_impl<op::contains_tag,
 };
 
 template <typename Key,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename KeyEqual,
           typename ProbingScheme,
           typename StorageRef,

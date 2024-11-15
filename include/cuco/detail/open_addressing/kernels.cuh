@@ -116,7 +116,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void insert_if_n(InputIt first,
   // and atomically add to the grand total
   auto const block_num_successes = BlockReduce(temp_storage).Sum(thread_num_successes);
   if (threadIdx.x == 0) {
-    num_successes->fetch_add(block_num_successes, hip::std::memory_order_relaxed);
+    num_successes->fetch_add(block_num_successes, cuda::std::memory_order_relaxed);
   }
 }
 
@@ -701,7 +701,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void size(StorageRef storage,
   using BlockReduce = hipcub::BlockReduce<size_type, BlockSize>;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   auto const block_count = BlockReduce(temp_storage).Sum(thread_count);
-  if (threadIdx.x == 0) { count->fetch_add(block_count, hip::std::memory_order_relaxed); }
+  if (threadIdx.x == 0) { count->fetch_add(block_count, cuda::std::memory_order_relaxed); }
 }
 
 template <int32_t BlockSize, typename ContainerRef, typename Predicate>

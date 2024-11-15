@@ -232,7 +232,7 @@ CUCO_KERNEL void erase(
   // and atomically add to the grand total
   std::size_t block_num_successes = BlockReduce(temp_storage).Sum(thread_num_successes);
   if (threadIdx.x == 0) {
-    num_successes->fetch_add(block_num_successes, hip::std::memory_order_relaxed);
+    num_successes->fetch_add(block_num_successes, cuda::std::memory_order_relaxed);
   }
 }
 
@@ -288,7 +288,7 @@ CUCO_KERNEL void erase(
   // and atomically add to the grand total
   std::size_t block_num_successes = BlockReduce(temp_storage).Sum(thread_num_successes);
   if (threadIdx.x == 0) {
-    num_successes->fetch_add(block_num_successes, hip::std::memory_order_relaxed);
+    num_successes->fetch_add(block_num_successes, cuda::std::memory_order_relaxed);
   }
 }
 
@@ -356,7 +356,7 @@ __global__ void insert_if_n(InputIt first,
   // and atomically add to the grand total
   std::size_t block_num_successes = BlockReduce(temp_storage).Sum(thread_num_successes);
   if (threadIdx.x == 0) {
-    num_successes->fetch_add(block_num_successes, hip::std::memory_order_relaxed);
+    num_successes->fetch_add(block_num_successes, cuda::std::memory_order_relaxed);
   }
 }
 
@@ -429,7 +429,7 @@ CUCO_KERNEL void insert_if_n(InputIt first,
   // and atomically add to the grand total
   std::size_t block_num_successes = BlockReduce(temp_storage).Sum(thread_num_successes);
   if (threadIdx.x == 0) {
-    num_successes->fetch_add(block_num_successes, hip::std::memory_order_relaxed);
+    num_successes->fetch_add(block_num_successes, cuda::std::memory_order_relaxed);
   }
 }
 
@@ -482,7 +482,7 @@ CUCO_KERNEL void find(
      */
     writeBuffer[threadIdx.x] = found == view.end()
                                  ? view.get_empty_value_sentinel()
-                                 : found->second.load(hip::std::memory_order_relaxed);
+                                 : found->second.load(cuda::std::memory_order_relaxed);
     __syncthreads();
     *(output_begin + idx) = writeBuffer[threadIdx.x];
     idx += loop_stride;

@@ -104,7 +104,7 @@ namespace cuco {
 #endif
 template <class Key,
           class Extent             = cuco::extent<std::size_t>,
-          hip::thread_scope Scope  = hip::thread_scope_device,
+          cuda::thread_scope Scope = cuda::thread_scope_device,
           class KeyEqual           = thrust::equal_to<Key>,
           class ProbingScheme      = cuco::double_hashing<CUCO_STATIC_SET_CG_SIZE,  // CG size
                                                           cuco::default_hash_function<Key>>,

@@ -41,14 +41,14 @@
 namespace cuco::detail {
 
 template <typename T, typename = void>
-struct is_std_pair_like : hip::std::false_type {};
+struct is_std_pair_like : cuda::std::false_type {};
 
 template <typename T>
 struct is_std_pair_like<T,
-                        hip::std::void_t<decltype(std::get<0>(hip::std::declval<T>())),
-                                          decltype(std::get<1>(hip::std::declval<T>()))>>
-  : hip::std::
-      conditional_t<std::tuple_size<T>::value == 2, hip::std::true_type, hip::std::false_type> {};
+                        cuda::std::void_t<decltype(std::get<0>(cuda::std::declval<T>())),
+                                          decltype(std::get<1>(cuda::std::declval<T>()))>>
+  : cuda::std::
+      conditional_t<std::tuple_size<T>::value == 2, cuda::std::true_type, cuda::std::false_type> {};
 
 template <typename T, typename = void>
 struct is_cuda_std_pair_like_impl : cuda::std::false_type {};

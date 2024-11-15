@@ -92,8 +92,8 @@ __global__ void count_by_key(Map map_ref,
       thread_unique_keys++;
     } else {
       // key is already in the map -> increment count
-      auto ref = hip::atomic_ref<uint32_t, hip::thread_scope_device>{slot->second};
-      ref.fetch_add(1, hip::memory_order_relaxed);
+      auto ref = cuda::atomic_ref<uint32_t, cuda::thread_scope_device>{slot->second};
+      ref.fetch_add(1, cuda::memory_order_relaxed);
     }
     idx += loop_stride;
   }
@@ -102,9 +102,9 @@ __global__ void count_by_key(Map map_ref,
   // and atomically add to the grand total
   uint64_t block_unique_keys = BlockReduce(temp_storage).Sum(thread_unique_keys);
   if (threadIdx.x == 0) {
-    hip::atomic_ref<uint64_t, hip::thread_scope_device> grid_unique_keys(
+    cuda::atomic_ref<uint64_t, cuda::thread_scope_device> grid_unique_keys(
       *thrust::raw_pointer_cast(num_unique_keys));
-    grid_unique_keys.fetch_add(block_unique_keys, hip::memory_order_relaxed);
+    grid_unique_keys.fetch_add(block_unique_keys, cuda::memory_order_relaxed);
   }
 }
 

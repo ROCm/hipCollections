@@ -72,7 +72,7 @@ namespace cuco {
  * @tparam Operators Device operator options defined in `include/cuco/operator.hpp`
  */
 template <typename Key,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           typename KeyEqual,
           typename ProbingScheme,
           typename StorageRef,

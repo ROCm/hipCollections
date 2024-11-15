@@ -248,7 +248,7 @@ class dynamic_map {
  */
 template <typename Key,
           typename Value,
-          hip::thread_scope Scope = hip::thread_scope_device,
+          cuda::thread_scope Scope = cuda::thread_scope_device,
           typename Allocator       = cuco::cuda_allocator<char>>
 class dynamic_map {
   static_assert(std::is_arithmetic<Key>::value, "Unsupported, non-arithmetic key type.");

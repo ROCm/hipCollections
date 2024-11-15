@@ -116,7 +116,7 @@ TEMPLATE_TEST_CASE("static_multimap heterogeneous lookup tests",
   constexpr std::size_t capacity = num * 2;
   cuco::static_multimap<Key,
                         Value,
-                        hip::thread_scope_device,
+                        cuda::thread_scope_device,
                         cuco::cuda_allocator<char>,
                         cuco::legacy::linear_probing<1, custom_hasher>>
     map{capacity, cuco::empty_key<Key>{sentinel_key}, cuco::empty_value<Value>{sentinel_value}};

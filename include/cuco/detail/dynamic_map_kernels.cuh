@@ -123,7 +123,7 @@ CUCO_KERNEL void insert(InputIt first,
 
   std::size_t const block_num_successes = BlockReduce(temp_storage).Sum(thread_num_successes);
   if (threadIdx.x == 0) {
-    num_successes->fetch_add(block_num_successes, hip::std::memory_order_relaxed);
+    num_successes->fetch_add(block_num_successes, cuda::std::memory_order_relaxed);
   }
 }
 
@@ -212,7 +212,7 @@ CUCO_KERNEL void insert(InputIt first,
   std::size_t const block_num_successes = BlockReduce(temp_storage).Sum(thread_num_successes);
   if (threadIdx.x == 0) {
     submap_num_successes[insert_idx]->fetch_add(block_num_successes,
-                                                hip::std::memory_order_relaxed);
+                                                cuda::std::memory_order_relaxed);
   }
 }
 
@@ -280,7 +280,7 @@ CUCO_KERNEL void erase(InputIt first,
   for (auto i = 0; i < num_submaps; ++i) {
     if (threadIdx.x == 0) {
       submap_num_successes[i]->fetch_add(static_cast<std::size_t>(submap_block_num_successes[i]),
-                                         hip::std::memory_order_relaxed);
+                                         cuda::std::memory_order_relaxed);
     }
   }
 }
@@ -354,7 +354,7 @@ CUCO_KERNEL void erase(InputIt first,
   for (auto i = 0; i < num_submaps; ++i) {
     if (threadIdx.x == 0) {
       submap_num_successes[i]->fetch_add(static_cast<std::size_t>(submap_block_num_successes[i]),
-                                         hip::std::memory_order_relaxed);
+                                         cuda::std::memory_order_relaxed);
     }
   }
 }

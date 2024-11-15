@@ -2276,9 +2276,9 @@ class static_map {
       pair_atomic_type const* const slots_ptr = source_device_view.get_slots();
       for (std::size_t i = g.thread_rank(); i < source_device_view.get_capacity(); i += g.size()) {
         new (&memory_to_use[i].first)
-          atomic_key_type{slots_ptr[i].first.load(hip::memory_order_relaxed)};
+          atomic_key_type{slots_ptr[i].first.load(cuda::memory_order_relaxed)};
         new (&memory_to_use[i].second)
-          atomic_mapped_type{slots_ptr[i].second.load(hip::memory_order_relaxed)};
+          atomic_mapped_type{slots_ptr[i].second.load(cuda::memory_order_relaxed)};
       }
       g.sync();
 #endif

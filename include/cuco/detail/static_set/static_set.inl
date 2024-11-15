@@ -43,7 +43,7 @@ namespace cuco {
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -108,7 +108,7 @@ constexpr static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Sto
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -121,7 +121,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -134,7 +134,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -149,7 +149,7 @@ static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::ins
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -178,7 +178,7 @@ static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::ins
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -192,7 +192,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -274,7 +274,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -288,7 +288,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -308,7 +308,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -327,7 +327,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -342,7 +342,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -399,7 +399,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -612,7 +612,7 @@ void static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -626,7 +626,7 @@ static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::siz
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -640,7 +640,7 @@ static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::cap
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
@@ -654,7 +654,7 @@ static_set<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::emp
 
 template <class Key,
           class Extent,
-          hip::thread_scope Scope,
+          cuda::thread_scope Scope,
           class KeyEqual,
           class ProbingScheme,
           class Allocator,
