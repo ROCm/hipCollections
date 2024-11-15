@@ -1515,7 +1515,7 @@ class open_addressing_ref_impl {
   [[nodiscard]] __host__ __device__ constexpr auto const& extract_key(
     Value const& value) const noexcept
   {
-    if /*constexpr*/ (this->has_payload) { //TODO(HIP): no constexpr
+    if constexpr (has_payload) {
       return thrust::raw_reference_cast(value).first;
     } else {
       return thrust::raw_reference_cast(value);
@@ -1551,7 +1551,7 @@ class open_addressing_ref_impl {
   template <typename T>
   [[nodiscard]] __device__ constexpr value_type native_value(T const& value) const noexcept
   {
-    if constexpr (this->has_payload) {
+    if constexpr (has_payload) {
       return {static_cast<key_type>(this->extract_key(value)), this->extract_payload(value)};
     } else {
       return static_cast<value_type>(value);
@@ -1571,7 +1571,7 @@ class open_addressing_ref_impl {
   template <typename T>
   [[nodiscard]] __device__ constexpr auto heterogeneous_value(T const& value) const noexcept
   {
-    if constexpr (this->has_payload and not cuda::std::is_same_v<T, value_type>) {
+    if constexpr (has_payload and not cuda::std::is_same_v<T, value_type>) {
       using mapped_type = decltype(this->empty_value_sentinel());
       if constexpr (cuco::detail::is_cuda_std_pair_like<T>::value) {
         return cuco::pair{cuda::std::get<0>(value),
@@ -1593,7 +1593,7 @@ class open_addressing_ref_impl {
    */
   [[nodiscard]] __device__ constexpr value_type const erased_slot_sentinel() const noexcept
   {
-    if constexpr (this->has_payload) {
+    if constexpr (has_payload) {
       return cuco::pair{this->erased_key_sentinel(), this->empty_value_sentinel()};
     } else {
       return this->erased_key_sentinel();
