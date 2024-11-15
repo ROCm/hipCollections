@@ -41,7 +41,7 @@
 #include <cuda/std/type_traits>
 #include <cuda/std/utility>
 
-#include <cooperative_groups.h>
+#include <hip/hip_cooperative_groups.h>
 
 namespace cuco {
 
