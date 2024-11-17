@@ -1914,64 +1914,6 @@ class static_multimap {
 
     /**
      * @brief Retrieves all the matches of a given key contained in multimap with per-flushing-CG
-     * shared memory buffer but without using cooperative groups for parallel probing.
-     *
-     * For key `k` existing in the map, copies `k` and all associated values to unspecified
-     * locations in `[output_begin, output_end)`.
-     *
-     * @tparam buffer_size Size of the output buffer
-     * @tparam FlushingCG Type of Cooperative Group used to flush output buffer
-     * @tparam atomicT Type of atomic storage
-     * @tparam OutputIt Device accessible output iterator whose `value_type` is
-     * constructible from the map's `value_type`
-     * @tparam KeyEqual Binary callable type
-     * @param flushing_cg The Cooperative Group used to flush output buffer
-     * @param k The key to search for
-     * @param flushing_cg_counter Pointer to flushing_cg counter
-     * @param output_buffer Shared memory buffer of the key/value pair sequence
-     * @param num_matches Size of the output sequence
-     * @param output_begin Beginning of the output sequence of key/value pairs
-     * @param key_equal The binary callable used to compare two keys
-     * for equality
-     */
-    template <uint32_t buffer_size,
-              typename FlushingCG,
-              typename atomicT,
-              typename OutputIt,
-              typename KeyEqual = thrust::equal_to<key_type>>
-    __device__ __forceinline__ void retrieve_no_cg_probe(FlushingCG const& flushing_cg,
-                                                         Key const& k,
-                                                         uint32_t* flushing_cg_counter,
-                                                         value_type* output_buffer,
-                                                         atomicT* num_matches,
-                                                         OutputIt output_begin,
-                                                         KeyEqual key_equal = KeyEqual{}) noexcept;
-
-    /**
-     * @brief Retrieves all the matches of a given key contained in multimap
-     *
-     * For key `k` existing in the map, copies `k` and all associated values to unspecified
-     * locations in `[output_begin, output_end)`.
-     *
-     * @tparam atomicT Type of atomic storage
-     * @tparam OutputIt Device accessible output iterator whose `value_type` is
-     * constructible from the map's `value_type`
-     * @tparam KeyEqual Binary callable type
-     * @param k The key to search for
-     * @param num_matches Size of the output sequence
-     * @param output_begin Beginning of the output sequence of key/value pairs
-     * @param key_equal The binary callable used to compare two keys
-     * for equality
-     */
-    template <typename atomicT, typename OutputIt, typename KeyEqual = thrust::equal_to<key_type>>
-    __device__ __forceinline__ void retrieve_no_cg_probe_no_flushing(
-      Key const& k,
-      atomicT* num_matches,
-      OutputIt output_begin,
-      KeyEqual key_equal = KeyEqual{}) noexcept;
-
-    /**
-     * @brief Retrieves all the matches of a given key contained in multimap with per-flushing-CG
      * shared memory buffer.
      *
      * For key `k` existing in the map, copies `k` and all associated values to unspecified
@@ -2006,71 +1948,6 @@ class static_multimap {
       Key const& k,
       uint32_t* flushing_cg_counter,
       value_type* output_buffer,
-      atomicT* num_matches,
-      OutputIt output_begin,
-      KeyEqual key_equal = KeyEqual{}) noexcept;
-
-    /**
-     * @brief Retrieves all the matches of a given key contained in multimap with per-flushing-CG
-     * shared memory buffer but without cooperative groups for parallel probing.
-     *
-     * For key `k` existing in the map, copies `k` and all associated values to unspecified
-     * locations in `[output_begin, output_end)`. If `k` does not have any matches, copies `k` and
-     * `empty_value_sentinel()` into the output.
-     *
-     * @tparam buffer_size Size of the output buffer
-     * @tparam FlushingCG Type of Cooperative Group used to flush output buffer
-     * @tparam atomicT Type of atomic storage
-     * @tparam OutputIt Device accessible output iterator whose `value_type` is
-     * constructible from the map's `value_type`
-     * @tparam KeyEqual Binary callable type
-     *
-     * @param flushing_cg The Cooperative Group used to flush output buffer
-     * @param k The key to search for
-     * @param flushing_cg_counter Pointer to flushing_cg counter
-     * @param output_buffer Shared memory buffer of the key/value pair sequence
-     * @param num_matches Size of the output sequence
-     * @param output_begin Beginning of the output sequence of key/value pairs
-     * @param key_equal The binary callable used to compare two keys
-     * for equality
-     */
-    template <uint32_t buffer_size,
-              typename FlushingCG,
-              typename atomicT,
-              typename OutputIt,
-              typename KeyEqual = thrust::equal_to<key_type>>
-    __device__ __forceinline__ void retrieve_outer_no_cg_probe(
-      FlushingCG const& flushing_cg,
-      Key const& k,
-      uint32_t* flushing_cg_counter,
-      value_type* output_buffer,
-      atomicT* num_matches,
-      OutputIt output_begin,
-      KeyEqual key_equal = KeyEqual{}) noexcept;
-
-    /**
-     * @brief Retrieves all the matches of a given key contained in multimap.
-     *
-     * For key `k` existing in the map, copies `k` and all associated values to unspecified
-     * locations in `[output_begin, output_end)`. If `k` does not have any matches, copies `k` and
-     * `empty_value_sentinel()` into the output.
-     *
-     * @tparam buffer_size Size of the output buffer
-     * @tparam FlushingCG Type of Cooperative Group used to flush output buffer
-     * @tparam atomicT Type of atomic storage
-     * @tparam OutputIt Device accessible output iterator whose `value_type` is
-     * constructible from the map's `value_type`
-     * @tparam KeyEqual Binary callable type
-     *
-     * @param k The key to search for
-     * @param num_matches Size of the output sequence
-     * @param output_begin Beginning of the output sequence of key/value pairs
-     * @param key_equal The binary callable used to compare two keys
-     * for equality
-     */
-    template <typename atomicT, typename OutputIt, typename KeyEqual = thrust::equal_to<key_type>>
-    __device__ __forceinline__ void retrieve_outer_no_cg_probe_no_flushing(
-      Key const& k,
       atomicT* num_matches,
       OutputIt output_begin,
       KeyEqual key_equal = KeyEqual{}) noexcept;
