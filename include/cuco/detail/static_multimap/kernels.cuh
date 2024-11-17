@@ -226,115 +226,6 @@ CUCO_KERNEL void contains(InputIt first, int64_t n, OutputIt output_begin, viewT
 }
 
 /**
- * @brief Indicates whether the elements in the range `[first, last)` are contained in the map.
- *
- * Stores `true` or `false` to `(output + i)` indicating if the element `*(first + i)` exists in the
- * map.
- *
- *
- * @tparam is_pair_contains `true` if it's a `pair_contains` implementation
- * @tparam block_size The size of the thread block
- * @tparam InputIt Device accessible input iterator
- * @tparam OutputIt Device accessible output iterator assignable from `bool`
- * @tparam viewT Type of device view allowing access of hash map storage
- * @tparam Equal Binary callable type
- *
- * @param first Beginning of the sequence of elements
- * @param n Number of elements to query
- * @param output_begin Beginning of the sequence of booleans for the presence of each element
- * @param view Device view used to access the hash map's slot storage
- * @param equal The binary function to compare input element and slot content for equality
- */
-template <bool is_pair_contains,
-          uint32_t block_size,
-          typename InputIt,
-          typename OutputIt,
-          typename viewT,
-          typename Equal>
-__global__ void contains(InputIt first, int64_t n, OutputIt output_begin, viewT view, Equal equal)
-{
-  int64_t const loop_stride = gridDim.x * block_size;
-  int64_t idx               = block_size * blockIdx.x + threadIdx.x;
-  __shared__ bool writeBuffer[block_size];
-
-  while (idx < n) {
-    typename std::iterator_traits<InputIt>::value_type element = *(first + idx);
-    auto found                                                 = [&]() {
-      if constexpr (is_pair_contains) { return view.pair_contains(element, equal); }
-      if constexpr (not is_pair_contains) { return view.contains(element, equal); }
-    }();
-
-    /*
-     * The ld.relaxed.gpu instruction used in view.find causes L1 to
-     * flush more frequently, causing increased sector stores from L2 to global memory.
-     * By writing results to shared memory and then synchronizing before writing back
-     * to global, we no longer rely on L1, preventing the increase in sector stores from
-     * L2 to global and improving performance.
-     */
-    writeBuffer[threadIdx.x] = found;
-    __syncthreads();
-    *(output_begin + idx) = writeBuffer[threadIdx.x];
-    idx += loop_stride;
-  }
-}
-
-/**
- * @brief Counts the occurrences of keys in `[first, last)` contained in the multimap.
- *
- * For each key, `k = *(first + i)`, counts all matching keys, `k'`, as determined by `key_equal(k,
- * k')` and stores the sum of all matches for all keys to `num_matches`. If `k` does not have any
- * matches, it contributes 1 to the final sum only if `is_outer` is true.
- *
- * @tparam block_size The size of the thread block
- * @tparam uses_vector_load Boolean flag indicating whether vector loads are used or not
- * @tparam is_outer Boolean flag indicating whether non-matches are counted
- * @tparam InputIt Device accessible input iterator whose `value_type` is convertible to the map's
- * `key_type`
- * @tparam atomicT Type of atomic storage
- * @tparam viewT Type of device view allowing access of hash map storage
- * @tparam KeyEqual Binary callable
- *
- * @param first Beginning of the sequence of keys to count
- * @param n Number of the keys to query
- * @param num_matches The number of all the matches for a sequence of keys
- * @param view Device view used to access the hash map's slot storage
- * @param key_equal Binary function to compare two keys for equality
- */
-template <uint32_t block_size,
-          bool is_outer,
-          typename InputIt,
-          typename atomicT,
-          typename viewT,
-          typename KeyEqual>
-__global__ void count(
-  InputIt first, int64_t n, atomicT* num_matches, viewT view, KeyEqual key_equal)
-{
-  int64_t const loop_stride = gridDim.x * block_size;
-  int64_t idx               = (block_size * blockIdx.x + threadIdx.x);
-
-  typedef hipcub::BlockReduce<std::size_t, block_size> BlockReduce;
-  __shared__ typename BlockReduce::TempStorage temp_storage;
-  std::size_t thread_num_matches = 0;
-
-  while (idx < n) {
-    auto key = *(first + idx);
-    if constexpr (is_outer) {
-      thread_num_matches += view.count_outer(key, key_equal);
-    } else {
-      thread_num_matches += view.count(key, key_equal);
-    }
-    idx += loop_stride;
-  }
-
-  // compute number of successfully inserted elements for each block
-  // and atomically add to the grand total
-  std::size_t block_num_matches = BlockReduce(temp_storage).Sum(thread_num_matches);
-  if (threadIdx.x == 0) {
-    num_matches->fetch_add(block_num_matches, cuda::std::memory_order_relaxed);
-  }
-}
-
-/**
  * @brief Counts the occurrences of keys in `[first, last)` contained in the multimap.
  *
  * For each key, `k = *(first + i)`, counts all matching keys, `k'`, as determined by `key_equal(k,
@@ -520,7 +411,7 @@ CUCO_KERNEL void retrieve(InputIt first,
 
   while (flushing_cg.any(idx < n)) {
     bool active_flag        = idx < n;
-    auto active_flushing_cg = cooperative_groups::binary_partition(flushing_cg, active_flag);
+    auto active_flushing_cg = cg::binary_partition<flushing_cg_size>(flushing_cg, active_flag);
 
     if (active_flag) {
       auto key = *(first + idx);
@@ -625,15 +516,17 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
 
   __shared__ pair_type probe_output_buffer[num_flushing_cgs][buffer_size];
   __shared__ pair_type contained_output_buffer[num_flushing_cgs][buffer_size];
-  // TODO: replace this with shared memory hip::atomic variables once the dynamiic initialization
+  // TODO: replace this with shared memory cuda::atomic variables once the dynamiic initialization
   // warning issue is solved __shared__ atomicT counter[num_flushing_cgs][buffer_size];
   __shared__ uint32_t flushing_cg_counter[num_flushing_cgs];
 
   if (flushing_cg.thread_rank() == 0) { flushing_cg_counter[flushing_cg_id] = 0; }
 
+  flushing_cg.sync();
+
   while (flushing_cg.any(idx < n)) {
     bool active_flag        = idx < n;
-    auto active_flushing_cg = cooperative_groups::binary_partition(flushing_cg, active_flag);
+    auto active_flushing_cg = cg::binary_partition<flushing_cg_size>(flushing_cg, active_flag);
 
     if (active_flag) {
       pair_type pair = *(first + idx);
