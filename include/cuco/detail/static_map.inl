@@ -121,13 +121,8 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::insert(
   static_assert(sizeof(std::size_t) == sizeof(atomic_ctr_type));
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
-  if constexpr (tile_size == 1) {
-    detail::insert<block_size><<<grid_size, block_size, 0, stream>>>(
-      first, num_keys, num_successes_, view, hash, key_equal);
-  } else {
-    detail::insert<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
-      first, num_keys, num_successes_, view, hash, key_equal);
-  }
+  detail::insert<block_size, tile_size>
+    <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
   CUCO_CUDA_TRY(hipMemcpyAsync(
     &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
 
@@ -196,13 +191,8 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::erase(
   CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
 
-  if constexpr (tile_size == 1) {
-    detail::erase<block_size><<<grid_size, block_size, 0, stream>>>(
-      first, num_keys, num_successes_, view, hash, key_equal);
-  } else {
-    detail::erase<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
-      first, num_keys, num_successes_, view, hash, key_equal);
-  }
+  detail::erase<block_size, tile_size>
+    <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
   CUCO_CUDA_TRY(hipMemcpyAsync(
     &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
 
@@ -229,13 +219,8 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::find(InputIt
   auto const grid_size  = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view             = get_device_view();
 
-  if constexpr (tile_size == 1) {
-    detail::find<block_size, Value>
-      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
-  } else {
-    detail::find<block_size, tile_size, Value>
-      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
-  }
+  detail::find<block_size, tile_size, Value>
+    <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
 }
 
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
@@ -310,13 +295,8 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::contains(Inp
   auto const grid_size = (tile_size * num_keys + stride * block_size - 1) / (stride * block_size);
   auto view            = get_device_view();
 
-  if constexpr (tile_size == 1) {
-    detail::contains<block_size>
-      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
-  } else {
-    detail::contains<block_size, tile_size>
-      <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
-  }
+  detail::contains<block_size, tile_size>
+    <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, hash, key_equal);
 }
 
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
