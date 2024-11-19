@@ -116,19 +116,19 @@ __global__ void check_hash_result_kernel_64(OutputIter result)
 {
   int i = 0;
 
-  result[i++] = check_hash_result<cuco::xxhash_64<char>>(0, 16804241149081757544, 0);
+  result[i++] = check_hash_result<cuco::xxhash_64<char>>(0, 16804241149081757544u, 0);
   result[i++] = check_hash_result<cuco::xxhash_64<char>>(42, 765293966243412708, 0);
-  result[i++] = check_hash_result<cuco::xxhash_64<char>>(0, 9486749600008296231, 42);
+  result[i++] = check_hash_result<cuco::xxhash_64<char>>(0, 9486749600008296231u, 42);
 
   result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(0, 4246796580750024372, 0);
   result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(0, 3614696996920510707, 42);
-  result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(42, 15516826743637085169, 0);
-  result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(123456789, 9462334144942111946, 0);
+  result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(42, 15516826743637085169u, 0);
+  result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(123456789, 9462334144942111946u, 0);
 
   result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(0, 3803688792395291579, 0);
-  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(0, 13194218611613725804, 42);
-  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(42, 13066772586158965587, 0);
-  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(123456789, 14662639848940634189, 0);
+  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(0, 13194218611613725804u, 42);
+  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(42, 13066772586158965587u, 0);
+  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(123456789, 14662639848940634189u, 0);
 
 #if defined(CUCO_HAS_INT128)
   result[i++] = check_hash_result<cuco::xxhash_64<__int128>>(123456789, 7986913354431084250, 0);
@@ -143,19 +143,19 @@ TEST_CASE("utility cuco::xxhash_64 test", "")
   // Reference hash values were computed using https://github.com/Cyan4973/xxHash
   SECTION("Check if host-generated hash values match the reference implementation.")
   {
-    CHECK(check_hash_result<cuco::xxhash_64<char>>(0, 16804241149081757544, 0));
+    CHECK(check_hash_result<cuco::xxhash_64<char>>(0, 16804241149081757544u, 0));
     CHECK(check_hash_result<cuco::xxhash_64<char>>(42, 765293966243412708, 0));
-    CHECK(check_hash_result<cuco::xxhash_64<char>>(0, 9486749600008296231, 42));
+    CHECK(check_hash_result<cuco::xxhash_64<char>>(0, 9486749600008296231u, 42));
 
     CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(0, 4246796580750024372, 0));
     CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(0, 3614696996920510707, 42));
-    CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(42, 15516826743637085169, 0));
-    CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(123456789, 9462334144942111946, 0));
+    CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(42, 15516826743637085169u, 0));
+    CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(123456789, 9462334144942111946u, 0));
 
     CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(0, 3803688792395291579, 0));
-    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(0, 13194218611613725804, 42));
-    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(42, 13066772586158965587, 0));
-    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(123456789, 14662639848940634189, 0));
+    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(0, 13194218611613725804u, 42));
+    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(42, 13066772586158965587u, 0));
+    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(123456789, 14662639848940634189u, 0));
 
 #if defined(CUCO_HAS_INT128)
     CHECK(check_hash_result<cuco::xxhash_64<__int128>>(123456789, 7986913354431084250, 0));
