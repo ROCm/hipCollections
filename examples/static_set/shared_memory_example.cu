@@ -122,5 +122,5 @@ int main(void)
 
   // Launch the kernel with a single thread block.
   shmem_set_kernel<set_ref_type><<<1, 128>>>(bucket_extent, empty_key_sentinel);
-  cudaDeviceSynchronize();
+  (void) cudaDeviceSynchronize();
 }
