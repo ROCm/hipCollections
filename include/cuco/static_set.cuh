@@ -100,7 +100,11 @@ namespace cuco {
  * @tparam Storage Slot bucket storage type
  */
 #ifndef CUCO_STATIC_SET_CG_SIZE
-#define CUCO_STATIC_SET_CG_SIZE 1  // TODO(HIP/AMD): CG size, default for NVIDIA: 4, investigate these parameters
+// TODO(HIP/AMD): CG size, default for NVIDIA: 4, investigate these parameters
+// NOTE(HIP/AMD): Failing unit tests related to rehash have been observed
+// in the upstream with CG size 1 (static set). They are going to be addressed 
+// in a future upgrade.
+#define CUCO_STATIC_SET_CG_SIZE 4
 #endif
 template <class Key,
           class Extent             = cuco::extent<std::size_t>,

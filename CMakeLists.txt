@@ -162,7 +162,7 @@ set(CUCO_TILE_SIZE "4" CACHE STRING "Size of cooperative groups")
 target_compile_options(cuco INTERFACE "-DCUCO_TILE_SIZE=${CUCO_TILE_SIZE}")
 set(CUCO_BLOCK_SIZE "128" CACHE STRING "Size of thread blocks")
 target_compile_options(cuco INTERFACE "-DCUCO_BLOCK_SIZE=${CUCO_BLOCK_SIZE}")
-set(CUCO_STATIC_SET_CG_SIZE "1" CACHE STRING "Size of cooperative groups for static_set")
+set(CUCO_STATIC_SET_CG_SIZE "4" CACHE STRING "Size of cooperative groups for static_set")
 target_compile_options(cuco INTERFACE "-DCUCO_STATIC_SET_CG_SIZE=${CUCO_STATIC_SET_CG_SIZE}")
 target_compile_options(cuco INTERFACE "-DHIP_ENABLE_WARP_SYNC_BUILTINS=1")
 
