@@ -814,6 +814,7 @@ class open_addressing_ref_impl {
           case detail::equal_result::UNEQUAL: continue;
           case detail::equal_result::EMPTY: return false;
           case detail::equal_result::EQUAL: return true;
+          case detail::equal_result::AVAILABLE: /*this case should never happen*/ assert(false); return false; // NOTE(HIP/AMD): fix warnings
         }
       }
       ++probing_iter;
