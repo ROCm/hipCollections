@@ -91,7 +91,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void insert_if_n(InputIt first,
                                                           AtomicT* num_successes,
                                                           Ref ref)
 {
-  using BlockReduce = hipcub::BlockReduce<typename Ref::size_type, BlockSize>;
+  using BlockReduce = cub::BlockReduce<typename Ref::size_type, BlockSize>;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   typename Ref::size_type thread_num_successes = 0;
 
@@ -698,7 +698,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void size(StorageRef storage,
     idx += loop_stride;
   }
 
-  using BlockReduce = hipcub::BlockReduce<size_type, BlockSize>;
+  using BlockReduce = cub::BlockReduce<size_type, BlockSize>;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   auto const block_count = BlockReduce(temp_storage).Sum(thread_count);
   if (threadIdx.x == 0) { count->fetch_add(block_count, cuda::std::memory_order_relaxed); }

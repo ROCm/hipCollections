@@ -33,11 +33,13 @@
 
 #include <cuco/static_map.cuh>
 
-#include <cub/block/block_reduce.cuh>
 #include <cuda/std/atomic>
 #include <thrust/device_vector.h>
 #include <thrust/logical.h>
 #include <thrust/transform.h>
+
+#include <hipcub/block/block_reduce.hpp>
+namespace cub = hipcub;
 
 #include <cmath>
 #include <cstddef>
@@ -77,7 +79,7 @@ __global__ void count_by_key(Map map_ref,
                              uint64_t num_keys,
                              UniqueIter num_unique_keys)
 {
-  using BlockReduce = hipcub::BlockReduce<uint64_t, BlockSize>;
+  using BlockReduce = cub::BlockReduce<uint64_t, BlockSize>;
   __shared__ typename BlockReduce::TempStorage temp_storage;
 
   int64_t const loop_stride = gridDim.x * BlockSize;

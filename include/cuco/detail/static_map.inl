@@ -36,10 +36,12 @@
 #include <cuco/detail/utils.cuh>
 #include <cuco/detail/utils.hpp>
 
-#include <cub/device/device_select.cuh>
 #include <thrust/iterator/transform_iterator.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
+
+#include <hipcub/device/device_select.hpp>
+namespace cub = hipcub;
 
 namespace cuco::legacy {
 
@@ -243,7 +245,7 @@ std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator, TileSize, B
   auto temp_allocator = temp_allocator_type{slot_allocator_};
   auto d_num_out      = reinterpret_cast<std::size_t*>(
     std::allocator_traits<temp_allocator_type>::allocate(temp_allocator, sizeof(std::size_t)));
-  CUCO_CUDA_TRY(hipcub::DeviceSelect::If(nullptr,
+  CUCO_CUDA_TRY(cub::DeviceSelect::If(nullptr,
                         temp_storage_bytes,
                         begin,
                         zipped_out_begin,
@@ -256,7 +258,7 @@ std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator, TileSize, B
   auto d_temp_storage =
     std::allocator_traits<temp_allocator_type>::allocate(temp_allocator, temp_storage_bytes);
 
-  CUCO_CUDA_TRY(hipcub::DeviceSelect::If(d_temp_storage,
+  CUCO_CUDA_TRY(cub::DeviceSelect::If(d_temp_storage,
                         temp_storage_bytes,
                         begin,
                         zipped_out_begin,

@@ -35,7 +35,9 @@
 
 #include "hip/hip_runtime.h"
 
-#include <cub/block/block_reduce.cuh>
+#include <hipcub/block/block_reduce.hpp>
+namespace cub = hipcub;
+
 #include <cuda/std/atomic>
 
 #include <hip/hip_cooperative_groups.h>
@@ -107,7 +109,7 @@ template <std::size_t block_size,
 CUCO_KERNEL void insert(
   InputIt first, int64_t n, atomicT* num_successes, viewT view, Hash hash, KeyEqual key_equal)
 {
-  typedef hipcub::BlockReduce<std::size_t, block_size> BlockReduce;
+  typedef cub::BlockReduce<std::size_t, block_size> BlockReduce;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_successes = 0;
 
@@ -162,7 +164,7 @@ template <std::size_t block_size,
 CUCO_KERNEL void insert(
   InputIt first, int64_t n, atomicT* num_successes, viewT view, Hash hash, KeyEqual key_equal)
 {
-  typedef hipcub::BlockReduce<std::size_t, block_size> BlockReduce;
+  typedef cub::BlockReduce<std::size_t, block_size> BlockReduce;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_successes = 0;
 
@@ -216,7 +218,7 @@ template <std::size_t block_size,
 CUCO_KERNEL void erase(
   InputIt first, int64_t n, atomicT* num_successes, viewT view, Hash hash, KeyEqual key_equal)
 {
-  using BlockReduce = hipcub::BlockReduce<std::size_t, block_size>;
+  using BlockReduce = cub::BlockReduce<std::size_t, block_size>;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_successes = 0;
 
@@ -269,7 +271,7 @@ template <std::size_t block_size,
 CUCO_KERNEL void erase(
   InputIt first, int64_t n, atomicT* num_successes, viewT view, Hash hash, KeyEqual key_equal)
 {
-  typedef hipcub::BlockReduce<std::size_t, block_size> BlockReduce;
+  typedef cub::BlockReduce<std::size_t, block_size> BlockReduce;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_successes = 0;
 
@@ -339,7 +341,7 @@ CUCO_KERNEL void insert_if_n(InputIt first,
                              Hash hash,
                              KeyEqual key_equal)
 {
-  typedef hipcub::BlockReduce<std::size_t, block_size> BlockReduce;
+  typedef cub::BlockReduce<std::size_t, block_size> BlockReduce;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_successes = 0;
 

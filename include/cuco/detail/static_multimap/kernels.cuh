@@ -262,7 +262,7 @@ CUCO_KERNEL void count(
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 
-  typedef hipcub::BlockReduce<std::size_t, block_size> BlockReduce;
+  typedef cub::BlockReduce<std::size_t, block_size> BlockReduce;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_matches = 0;
 
@@ -321,7 +321,7 @@ CUCO_KERNEL void pair_count(
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 
-  typedef hipcub::BlockReduce<std::size_t, block_size> BlockReduce;
+  typedef cub::BlockReduce<std::size_t, block_size> BlockReduce;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_matches = 0;
 

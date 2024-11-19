@@ -37,7 +37,13 @@
 
 #include <cuco/detail/utility/cuda.cuh>
 
-#include <cub/block/block_reduce.cuh>
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
+#include "cub/block/block_reduce.cuh"
+#else
+#include "hipcub/hipcub.hpp"
+namespace cub = hipcub;
+#endif
+
 #include <cuda/std/atomic>
 
 #include <hip/hip_cooperative_groups.h>
@@ -95,7 +101,7 @@ CUCO_KERNEL void insert(InputIt first,
                         Hash hash,
                         KeyEqual key_equal)
 {
-  using BlockReduce = hipcub::BlockReduce<std::size_t, block_size>;
+  using BlockReduce = cub::BlockReduce<std::size_t, block_size>;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_successes = 0;
 
@@ -180,7 +186,7 @@ CUCO_KERNEL void insert(InputIt first,
                         Hash hash,
                         KeyEqual key_equal)
 {
-  using BlockReduce = hipcub::BlockReduce<std::size_t, block_size>;
+  using BlockReduce = cub::BlockReduce<std::size_t, block_size>;
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_successes = 0;
 
