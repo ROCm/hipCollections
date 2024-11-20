@@ -14,23 +14,6 @@
  * limitations under the License.
  */
 
-// Modifications Copyright (c) 2024-2025 Advanced Micro Devices, Inc.
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
 #pragma once
 
 #include <cuco/detail/dynamic_map_kernels.cuh>
@@ -297,7 +280,7 @@ class dynamic_map {
               empty_key<Key> empty_key_sentinel,
               empty_value<Value> empty_value_sentinel,
               Allocator const& alloc = Allocator{},
-              hipStream_t stream    = nullptr);
+              cudaStream_t stream    = nullptr);
 
   /**
    * @brief Constructs a dynamically-sized map with erase capability.
@@ -328,7 +311,7 @@ class dynamic_map {
               empty_value<Value> empty_value_sentinel,
               erased_key<Key> erased_key_sentinel,
               Allocator const& alloc = Allocator{},
-              hipStream_t stream    = nullptr);
+              cudaStream_t stream    = nullptr);
 
   /**
    * @brief Destroys the map and frees its contents
@@ -344,7 +327,7 @@ class dynamic_map {
    * @param n The number of key value pairs for which there must be space
    * @param stream Stream used for executing the kernels
    */
-  void reserve(std::size_t n, hipStream_t stream = nullptr);
+  void reserve(std::size_t n, cudaStream_t stream = nullptr);
 
   /**
    * @brief Inserts all key/value pairs in the range `[first, last)`.
@@ -369,7 +352,7 @@ class dynamic_map {
               InputIt last,
               Hash hash           = Hash{},
               KeyEqual key_equal  = KeyEqual{},
-              hipStream_t stream = nullptr);
+              cudaStream_t stream = nullptr);
 
   /**
    * @brief Erases keys in the range `[first, last)`.
@@ -408,7 +391,7 @@ class dynamic_map {
              InputIt last,
              Hash hash           = Hash{},
              KeyEqual key_equal  = KeyEqual{},
-             hipStream_t stream = nullptr);
+             cudaStream_t stream = nullptr);
 
   /**
    * @brief Finds the values corresponding to all keys in the range `[first, last)`.
@@ -439,7 +422,7 @@ class dynamic_map {
             OutputIt output_begin,
             Hash hash           = Hash{},
             KeyEqual key_equal  = KeyEqual{},
-            hipStream_t stream = nullptr);
+            cudaStream_t stream = nullptr);
 
   /**
    * @brief Indicates whether the keys in the range `[first, last)` are contained in the map.
@@ -469,7 +452,7 @@ class dynamic_map {
                 OutputIt output_begin,
                 Hash hash           = Hash{},
                 KeyEqual key_equal  = KeyEqual{},
-                hipStream_t stream = nullptr);
+                cudaStream_t stream = nullptr);
 
   /**
    * @brief Gets the current number of elements in the map

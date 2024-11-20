@@ -705,7 +705,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::static_multimap(
   std::size_t capacity,
   empty_key<Key> empty_key_sentinel,
   empty_value<Value> empty_value_sentinel,
-  hipStream_t stream,
+  cudaStream_t stream,
   Allocator const& alloc)
   : capacity_{cuco::detail::get_valid_capacity<cg_size(), vector_width(), uses_vector_load()>(
       capacity)},
@@ -731,7 +731,7 @@ template <typename Key,
 template <typename InputIt>
 void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::insert(InputIt first,
                                                                           InputIt last,
-                                                                          hipStream_t stream)
+                                                                          cudaStream_t stream)
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
@@ -743,7 +743,7 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::insert(InputI
 
   detail::insert<block_size, cg_size()>
     <<<grid_size, block_size, 0, stream>>>(first, num_keys, view);
-  CUCO_CUDA_TRY(hipStreamSynchronize(stream));
+  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
 }
 
 template <typename Key,
@@ -753,7 +753,7 @@ template <typename Key,
           class ProbeSequence>
 template <typename InputIt, typename StencilIt, typename Predicate>
 void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::insert_if(
-  InputIt first, InputIt last, StencilIt stencil, Predicate pred, hipStream_t stream)
+  InputIt first, InputIt last, StencilIt stencil, Predicate pred, cudaStream_t stream)
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
@@ -765,7 +765,7 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::insert_if(
 
   detail::insert_if_n<block_size, cg_size()>
     <<<grid_size, block_size, 0, stream>>>(first, stencil, num_keys, view, pred);
-  CUCO_CUDA_TRY(hipStreamSynchronize(stream));
+  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
 }
 
 template <typename Key,
@@ -775,7 +775,7 @@ template <typename Key,
           class ProbeSequence>
 template <typename InputIt, typename OutputIt, typename KeyEqual>
 void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::contains(
-  InputIt first, InputIt last, OutputIt output_begin, KeyEqual key_equal, hipStream_t stream) const
+  InputIt first, InputIt last, OutputIt output_begin, KeyEqual key_equal, cudaStream_t stream) const
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
@@ -788,7 +788,7 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::contains(
 
   detail::contains<is_pair_contains, block_size, cg_size()>
     <<<grid_size, block_size, 0, stream>>>(first, num_keys, output_begin, view, key_equal);
-  CUCO_CUDA_TRY(hipStreamSynchronize(stream));
+  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
 }
 
 template <typename Key,
@@ -798,7 +798,7 @@ template <typename Key,
           class ProbeSequence>
 template <typename InputIt, typename OutputIt, typename PairEqual>
 void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_contains(
-  InputIt first, InputIt last, OutputIt output_begin, PairEqual pair_equal, hipStream_t stream)
+  InputIt first, InputIt last, OutputIt output_begin, PairEqual pair_equal, cudaStream_t stream)
   const
 {
   auto const num_pairs = cuco::detail::distance(first, last);
@@ -812,7 +812,7 @@ void static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_contains
 
   detail::contains<is_pair_contains, block_size, cg_size()>
     <<<grid_size, block_size, 0, stream>>>(first, num_pairs, output_begin, view, pair_equal);
-  CUCO_CUDA_TRY(hipStreamSynchronize(stream));
+  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
 }
 
 template <typename Key,
@@ -822,7 +822,7 @@ template <typename Key,
           class ProbeSequence>
 template <typename InputIt, typename KeyEqual>
 std::size_t static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::count(
-  InputIt first, InputIt last, hipStream_t stream, KeyEqual key_equal) const
+  InputIt first, InputIt last, cudaStream_t stream, KeyEqual key_equal) const
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return 0; }
@@ -850,7 +850,7 @@ template <typename Key,
           class ProbeSequence>
 template <typename InputIt, typename KeyEqual>
 std::size_t static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::count_outer(
-  InputIt first, InputIt last, hipStream_t stream, KeyEqual key_equal) const
+  InputIt first, InputIt last, cudaStream_t stream, KeyEqual key_equal) const
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return 0; }
@@ -878,7 +878,7 @@ template <typename Key,
           class ProbeSequence>
 template <typename InputIt, typename PairEqual>
 std::size_t static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_count(
-  InputIt first, InputIt last, PairEqual pair_equal, hipStream_t stream) const
+  InputIt first, InputIt last, PairEqual pair_equal, cudaStream_t stream) const
 {
   auto const num_pairs = cuco::detail::distance(first, last);
   if (num_pairs == 0) { return 0; }
@@ -906,7 +906,7 @@ template <typename Key,
           class ProbeSequence>
 template <typename InputIt, typename PairEqual>
 std::size_t static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_count_outer(
-  InputIt first, InputIt last, PairEqual pair_equal, hipStream_t stream) const
+  InputIt first, InputIt last, PairEqual pair_equal, cudaStream_t stream) const
 {
   auto const num_pairs = cuco::detail::distance(first, last);
   if (num_pairs == 0) { return 0; }
@@ -934,7 +934,7 @@ template <typename Key,
           class ProbeSequence>
 template <typename InputIt, typename OutputIt, typename KeyEqual>
 OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve(
-  InputIt first, InputIt last, OutputIt output_begin, hipStream_t stream, KeyEqual key_equal) const
+  InputIt first, InputIt last, OutputIt output_begin, cudaStream_t stream, KeyEqual key_equal) const
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return output_begin; }
@@ -968,7 +968,7 @@ template <typename Key,
           class ProbeSequence>
 template <typename InputIt, typename OutputIt, typename KeyEqual>
 OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve_outer(
-  InputIt first, InputIt last, OutputIt output_begin, hipStream_t stream, KeyEqual key_equal) const
+  InputIt first, InputIt last, OutputIt output_begin, cudaStream_t stream, KeyEqual key_equal) const
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return output_begin; }
@@ -1008,7 +1008,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve(
   OutputIt1 probe_output_begin,
   OutputIt2 contained_output_begin,
   PairEqual pair_equal,
-  hipStream_t stream) const
+  cudaStream_t stream) const
 {
   auto const num_pairs = cuco::detail::distance(first, last);
   if (num_pairs == 0) { return std::make_pair(probe_output_begin, contained_output_begin); }
@@ -1056,7 +1056,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve_oute
   OutputIt1 probe_output_begin,
   OutputIt2 contained_output_begin,
   PairEqual pair_equal,
-  hipStream_t stream) const
+  cudaStream_t stream) const
 {
   auto const num_pairs = cuco::detail::distance(first, last);
   if (num_pairs == 0) { return std::make_pair(probe_output_begin, contained_output_begin); }
@@ -1579,7 +1579,7 @@ template <typename Key,
           typename Allocator,
           class ProbeSequence>
 std::size_t static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::get_size(
-  hipStream_t stream) const noexcept
+  cudaStream_t stream) const noexcept
 {
   auto begin  = thrust::make_transform_iterator(raw_slots(), detail::slot_to_tuple<Key, Value>{});
   auto filled = cuco::detail::slot_is_filled<Key>{get_empty_key_sentinel()};
@@ -1593,7 +1593,7 @@ template <typename Key,
           typename Allocator,
           class ProbeSequence>
 float static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::get_load_factor(
-  hipStream_t stream) const noexcept
+  cudaStream_t stream) const noexcept
 {
   auto size = get_size(stream);
   return static_cast<float>(size) / static_cast<float>(capacity_);

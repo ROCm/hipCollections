@@ -1050,7 +1050,7 @@ class static_multimap {
   static_multimap(std::size_t capacity,
                   empty_key<Key> empty_key_sentinel,
                   empty_value<Value> empty_value_sentinel,
-                  hipStream_t stream    = 0,
+                  cudaStream_t stream   = 0,
                   Allocator const& alloc = Allocator{});
 
   /**
@@ -1064,7 +1064,7 @@ class static_multimap {
    * @param stream CUDA stream used for insert
    */
   template <typename InputIt>
-  void insert(InputIt first, InputIt last, hipStream_t stream = 0);
+  void insert(InputIt first, InputIt last, cudaStream_t stream = 0);
 
   /**
    * @brief Inserts key/value pairs in the range `[first, first + n)` if `pred`
@@ -1088,7 +1088,7 @@ class static_multimap {
    */
   template <typename InputIt, typename StencilIt, typename Predicate>
   void insert_if(
-    InputIt first, InputIt last, StencilIt stencil, Predicate pred, hipStream_t stream = 0);
+    InputIt first, InputIt last, StencilIt stencil, Predicate pred, cudaStream_t stream = 0);
 
   /**
    * @brief Indicates whether the keys in the range `[first, last)` are contained in the map.
@@ -1116,7 +1116,7 @@ class static_multimap {
                 InputIt last,
                 OutputIt output_begin,
                 KeyEqual key_equal  = KeyEqual{},
-                hipStream_t stream = 0) const;
+                cudaStream_t stream = 0) const;
 
   /**
    * @brief Indicates whether the pairs in the range `[first, last)` are contained in the map.
@@ -1145,7 +1145,7 @@ class static_multimap {
                      InputIt last,
                      OutputIt output_begin,
                      PairEqual pair_equal,
-                     hipStream_t stream = 0) const;
+                     cudaStream_t stream = 0) const;
 
   /**
    * @brief Counts the occurrences of keys in `[first, last)` contained in the multimap.
@@ -1164,7 +1164,7 @@ class static_multimap {
   template <typename InputIt, typename KeyEqual = thrust::equal_to<key_type>>
   std::size_t count(InputIt first,
                     InputIt last,
-                    hipStream_t stream = 0,
+                    cudaStream_t stream = 0,
                     KeyEqual key_equal  = KeyEqual{}) const;
 
   /**
@@ -1186,7 +1186,7 @@ class static_multimap {
   template <typename InputIt, typename KeyEqual = thrust::equal_to<key_type>>
   std::size_t count_outer(InputIt first,
                           InputIt last,
-                          hipStream_t stream = 0,
+                          cudaStream_t stream = 0,
                           KeyEqual key_equal  = KeyEqual{}) const;
 
   /**
@@ -1209,7 +1209,7 @@ class static_multimap {
   std::size_t pair_count(InputIt first,
                          InputIt last,
                          PairEqual pair_equal,
-                         hipStream_t stream = 0) const;
+                         cudaStream_t stream = 0) const;
 
   /**
    * @brief Counts the occurrences of key/value pairs in `[first, last)` contained in the multimap.
@@ -1233,7 +1233,7 @@ class static_multimap {
   std::size_t pair_count_outer(InputIt first,
                                InputIt last,
                                PairEqual pair_equal,
-                               hipStream_t stream = 0) const;
+                               cudaStream_t stream = 0) const;
 
   /**
    * @brief Retrieves all the values corresponding to all keys in the range `[first, last)`.
@@ -1260,7 +1260,7 @@ class static_multimap {
   OutputIt retrieve(InputIt first,
                     InputIt last,
                     OutputIt output_begin,
-                    hipStream_t stream = 0,
+                    cudaStream_t stream = 0,
                     KeyEqual key_equal  = KeyEqual{}) const;
 
   /**
@@ -1289,7 +1289,7 @@ class static_multimap {
   OutputIt retrieve_outer(InputIt first,
                           InputIt last,
                           OutputIt output_begin,
-                          hipStream_t stream = 0,
+                          cudaStream_t stream = 0,
                           KeyEqual key_equal  = KeyEqual{}) const;
 
   /**
@@ -1326,7 +1326,7 @@ class static_multimap {
                                                 OutputIt1 probe_output_begin,
                                                 OutputIt2 contained_output_begin,
                                                 PairEqual pair_equal,
-                                                hipStream_t stream = 0) const;
+                                                cudaStream_t stream = 0) const;
 
   /**
    * @brief Retrieves all pairs matching the input probe pair in the range `[first, last)`.
@@ -1364,7 +1364,7 @@ class static_multimap {
                                                       OutputIt1 probe_output_begin,
                                                       OutputIt2 contained_output_begin,
                                                       PairEqual pair_equal,
-                                                      hipStream_t stream = 0) const;
+                                                      cudaStream_t stream = 0) const;
 
  private:
   /**
@@ -2175,7 +2175,7 @@ class static_multimap {
    * @param stream CUDA stream used to get the number of inserted elements
    * @return The number of elements in the map
    */
-  std::size_t get_size(hipStream_t stream = 0) const noexcept;
+  std::size_t get_size(cudaStream_t stream = 0) const noexcept;
 
   /**
    * @brief Gets the load factor of the hash map.
@@ -2183,7 +2183,7 @@ class static_multimap {
    * @param stream CUDA stream used to get the load factor
    * @return The load factor of the hash map
    */
-  float get_load_factor(hipStream_t stream = 0) const noexcept;
+  float get_load_factor(cudaStream_t stream = 0) const noexcept;
 
   /**
    * @brief Gets the sentinel value used to represent an empty key slot.

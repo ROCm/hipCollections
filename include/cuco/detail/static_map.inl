@@ -50,7 +50,7 @@ static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::static_map(std::s
                                                      empty_key<Key> empty_key_sentinel,
                                                      empty_value<Value> empty_value_sentinel,
                                                      Allocator const& alloc,
-                                                     hipStream_t stream)
+                                                     cudaStream_t stream)
   : capacity_{std::max(capacity, std::size_t{1})},  // to avoid dereferencing a nullptr (Issue #72)
     empty_key_sentinel_{empty_key_sentinel.value},
     empty_value_sentinel_{empty_value_sentinel.value},
@@ -75,7 +75,7 @@ static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::static_map(std::s
                                                      empty_value<Value> empty_value_sentinel,
                                                      erased_key<Key> erased_key_sentinel,
                                                      Allocator const& alloc,
-                                                     hipStream_t stream)
+                                                     cudaStream_t stream)
   : capacity_{std::max(capacity, std::size_t{1})},  // to avoid dereferencing a nullptr (Issue #72)
     empty_key_sentinel_{empty_key_sentinel.value},
     empty_value_sentinel_{empty_value_sentinel.value},
@@ -108,7 +108,7 @@ static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::~static_map()
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename InputIt, typename Hash, typename KeyEqual>
 void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::insert(
-  InputIt first, InputIt last, Hash hash, KeyEqual key_equal, hipStream_t stream)
+  InputIt first, InputIt last, Hash hash, KeyEqual key_equal, cudaStream_t stream)
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
@@ -121,14 +121,14 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::insert(
 
   // TODO: memset an atomic variable is unsafe
   static_assert(sizeof(std::size_t) == sizeof(atomic_ctr_type));
-  CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
+  CUCO_CUDA_TRY(cudaMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
   detail::insert<block_size, tile_size>
     <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
-  CUCO_CUDA_TRY(hipMemcpyAsync(
-    &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
+  CUCO_CUDA_TRY(cudaMemcpyAsync(
+    &h_num_successes, num_successes_, sizeof(atomic_ctr_type), cudaMemcpyDeviceToHost, stream));
 
-  CUCO_CUDA_TRY(hipStreamSynchronize(stream));  // stream sync to ensure h_num_successes is updated
+  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));  // stream sync to ensure h_num_successes is updated
 
   size_ += h_num_successes;
 }
@@ -145,7 +145,7 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::insert_if(In
                                                          Predicate pred,
                                                          Hash hash,
                                                          KeyEqual key_equal,
-                                                         hipStream_t stream)
+                                                         cudaStream_t stream)
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
@@ -158,14 +158,14 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::insert_if(In
 
   // TODO: memset an atomic variable is unsafe
   static_assert(sizeof(std::size_t) == sizeof(atomic_ctr_type));
-  CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
+  CUCO_CUDA_TRY(cudaMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
 
   detail::insert_if_n<block_size, tile_size><<<grid_size, block_size, 0, stream>>>(
     first, num_keys, num_successes_, view, stencil, pred, hash, key_equal);
-  CUCO_CUDA_TRY(hipMemcpyAsync(
-    &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
-  CUCO_CUDA_TRY(hipStreamSynchronize(stream));
+  CUCO_CUDA_TRY(cudaMemcpyAsync(
+    &h_num_successes, num_successes_, sizeof(atomic_ctr_type), cudaMemcpyDeviceToHost, stream));
+  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
 
   size_ += h_num_successes;
 }
@@ -173,7 +173,7 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::insert_if(In
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename InputIt, typename Hash, typename KeyEqual>
 void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::erase(
-  InputIt first, InputIt last, Hash hash, KeyEqual key_equal, hipStream_t stream)
+  InputIt first, InputIt last, Hash hash, KeyEqual key_equal, cudaStream_t stream)
 {
   CUCO_EXPECTS(get_empty_key_sentinel() != get_erased_key_sentinel(),
                "You must provide a unique erased key sentinel value at map construction.",
@@ -190,15 +190,15 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::erase(
 
   // TODO: memset an atomic variable is unsafe
   static_assert(sizeof(std::size_t) == sizeof(atomic_ctr_type));
-  CUCO_CUDA_TRY(hipMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
+  CUCO_CUDA_TRY(cudaMemsetAsync(num_successes_, 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_num_successes;
 
   detail::erase<block_size, tile_size>
     <<<grid_size, block_size, 0, stream>>>(first, num_keys, num_successes_, view, hash, key_equal);
-  CUCO_CUDA_TRY(hipMemcpyAsync(
-    &h_num_successes, num_successes_, sizeof(atomic_ctr_type), hipMemcpyDeviceToHost, stream));
+  CUCO_CUDA_TRY(cudaMemcpyAsync(
+    &h_num_successes, num_successes_, sizeof(atomic_ctr_type), cudaMemcpyDeviceToHost, stream));
 
-  CUCO_CUDA_TRY(hipStreamSynchronize(stream));  // stream sync to ensure h_num_successes is updated
+  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));  // stream sync to ensure h_num_successes is updated
 
   size_ -= h_num_successes;
 }
@@ -210,7 +210,7 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::find(InputIt
                                                     OutputIt output_begin,
                                                     Hash hash,
                                                     KeyEqual key_equal,
-                                                    hipStream_t stream)
+                                                    cudaStream_t stream)
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }
@@ -229,7 +229,7 @@ template <typename Key, typename Value, cuda::thread_scope Scope, typename Alloc
 template <typename KeyOut, typename ValueOut>
 std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::retrieve_all(KeyOut keys_out,
                                                                 ValueOut values_out,
-                                                                hipStream_t stream) const
+                                                                cudaStream_t stream) const
 {
   static_assert(sizeof(pair_atomic_type) == sizeof(value_type));
   auto slots_begin = reinterpret_cast<value_type*>(slots_);
@@ -269,8 +269,8 @@ std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator, TileSize, B
 
   std::size_t h_num_out;
   CUCO_CUDA_TRY(
-    hipMemcpyAsync(&h_num_out, d_num_out, sizeof(std::size_t), hipMemcpyDeviceToHost, stream));
-  CUCO_CUDA_TRY(hipStreamSynchronize(stream));
+    cudaMemcpyAsync(&h_num_out, d_num_out, sizeof(std::size_t), cudaMemcpyDeviceToHost, stream));
+  CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
   std::allocator_traits<temp_allocator_type>::deallocate(
     temp_allocator, reinterpret_cast<char*>(d_num_out), sizeof(std::size_t));
   std::allocator_traits<temp_allocator_type>::deallocate(
@@ -286,7 +286,7 @@ void static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::contains(Inp
                                                         OutputIt output_begin,
                                                         Hash hash,
                                                         KeyEqual key_equal,
-                                                        hipStream_t stream) const
+                                                        cudaStream_t stream) const
 {
   auto const num_keys = cuco::detail::distance(first, last);
   if (num_keys == 0) { return; }

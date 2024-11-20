@@ -55,7 +55,7 @@ TEMPLATE_TEST_CASE_SIG("static_map: unique sequence of keys on given stream",
                        (int64_t, int32_t, 1),
                        (int64_t, int64_t, 1))
 {
-  hipStream_t stream;
+  cudaStream_t stream;
   CUCO_CUDA_TRY(hipStreamCreate(&stream));
 
   constexpr std::size_t num_keys{500'000};

@@ -14,30 +14,13 @@
  * limitations under the License.
  */
 
-// Modifications Copyright (c) 2024-2025 Advanced Micro Devices, Inc.
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-
 #pragma once
 
 #include <cuco/detail/error.hpp>
 
 namespace cuco {
 /**
- * @brief A device allocator using `hipMalloc`/`hipFree` to satisfy (de)allocations.
+ * @brief A device allocator using `cudaMalloc`/`cudaFree` to satisfy (de)allocations.
  *
  * @tparam T The allocator's value type
  */
@@ -57,7 +40,7 @@ class cuda_allocator {
   }
 
   /**
-   * @brief Allocates storage for `n` objects of type `T` using `hipMalloc`.
+   * @brief Allocates storage for `n` objects of type `T` using `cudaMalloc`.
    *
    * @param n The number of objects to allocate storage for
    * @return Pointer to the allocated storage
@@ -65,7 +48,7 @@ class cuda_allocator {
   value_type* allocate(std::size_t n)
   {
     value_type* p;
-    CUCO_CUDA_TRY(hipMalloc(&p, sizeof(value_type) * n));
+    CUCO_CUDA_TRY(cudaMalloc(&p, sizeof(value_type) * n));
     return p;
   }
 
@@ -74,7 +57,7 @@ class cuda_allocator {
    *
    * @param p Pointer to memory to deallocate
    */
-  void deallocate(value_type* p, std::size_t) { CUCO_CUDA_TRY(hipFree(p)); }
+  void deallocate(value_type* p, std::size_t) { CUCO_CUDA_TRY(cudaFree(p)); }
 };
 
 /**

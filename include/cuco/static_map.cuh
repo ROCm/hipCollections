@@ -1312,7 +1312,7 @@ class static_map {
              empty_key<Key> empty_key_sentinel,
              empty_value<Value> empty_value_sentinel,
              Allocator const& alloc = Allocator{},
-             hipStream_t stream    = 0);
+             cudaStream_t stream    = 0);
 
   /**
    * @brief Constructs a fixed-size map with erase capability.
@@ -1333,7 +1333,7 @@ class static_map {
              empty_value<Value> empty_value_sentinel,
              erased_key<Key> erased_key_sentinel,
              Allocator const& alloc = Allocator{},
-             hipStream_t stream    = 0);
+             cudaStream_t stream    = 0);
 
   /**
    * @brief Destroys the map and frees its contents.
@@ -1366,7 +1366,7 @@ class static_map {
               InputIt last,
               Hash hash           = Hash{},
               KeyEqual key_equal  = KeyEqual{},
-              hipStream_t stream = 0);
+              cudaStream_t stream = 0);
 
   /**
    * @brief Inserts key/value pairs in the range `[first, last)` if `pred`
@@ -1402,7 +1402,7 @@ class static_map {
                  Predicate pred,
                  Hash hash           = Hash{},
                  KeyEqual key_equal  = KeyEqual{},
-                 hipStream_t stream = 0);
+                 cudaStream_t stream = 0);
 
   /**
    * @brief Erases keys in the range `[first, last)`.
@@ -1438,7 +1438,7 @@ class static_map {
              InputIt last,
              Hash hash           = Hash{},
              KeyEqual key_equal  = KeyEqual{},
-             hipStream_t stream = 0);
+             cudaStream_t stream = 0);
 
   /**
    * @brief Finds the values corresponding to all keys in the range `[first, last)`.
@@ -1468,7 +1468,7 @@ class static_map {
             OutputIt output_begin,
             Hash hash           = Hash{},
             KeyEqual key_equal  = KeyEqual{},
-            hipStream_t stream = 0);
+            cudaStream_t stream = 0);
 
   /**
    * @brief Retrieves all of the keys and their associated values.
@@ -1491,7 +1491,7 @@ class static_map {
   template <typename KeyOut, typename ValueOut>
   std::pair<KeyOut, ValueOut> retrieve_all(KeyOut keys_out,
                                            ValueOut values_out,
-                                           hipStream_t stream = 0) const;
+                                           cudaStream_t stream = 0) const;
 
   /**
    * @brief Indicates whether the keys in the range `[first, last)` are contained in the map.
@@ -1523,7 +1523,7 @@ class static_map {
                 OutputIt output_begin,
                 Hash hash           = Hash{},
                 KeyEqual key_equal  = KeyEqual{},
-                hipStream_t stream = 0) const;
+                cudaStream_t stream = 0) const;
 
  private:
   class device_view_base {

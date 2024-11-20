@@ -54,7 +54,7 @@ enum class probe_sequence { linear_probing, double_hashing };
 
 // User-defined logical algorithms to reduce compilation time
 template <typename Iterator, typename Predicate>
-int count_if(Iterator begin, Iterator end, Predicate p, hipStream_t stream = 0)
+int count_if(Iterator begin, Iterator end, Predicate p, cudaStream_t stream = 0)
 {
   auto const size      = std::distance(begin, end);
   auto const grid_size = (size + block_size - 1) / block_size;
@@ -75,7 +75,7 @@ int count_if(Iterator begin, Iterator end, Predicate p, hipStream_t stream = 0)
 }
 
 template <typename Iterator, typename Predicate>
-bool all_of(Iterator begin, Iterator end, Predicate p, hipStream_t stream = 0)
+bool all_of(Iterator begin, Iterator end, Predicate p, cudaStream_t stream = 0)
 {
   auto const size  = std::distance(begin, end);
   auto const count = count_if(begin, end, p, stream);
@@ -84,20 +84,20 @@ bool all_of(Iterator begin, Iterator end, Predicate p, hipStream_t stream = 0)
 }
 
 template <typename Iterator, typename Predicate>
-bool any_of(Iterator begin, Iterator end, Predicate p, hipStream_t stream = 0)
+bool any_of(Iterator begin, Iterator end, Predicate p, cudaStream_t stream = 0)
 {
   auto const count = count_if(begin, end, p, stream);
   return count > 0;
 }
 
 template <typename Iterator, typename Predicate>
-bool none_of(Iterator begin, Iterator end, Predicate p, hipStream_t stream = 0)
+bool none_of(Iterator begin, Iterator end, Predicate p, cudaStream_t stream = 0)
 {
   return not all_of(begin, end, p, stream);
 }
 
 template <typename Iterator1, typename Iterator2, typename Predicate>
-bool equal(Iterator1 begin1, Iterator1 end1, Iterator2 begin2, Predicate p, hipStream_t stream = 0)
+bool equal(Iterator1 begin1, Iterator1 end1, Iterator2 begin2, Predicate p, cudaStream_t stream = 0)
 {
   auto const size      = std::distance(begin1, end1);
   auto const grid_size = (size + block_size - 1) / block_size;

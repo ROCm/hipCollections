@@ -354,10 +354,10 @@ class key_generator {
    * @param dist Random distribution to use
    * @param out_begin Start of the output sequence
    * @param out_end End of the output sequence
-   * @param stream hip stream in which this operation is executed in
+   * @param stream CUDA stream in which this operation is executed in
    */
   template <typename Dist, typename OutputIt>
-  void generate(Dist dist, OutputIt out_begin, OutputIt out_end, hipStream_t stream)
+  void generate(Dist dist, OutputIt out_begin, OutputIt out_end, cudaStream_t stream)
   {
     generate(dist, out_begin, out_end, thrust::hip::par_nosync.on(stream));
   }
@@ -429,10 +429,10 @@ class key_generator {
    * @param begin Start of the key sequence
    * @param end End of the key sequence
    * @param keep_prob Probability that a key is kept
-   * @param stream hip stream in which this operation is executed in
+   * @param stream CUDA stream in which this operation is executed in
    */
   template <typename InOutIt>
-  void dropout(InOutIt begin, InOutIt end, double keep_prob, hipStream_t stream)
+  void dropout(InOutIt begin, InOutIt end, double keep_prob, cudaStream_t stream)
   {
     using thrust::system::detail::generic::select_system;
 

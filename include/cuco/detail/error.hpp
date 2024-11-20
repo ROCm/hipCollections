@@ -35,7 +35,7 @@
 
 #include <cuco/utility/error.hpp>
 
-#include <hip/hip_runtime_api.h>
+#include <cuco/cuda_runtime_api.h>
 
 #define STRINGIFY_DETAIL(x) #x
 #define CUCO_STRINGIFY(x)   STRINGIFY_DETAIL(x)
@@ -44,7 +44,7 @@
  * @brief Error checking macro for CUDA runtime API functions.
  *
  * Invokes a CUDA runtime API function call. If the call does not return
- * `hipSuccess`, invokes hipGetLastError() to clear the error and throws an
+ * `cudaSuccess`, invokes cudaGetLastError() to clear the error and throws an
  * exception detailing the CUDA error that occurred
  *
  * Defaults to throwing `cuco::cuda_error`, but a custom exception may also be
@@ -53,11 +53,11 @@
  * Example:
  * ```c++
  *
- * // Throws `cuco::cuda_error` if `hipMalloc` fails
- * CUCO_CUDA_TRY(hipMalloc(&p, 100));
+ * // Throws `cuco::cuda_error` if `cudaMalloc` fails
+ * CUCO_CUDA_TRY(cudaMalloc(&p, 100));
  *
- * // Throws `std::runtime_error` if `hipMalloc` fails
- * CUCO_CUDA_TRY(hipMalloc(&p, 100), std::runtime_error);
+ * // Throws `std::runtime_error` if `cudaMalloc` fails
+ * CUCO_CUDA_TRY(cudaMalloc(&p, 100), std::runtime_error);
  * ```
  *
  */
@@ -67,24 +67,24 @@
 #define GET_CUCO_CUDA_TRY_MACRO(_1, _2, NAME, ...) NAME
 #define CUCO_CUDA_TRY_2(_call, _exception_type)                                                    \
   do {                                                                                             \
-    hipError_t error = (_call);                                                             \
-    if (hipSuccess != error) {                                                                    \
-      error = hipGetLastError();                                                                          \
+    cudaError_t error = (_call);                                                             \
+    if (cudaSuccess != error) {                                                                    \
+      error = cudaGetLastError();                                                                          \
       throw _exception_type{std::string{"CUDA error at: "} + __FILE__ + CUCO_STRINGIFY(__LINE__) + \
-                            ": " + hipGetErrorName(error) + " " + hipGetErrorString(error)};     \
+                            ": " + cudaGetErrorName(error) + " " + cudaGetErrorString(error)};     \
     }                                                                                              \
   } while (0);
 #define CUCO_CUDA_TRY_1(_call) CUCO_CUDA_TRY_2(_call, cuco::cuda_error)
 
 /**
  * @brief Error checking macro for CUDA runtime API that asserts the result is
- * equal to `hipSuccess`.
+ * equal to `cudaSuccess`.
  *
  */
 #define CUCO_ASSERT_CUDA_SUCCESS(expr) \
   do {                                 \
-    hipError_t const status = (expr); \
-    assert(hipSuccess == status);     \
+    cudaError_t const status = (expr); \
+    assert(cudaSuccess == status);     \
   } while (0)
 
 /**
