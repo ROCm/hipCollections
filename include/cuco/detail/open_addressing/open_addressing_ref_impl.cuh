@@ -493,7 +493,7 @@ class open_addressing_ref_impl {
                              bucket_slots[intra_bucket_index],
                              val)
             : insert_result::CONTINUE;
-        // Todo(HIP): 
+        // TODO(HIP/AMD): 
         switch (static_cast<insert_result>(group.shfl(to_underlying_t(status), src_lane))) {
           case insert_result::SUCCESS: return true;
           case insert_result::DUPLICATE: {

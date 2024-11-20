@@ -131,7 +131,7 @@ struct XXHash_32 {
                                                          Extent size) const noexcept
   {
     std::size_t offset = 0;
-    std::uint32_t h32 = 0; // Todo(HIP): initialized with 0
+    std::uint32_t h32 = 0; // TODO(HIP/AMD): initialized with 0
 
     // data can be processed in 16-byte chunks
     if (size >= 16) {
@@ -314,7 +314,7 @@ struct XXHash_64 {
                                                          Extent size) const noexcept
   {
     std::size_t offset = 0;
-    std::uint64_t h64 = 0; //Todo(HIP)
+    std::uint64_t h64 = 0; //TODO(HIP/AMD)
 
     // data can be processed in 32-byte chunks
     if (size >= 32) {

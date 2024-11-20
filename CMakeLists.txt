@@ -100,7 +100,7 @@ if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}")
 endif()
 
 option(BUILD_TESTS "Configure CMake to build tests" ON)
-#Todo(hip): Enable building benchmarks, NVbench is required
+#TODO(HIP/AMD): Enable building benchmarks, NVbench is required
 option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ON)
 option(BUILD_EXAMPLES "Configure CMake to build examples" ${default_build_option_state})
 option(INSTALL_CUCO "Enable CMake install rules for cuco" ${default_build_option_state})
@@ -140,7 +140,7 @@ rapids_cpm_package_override(${CMAKE_CURRENT_LIST_DIR}/versions.json)
 include(cmake/thirdparty/get_rocthrust.cmake)
 include(cmake/thirdparty/get_libhipcxx.cmake)
 
-#Todo(HIP): Ideally, we could use rapids-cmake to configure hipcub
+#TODO(HIP/AMD): Ideally, we could use rapids-cmake to configure hipcub
 find_package(rocprim REQUIRED CONFIG PATHS "/opt/rocm/rocprim")
 find_package(hipcub REQUIRED CONFIG PATHS "/opt/rocm/hipcub")
 
