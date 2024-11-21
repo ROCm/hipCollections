@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <nvbench/nvbench.cuh>
@@ -21,10 +38,11 @@
 #include <cstdint>
 #include <vector>
 
-namespace cuco::benchmark::defaults {
+namespace hipco::benchmark::defaults {
 
 using KEY_TYPE_RANGE   = nvbench::type_list<nvbench::int32_t, nvbench::int64_t>;
 using VALUE_TYPE_RANGE = nvbench::type_list<nvbench::int32_t, nvbench::int64_t>;
+using CG_TYPE_RANGE    = nvbench::enum_type_list<1, 2, 4, 8, 16, 32, 64>;
 
 auto constexpr N             = 100'000'000;
 auto constexpr OCCUPANCY     = 0.5;
@@ -35,12 +53,11 @@ auto constexpr SKEW          = 0.5;
 auto constexpr BATCH_SIZE    = 1'000'000;
 auto constexpr INITIAL_SIZE  = 50'000'000;
 
-auto const N_RANGE = nvbench::range(10'000'000, 100'000'000, 20'000'000);
-auto const N_RANGE_CACHE =
-  std::vector<nvbench::int64_t>{8'000, 80'000, 800'000, 8'000'000, 80'000'000};
+auto const N_RANGE             = nvbench::range(10'000'000, 100'000'000, 20'000'000);
+auto const N_RANGE_CACHE       = std::vector<nvbench::int64_t>{8'000, 80'000, 800'000, 8'000'000, 80'000'000};
 auto const OCCUPANCY_RANGE     = nvbench::range(0.1, 0.9, 0.1);
 auto const MULTIPLICITY_RANGE  = std::vector<nvbench::int64_t>{1, 2, 4, 8, 16};
 auto const MATCHING_RATE_RANGE = nvbench::range(0.1, 1., 0.1);
 auto const SKEW_RANGE          = nvbench::range(0.1, 1., 0.1);
 
-}  // namespace cuco::benchmark::defaults
+}  // namespace hipco::benchmark::defaults
