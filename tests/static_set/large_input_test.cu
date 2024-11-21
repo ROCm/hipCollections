@@ -66,7 +66,8 @@ TEMPLATE_TEST_CASE_SIG(
 {
   constexpr std::size_t num_keys{1'200'000'000};
 
-  using extent_type = cuco::extent<std::size_t>;
+  // NOTE(HIP/AMD): unused
+  //using extent_type = cuco::extent<std::size_t>;
   using probe       = cuco::double_hashing<CGSize, cuco::default_hash_function<Key>>;
 
   try {

@@ -14,17 +14,33 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <cuco/detail/utils.cuh>
 #include <cuco/pair.cuh>
 
-#include <cuda/std/atomic>
+#include <hip/std/atomic>
 
-#include <cooperative_groups.h>
+#include <hip/hip_cooperative_groups.h>
 
 #include <utility>
-
 namespace cuco::legacy::detail {
 
 /**
@@ -71,9 +87,9 @@ template <typename Key,
           uint32_t CGSize>
 class probe_sequence_impl_base {
  protected:
-  using value_type         = cuco::pair<Key, Value>;            ///< Type of key/value pairs
-  using key_type           = Key;                               ///< Key type
-  using mapped_type        = Value;                             ///< Type of mapped values
+  using value_type         = cuco::pair<Key, Value>;     ///< Type of key/value pairs
+  using key_type           = Key;                              ///< Key type
+  using mapped_type        = Value;                            ///< Type of mapped values
   using atomic_key_type    = cuda::atomic<key_type, Scope>;     ///< Type of atomic keys
   using atomic_mapped_type = cuda::atomic<mapped_type, Scope>;  ///< Type of atomic mapped values
   /// Pair type of atomic key and atomic mapped value

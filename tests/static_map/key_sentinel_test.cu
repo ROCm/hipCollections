@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <utils.hpp>
 
 #include <cuco/static_map.cuh>
@@ -24,7 +41,7 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 
-#include <cuda/functional>
+//#include <cuda/functional>
 
 #define SIZE 10
 __device__ int A[SIZE];
@@ -35,7 +52,7 @@ struct custom_equals {
 };
 
 TEMPLATE_TEST_CASE_SIG(
-  "Key comparison against sentinel", "", ((typename T), T), (int32_t), (int64_t))
+  "Key comparison against sentinel", "", ((typename T, int dummy), T, dummy), (int32_t, 1), (int64_t, 1))
 {
   using Key   = T;
   using Value = T;
@@ -54,11 +71,11 @@ TEMPLATE_TEST_CASE_SIG(
   for (int i = 0; i < SIZE; i++) {
     h_A[i] = i;
   }
-  CUCO_CUDA_TRY(cudaMemcpyToSymbol(A, h_A, SIZE * sizeof(int)));
+  CUCO_CUDA_TRY(hipMemcpyToSymbol(HIP_SYMBOL(A), h_A, SIZE * sizeof(int)));
 
   auto pairs_begin = thrust::make_transform_iterator(
     thrust::make_counting_iterator<T>(0),
-    cuda::proclaim_return_type<cuco::pair<Key, Value>>(
+    proclaim_return_type<cuco::pair<Key, Value>>(
       [] __device__(auto i) { return cuco::pair<Key, Value>(i, i); }));
 
   SECTION(
@@ -67,7 +84,7 @@ TEMPLATE_TEST_CASE_SIG(
     REQUIRE(
       cuco::test::all_of(pairs_begin,
                          pairs_begin + num_keys,
-                         cuda::proclaim_return_type<bool>(
+                         proclaim_return_type<bool>(
                            [insert_ref] __device__(cuco::pair<Key, Value> const& pair) mutable {
                              return insert_ref.insert(pair);
                            })));
@@ -81,7 +98,7 @@ TEMPLATE_TEST_CASE_SIG(
     REQUIRE(cuco::test::all_of(
       pairs_begin,
       pairs_begin + num_keys,
-      cuda::proclaim_return_type<bool>([find_ref] __device__(cuco::pair<Key, Value> const& pair) {
+      proclaim_return_type<bool>([find_ref] __device__(cuco::pair<Key, Value> const& pair) {
         auto const found = find_ref.find(pair.first);
         return (found != find_ref.end()) and
                (found->first == pair.first and found->second == pair.second);

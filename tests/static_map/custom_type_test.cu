@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <utils.hpp>
 
 #include <cuco/static_map.cuh>
@@ -27,13 +44,13 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 
-#include <cuda/functional>
+//#include <cuda/functional>
 
 #include <tuple>
 
 // User-defined key type
 template <typename T>
-struct key_pair_type {
+struct alignas(8) key_pair_type { //no hip support for unaligned atomics SWDEV-393058
   T a;
   T b;
 
@@ -50,7 +67,7 @@ struct key_pair_type {
 
 // User-defined key type
 template <typename T>
-struct large_key_type {
+struct alignas(8) large_key_type { //no hip support for unaligned atomics SWDEV-393058
   T a;
   T b;
   T c;
@@ -68,7 +85,7 @@ struct large_key_type {
 
 // User-defined value type
 template <typename T>
-struct value_pair_type {
+struct alignas(8) value_pair_type { //no hip support for unaligned atomics SWDEV-393058
   T f;
   T s;
 
@@ -84,7 +101,7 @@ struct value_pair_type {
 // User-defined device hasher
 struct hash_custom_key {
   template <typename custom_type>
-  __device__ uint32_t operator()(custom_type k)
+  __host__ __device__ uint32_t operator()(custom_type k) //todo(HIP): __host__ needed to select the right template, compiler issue?
   {
     return thrust::raw_reference_cast(k).a;
   };
@@ -93,7 +110,7 @@ struct hash_custom_key {
 // User-defined device key equality
 struct custom_key_equals {
   template <typename lhs_type, typename rhs_type>
-  __device__ bool operator()(lhs_type lhs, rhs_type rhs)
+  __host__ __device__ bool operator()(lhs_type lhs, rhs_type rhs)  //todo(HIP): __host__ needed to select the right template, compiler issue?
   {
     return lhs == static_cast<lhs_type>(rhs);
   }
@@ -101,14 +118,14 @@ struct custom_key_equals {
 
 TEMPLATE_TEST_CASE_SIG("User defined key and value type",
                        "",
-                       ((typename Key, typename Value), Key, Value),
+                       ((typename Key, typename Value, int dummy), Key, Value, dummy),
 #if defined(CUCO_HAS_INDEPENDENT_THREADS)  // Key type larger than 8B only supported for sm_70 and
                                            // up
-                       (key_pair_type<int64_t>, value_pair_type<int32_t>),
-                       (key_pair_type<int64_t>, value_pair_type<int64_t>),
-                       (large_key_type<int32_t>, value_pair_type<int32_t>),
+                       (key_pair_type<int64_t>, value_pair_type<int32_t>, 1),
+                       (key_pair_type<int64_t>, value_pair_type<int64_t>, 1),
+                       (large_key_type<int32_t>, value_pair_type<int32_t>, 1),
 #endif
-                       (key_pair_type<int32_t>, value_pair_type<int32_t>))
+                       (key_pair_type<int32_t>, value_pair_type<int32_t>, 1))
 {
   auto const sentinel_key   = Key{-1};
   auto const sentinel_value = Value{-1};
@@ -125,18 +142,17 @@ TEMPLATE_TEST_CASE_SIG("User defined key and value type",
                     thrust::counting_iterator<int>(0),
                     thrust::counting_iterator<int>(num),
                     insert_keys.begin(),
-                    cuda::proclaim_return_type<Key>([] __device__(auto i) { return Key{i}; }));
+                    proclaim_return_type<Key>([] __device__(auto i) { return Key{i}; }));
 
   thrust::transform(thrust::device,
                     thrust::counting_iterator<int>(0),
                     thrust::counting_iterator<int>(num),
                     insert_values.begin(),
-                    cuda::proclaim_return_type<Value>([] __device__(auto i) { return Value{i}; }));
+                    proclaim_return_type<Value>([] __device__(auto i) { return Value{i}; }));
 
   auto insert_pairs = thrust::make_transform_iterator(
     thrust::make_counting_iterator<int>(0),
-    cuda::proclaim_return_type<cuco::pair<Key, Value>>(
-      [] __device__(auto i) { return cuco::pair<Key, Value>(i, i); }));
+      proclaim_return_type<cuco::pair<Key, Value>>([] __host__ __device__(auto i) { return cuco::pair<Key, Value>(i, i); }));
 
   SECTION("All inserted keys-value pairs should be correctly recovered during find")
   {
@@ -154,7 +170,7 @@ TEMPLATE_TEST_CASE_SIG("User defined key and value type",
     REQUIRE(cuco::test::equal(insert_values.begin(),
                               insert_values.end(),
                               found_values.begin(),
-                              cuda::proclaim_return_type<bool>([] __device__(Value lhs, Value rhs) {
+                              proclaim_return_type<bool>([] __device__(Value lhs, Value rhs) {
                                 return std::tie(lhs.f, lhs.s) == std::tie(rhs.f, rhs.s);
                               })));
   }
@@ -178,7 +194,7 @@ TEMPLATE_TEST_CASE_SIG("User defined key and value type",
       insert_pairs,
       insert_pairs + num,
       thrust::counting_iterator<int>(0),
-      cuda::proclaim_return_type<bool>([] __device__(auto const& key) { return (key % 2) == 0; }),
+      proclaim_return_type<bool>([] __device__(auto const& key) { return (key % 2) == 0; }),
       hash_custom_key{},
       custom_key_equals{});
 
@@ -194,7 +210,8 @@ TEMPLATE_TEST_CASE_SIG("User defined key and value type",
       contained.begin(),
       contained.end(),
       thrust::counting_iterator<int>(0),
-      cuda::proclaim_return_type<bool>([] __device__(auto const& idx_contained, auto const& idx) {
+      proclaim_return_type<bool>(
+      [] __device__(auto const& idx_contained, auto const& idx) {
         return ((idx % 2) == 0) == idx_contained;
       })));
   }
@@ -218,7 +235,7 @@ TEMPLATE_TEST_CASE_SIG("User defined key and value type",
     REQUIRE(cuco::test::all_of(
       insert_pairs,
       insert_pairs + num,
-      cuda::proclaim_return_type<bool>([view] __device__(cuco::pair<Key, Value> const& pair) {
+      proclaim_return_type<bool>([view] __device__(cuco::pair<Key, Value> const& pair) {
         return view.contains(pair.first, hash_custom_key{}, custom_key_equals{});
       })));
   }
@@ -228,7 +245,7 @@ TEMPLATE_TEST_CASE_SIG("User defined key and value type",
     auto m_view = map.get_device_mutable_view();
     REQUIRE(cuco::test::all_of(insert_pairs,
                                insert_pairs + num,
-                               cuda::proclaim_return_type<bool>(
+                               proclaim_return_type<bool>(
                                  [m_view] __device__(cuco::pair<Key, Value> const& pair) mutable {
                                    return m_view.insert(
                                      pair, hash_custom_key{}, custom_key_equals{});
@@ -243,7 +260,7 @@ TEMPLATE_TEST_CASE_SIG("User defined key and value type",
       REQUIRE(cuco::test::all_of(
         insert_pairs,
         insert_pairs + num,
-        cuda::proclaim_return_type<bool>(
+        proclaim_return_type<bool>(
           [view] __device__(cuco::pair<Key, Value> const& pair) mutable {
             return view.find(pair.first, hash_custom_key{}, custom_key_equals{}) == view.end();
           })));
@@ -255,7 +272,7 @@ TEMPLATE_TEST_CASE_SIG("User defined key and value type",
       REQUIRE(cuco::test::all_of(
         insert_pairs,
         insert_pairs + num,
-        cuda::proclaim_return_type<bool>([view] __device__(cuco::pair<Key, Value> const& pair) {
+        proclaim_return_type<bool>([view] __device__(cuco::pair<Key, Value> const& pair) {
           return view.find(pair.first, hash_custom_key{}, custom_key_equals{}) == view.end();
         })));
     }

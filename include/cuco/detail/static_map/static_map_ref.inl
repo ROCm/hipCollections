@@ -20,9 +20,9 @@
 
 #include <thrust/tuple.h>
 
-#include <cuda/atomic>
+#include <hip/atomic>
 
-#include <cooperative_groups.h>
+#include <hip/hip_cooperative_groups.h>
 
 namespace cuco {
 
@@ -109,7 +109,7 @@ template <typename Key,
           typename ProbingScheme,
           typename StorageRef,
           typename... Operators>
-__host__ __device__ constexpr static_map_ref<Key,
+__host__ __device__ constexpr typename static_map_ref<Key,
                                              T,
                                              Scope,
                                              KeyEqual,
@@ -129,7 +129,7 @@ template <typename Key,
           typename ProbingScheme,
           typename StorageRef,
           typename... Operators>
-__host__ __device__ constexpr static_map_ref<Key,
+__host__ __device__ constexpr typename static_map_ref<Key,
                                              T,
                                              Scope,
                                              KeyEqual,
@@ -149,7 +149,7 @@ template <typename Key,
           typename ProbingScheme,
           typename StorageRef,
           typename... Operators>
-__host__ __device__ constexpr static_map_ref<Key,
+__host__ __device__ constexpr typename static_map_ref<Key,
                                              T,
                                              Scope,
                                              KeyEqual,
@@ -182,7 +182,7 @@ template <typename Key,
           typename ProbingScheme,
           typename StorageRef,
           typename... Operators>
-__host__ __device__ constexpr static_map_ref<Key,
+__host__ __device__ constexpr typename static_map_ref<Key,
                                              T,
                                              Scope,
                                              KeyEqual,
@@ -245,7 +245,7 @@ template <typename Key,
           typename StorageRef,
           typename... Operators>
 template <typename... NewOperators>
-auto static_map_ref<Key, T, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::with(
+auto __host__ __device__ static_map_ref<Key, T, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::with(
   NewOperators...) && noexcept
 {
   return static_map_ref<Key, T, Scope, KeyEqual, ProbingScheme, StorageRef, NewOperators...>{
@@ -398,7 +398,7 @@ class operator_impl<
 
       for (auto& slot_content : window_slots) {
         auto const eq_res =
-          ref_.impl_.predicate_.operator()<is_insert::YES>(slot_content.first, key);
+          ref_.impl_.predicate_.template operator()<is_insert::YES>(slot_content.first, key);
 
         // If the key is already in the container, update the payload and return
         if (eq_res == detail::equal_result::EQUAL) {
@@ -449,7 +449,7 @@ class operator_impl<
       auto const [state, intra_window_index] = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto i = 0; i < window_size; ++i) {
-          res = ref_.impl_.predicate_.operator()<is_insert::YES>(window_slots[i].first, key);
+          res = ref_.impl_.predicate_.template operator()<is_insert::YES>(window_slots[i].first, key);
           if (res != detail::equal_result::UNEQUAL) {
             return detail::window_probing_results{res, i};
           }
@@ -460,7 +460,7 @@ class operator_impl<
 
       auto const group_contains_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_contains_equal) {
-        auto const src_lane = __ffs(group_contains_equal) - 1;
+        auto const src_lane = __FFS((lane_mask)group_contains_equal) - 1;
         if (group.thread_rank() == src_lane) {
           ref_.impl_.atomic_store(
             &((storage_ref.data() + *probing_iter)->data() + intra_window_index)->second,
@@ -472,7 +472,7 @@ class operator_impl<
 
       auto const group_contains_available = group.ballot(state == detail::equal_result::AVAILABLE);
       if (group_contains_available) {
-        auto const src_lane = __ffs(group_contains_available) - 1;
+        auto const src_lane = __FFS((lane_mask)group_contains_available) - 1;
         auto const status =
           (group.thread_rank() == src_lane)
             ? attempt_insert_or_assign(

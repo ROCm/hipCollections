@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <cuco/detail/error.hpp>
@@ -139,7 +156,7 @@ struct generate_gaussian_fn {
    *
    * @return A resulting random number
    */
-  __host__ __device__ constexpr T operator()(std::size_t seed) const noexcept
+  __host__ __device__ /*constexpr*/ T operator()(std::size_t seed) const noexcept //FIXME(HIP/AMD): compiler error when using constexpr
   {
     RNG rng;
     thrust::normal_distribution<> normal_dist(static_cast<double>(num_ / 2), num_ * dist_.value);
@@ -213,7 +230,7 @@ struct dropout_pred {
    *
    * @return A random boolean value
    */
-  __host__ __device__ constexpr bool operator()(std::size_t seed) const noexcept
+  __host__ __device__ /*constexpr*/ bool operator()(std::size_t seed) const noexcept //FIXME(HIP/AMD): compiler error when using constexpr
   {
     RNG rng;
     thrust::uniform_real_distribution<double> rate_dist{0.0, 1.0};
@@ -312,7 +329,7 @@ class key_generator {
   }
 
   /**
-   * @brief Overload of 'generate' which uses 'thrust::cuda::par_nosync' execution policy on CUDA
+   * @brief Overload of 'generate' which uses 'thrust::hip::par_nosync' execution policy on hip
    * stream 'stream'
    *
    * @tparam Dist Key distribution type
@@ -321,12 +338,12 @@ class key_generator {
    * @param dist Random distribution to use
    * @param out_begin Start of the output sequence
    * @param out_end End of the output sequence
-   * @param stream CUDA stream in which this operation is executed in
+   * @param stream hip stream in which this operation is executed in
    */
   template <typename Dist, typename OutputIt>
   void generate(Dist dist, OutputIt out_begin, OutputIt out_end, cudaStream_t stream)
   {
-    generate(dist, out_begin, out_end, thrust::cuda::par_nosync.on(stream));
+    generate(dist, out_begin, out_end, thrust::hip::par_nosync.on(stream));
   }
 
   /**
@@ -388,7 +405,7 @@ class key_generator {
   }
 
   /**
-   * @brief Overload of 'dropout' which uses 'thrust::cuda::par_nosync' execution policy on CUDA
+   * @brief Overload of 'dropout' which uses 'thrust::hip::par_nosync' execution policy on hip
    * stream 'stream'
    *
    * @tparam InOutIt Input/Ouput iterator typy which value type is the desired key type
@@ -396,7 +413,7 @@ class key_generator {
    * @param begin Start of the key sequence
    * @param end End of the key sequence
    * @param keep_prob Probability that a key is kept
-   * @param stream CUDA stream in which this operation is executed in
+   * @param stream hip stream in which this operation is executed in
    */
   template <typename InOutIt>
   void dropout(InOutIt begin, InOutIt end, double keep_prob, cudaStream_t stream)
@@ -406,7 +423,7 @@ class key_generator {
     typedef typename thrust::iterator_system<InOutIt>::type System;
     System system;
 
-    dropout(begin, end, keep_prob, thrust::cuda::par_nosync.on(stream));
+    dropout(begin, end, keep_prob, thrust::hip::par_nosync.on(stream));
   }
 
  private:

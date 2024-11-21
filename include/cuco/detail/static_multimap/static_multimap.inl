@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /*
  * Copyright (c) 2021-2023, NVIDIA CORPORATION.
  *
@@ -14,6 +15,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <cuco/detail/utility/cuda.hpp>
 #include <cuco/detail/utils.cuh>
 
@@ -25,7 +43,6 @@
 #include <iterator>
 
 namespace cuco {
-
 template <typename Key,
           typename Value,
           cuda::thread_scope Scope,
@@ -41,8 +58,8 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::static_multimap(
       capacity)},
     empty_key_sentinel_{empty_key_sentinel.value},
     empty_value_sentinel_{empty_value_sentinel.value},
-    counter_allocator_{alloc},
     slot_allocator_{alloc},
+    counter_allocator_{alloc},
     delete_counter_{counter_allocator_},
     delete_slots_{slot_allocator_, capacity_},
     d_counter_{counter_allocator_.allocate(1), delete_counter_},
@@ -384,7 +401,8 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve(
   CUCO_CUDA_TRY(cudaMemsetAsync(d_counter_.get(), 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_counter;
 
-  detail::pair_retrieve<block_size, flushing_cg_size, cg_size(), buffer_size, is_outer>
+  // todo: add variants without flushing and without cg for probing
+  detail::pair_retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
     <<<grid_size, block_size, 0, stream>>>(first,
                                            num_pairs,
                                            probe_output_begin,
@@ -434,8 +452,9 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve_oute
   CUCO_CUDA_TRY(cudaMemsetAsync(d_counter_.get(), 0, sizeof(atomic_ctr_type), stream));
   std::size_t h_counter;
 
-  detail::pair_retrieve<block_size, flushing_cg_size, cg_size(), buffer_size, is_outer>
-    <<<grid_size, block_size, 0, stream>>>(first,
+  // todo: add variants without flushing and without cg for probing
+  detail::pair_retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
+    <<<grid_size, detail::default_block_size(), 0, stream>>>(first,
                                            num_pairs,
                                            probe_output_begin,
                                            contained_output_begin,
@@ -457,10 +476,22 @@ template <typename Key,
           class ProbeSequence>
 __device__ __forceinline__ void
 static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutable_view::insert(
+  value_type const& insert_pair) noexcept
+{
+  impl_.template insert<uses_vector_load()>(insert_pair);
+}
+
+template <typename Key,
+          typename Value,
+          cuda::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+__device__ __forceinline__ void
+static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutable_view::insert(
   cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& g,
   value_type const& insert_pair) noexcept
 {
-  impl_.insert<uses_vector_load()>(g, insert_pair);
+  impl_.template insert<uses_vector_load()>(g, insert_pair);
 }
 
 template <typename Key,
@@ -469,7 +500,7 @@ template <typename Key,
           typename Allocator,
           class ProbeSequence>
 template <typename CG>
-__device__ __forceinline__ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view
+__device__ __forceinline__ typename static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view
 static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::make_copy(
   CG g, pair_atomic_type* const memory_to_use, device_view source_device_view) noexcept
 {
@@ -516,7 +547,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::flush
   atomicT* num_matches,
   OutputIt output_begin) noexcept
 {
-  impl_.flush_output_buffer(g, num_outputs, output_buffer, num_matches, output_begin);
+  impl_.template flush_output_buffer(g, num_outputs, output_buffer, num_matches, output_begin);
 }
 
 template <typename Key,
@@ -535,13 +566,13 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::flush
   OutputIt1 probe_output_begin,
   OutputIt2 contained_output_begin) noexcept
 {
-  impl_.flush_output_buffer(g,
-                            num_outputs,
-                            probe_output_buffer,
-                            contained_output_buffer,
-                            num_matches,
-                            probe_output_begin,
-                            contained_output_begin);
+  impl_.template flush_output_buffer(g,
+                                     num_outputs,
+                                     probe_output_buffer,
+                                     contained_output_buffer,
+                                     num_matches,
+                                     probe_output_begin,
+                                     contained_output_begin);
 }
 
 template <typename Key,
@@ -557,7 +588,22 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::conta
   KeyEqual key_equal) const noexcept
 {
   constexpr bool is_pair_contains = false;
-  return impl_.contains<is_pair_contains, uses_vector_load()>(g, k, key_equal);
+  return impl_.template contains<is_pair_contains, uses_vector_load()>(g, k, key_equal);
+}
+
+template <typename Key,
+          typename Value,
+          cuda::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+template <typename ProbeKey, typename KeyEqual>
+__device__ __forceinline__ bool
+static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::contains(
+  ProbeKey const& k,
+  KeyEqual key_equal) const noexcept
+{
+  constexpr bool is_pair_contains = false;
+  return impl_.template contains<is_pair_contains, uses_vector_load()>(k, key_equal);
 }
 
 template <typename Key,
@@ -573,7 +619,21 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::pair_
   PairEqual pair_equal) const noexcept
 {
   constexpr bool is_pair_contains = true;
-  return impl_.contains<is_pair_contains, uses_vector_load()>(g, p, pair_equal);
+  return impl_.template contains<is_pair_contains, uses_vector_load()>(g, p, pair_equal);
+}
+
+template <typename Key,
+          typename Value,
+          cuda::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+template <typename KeyEqual>
+__device__ __forceinline__ std::size_t
+static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::count(
+  Key const& k, KeyEqual key_equal) noexcept
+{
+  constexpr bool is_outer = false;
+  return impl_.template count<uses_vector_load(), is_outer>(k, key_equal);
 }
 
 template <typename Key,
@@ -589,7 +649,21 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::count
   KeyEqual key_equal) noexcept
 {
   constexpr bool is_outer = false;
-  return impl_.count<uses_vector_load(), is_outer>(g, k, key_equal);
+  return impl_.template count<uses_vector_load(), is_outer>(g, k, key_equal);
+}
+
+template <typename Key,
+          typename Value,
+          cuda::thread_scope Scope,
+          typename Allocator,
+          class ProbeSequence>
+template <typename KeyEqual>
+__device__ __forceinline__ std::size_t
+static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::count_outer(
+  Key const& k, KeyEqual key_equal) noexcept
+{
+  constexpr bool is_outer = true;
+  return impl_.template count<uses_vector_load(), is_outer>(k, key_equal);
 }
 
 template <typename Key,
@@ -605,7 +679,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::count
   KeyEqual key_equal) noexcept
 {
   constexpr bool is_outer = true;
-  return impl_.count<uses_vector_load(), is_outer>(g, k, key_equal);
+  return impl_.template count<uses_vector_load(), is_outer>(g, k, key_equal);
 }
 
 template <typename Key,
@@ -621,7 +695,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::pair_
   PairEqual pair_equal) noexcept
 {
   constexpr bool is_outer = false;
-  return impl_.pair_count<uses_vector_load(), is_outer>(g, pair, pair_equal);
+  return impl_.template pair_count<uses_vector_load(), is_outer>(g, pair, pair_equal);
 }
 
 template <typename Key,
@@ -637,7 +711,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::pair_
   PairEqual pair_equal) noexcept
 {
   constexpr bool is_outer = true;
-  return impl_.pair_count<uses_vector_load(), is_outer>(g, pair, pair_equal);
+  return impl_.template pair_count<uses_vector_load(), is_outer>(g, pair, pair_equal);
 }
 
 template <typename Key,
@@ -663,17 +737,17 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::retri
 {
   constexpr bool is_outer = false;
   if constexpr (uses_vector_load()) {
-    impl_.retrieve<buffer_size, is_outer>(flushing_cg,
-                                          probing_cg,
-                                          k,
-                                          flushing_cg_counter,
-                                          output_buffer,
-                                          num_matches,
-                                          output_begin,
-                                          key_equal);
+    impl_.template retrieve<buffer_size, is_outer>(flushing_cg,
+                                                   probing_cg,
+                                                   k,
+                                                   flushing_cg_counter,
+                                                   output_buffer,
+                                                   num_matches,
+                                                   output_begin,
+                                                   key_equal);
   } else  // In the case of scalar load, flushing CG is the same as probing CG
   {
-    impl_.retrieve<buffer_size, is_outer>(
+    impl_.template retrieve<buffer_size, is_outer>(
       probing_cg, k, flushing_cg_counter, output_buffer, num_matches, output_begin, key_equal);
   }
 }
@@ -701,17 +775,17 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::retri
 {
   constexpr bool is_outer = true;
   if constexpr (uses_vector_load()) {
-    impl_.retrieve<buffer_size, is_outer>(flushing_cg,
-                                          probing_cg,
-                                          k,
-                                          flushing_cg_counter,
-                                          output_buffer,
-                                          num_matches,
-                                          output_begin,
-                                          key_equal);
+    impl_.template retrieve<buffer_size, is_outer>(flushing_cg,
+                                                   probing_cg,
+                                                   k,
+                                                   flushing_cg_counter,
+                                                   output_buffer,
+                                                   num_matches,
+                                                   output_begin,
+                                                   key_equal);
   } else  // In the case of scalar load, flushing CG is the same as probing CG
   {
-    impl_.retrieve<buffer_size, is_outer>(
+    impl_.template retrieve<buffer_size, is_outer>(
       probing_cg, k, flushing_cg_counter, output_buffer, num_matches, output_begin, key_equal);
   }
 }
@@ -737,13 +811,13 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::pair_
   PairEqual pair_equal) noexcept
 {
   constexpr bool is_outer = false;
-  impl_.pair_retrieve<is_outer, uses_vector_load()>(probing_cg,
-                                                    pair,
-                                                    probe_key_begin,
-                                                    probe_val_begin,
-                                                    contained_key_begin,
-                                                    contained_val_begin,
-                                                    pair_equal);
+  impl_.template pair_retrieve<is_outer, uses_vector_load()>(probing_cg,
+                                                             pair,
+                                                             probe_key_begin,
+                                                             probe_val_begin,
+                                                             contained_key_begin,
+                                                             contained_val_begin,
+                                                             pair_equal);
 }
 
 template <typename Key,
@@ -772,27 +846,27 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::pair_
 {
   constexpr bool is_outer = false;
   if constexpr (uses_vector_load()) {
-    impl_.pair_retrieve<buffer_size, is_outer>(flushing_cg,
-                                               probing_cg,
-                                               pair,
-                                               flushing_cg_counter,
-                                               probe_output_buffer,
-                                               contained_output_buffer,
-                                               num_matches,
-                                               probe_output_begin,
-                                               contained_output_begin,
-                                               pair_equal);
+    impl_.template pair_retrieve<buffer_size, is_outer>(flushing_cg,
+                                                        probing_cg,
+                                                        pair,
+                                                        flushing_cg_counter,
+                                                        probe_output_buffer,
+                                                        contained_output_buffer,
+                                                        num_matches,
+                                                        probe_output_begin,
+                                                        contained_output_begin,
+                                                        pair_equal);
   } else  // In the case of scalar load, flushing CG is the same as probing CG
   {
-    impl_.pair_retrieve<buffer_size, is_outer>(probing_cg,
-                                               pair,
-                                               flushing_cg_counter,
-                                               probe_output_buffer,
-                                               contained_output_buffer,
-                                               num_matches,
-                                               probe_output_begin,
-                                               contained_output_begin,
-                                               pair_equal);
+    impl_.template pair_retrieve<buffer_size, is_outer>(probing_cg,
+                                                        pair,
+                                                        flushing_cg_counter,
+                                                        probe_output_buffer,
+                                                        contained_output_buffer,
+                                                        num_matches,
+                                                        probe_output_begin,
+                                                        contained_output_begin,
+                                                        pair_equal);
   }
 }
 
@@ -817,13 +891,13 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::pair_
   PairEqual pair_equal) noexcept
 {
   constexpr bool is_outer = true;
-  impl_.pair_retrieve<is_outer, uses_vector_load()>(probing_cg,
-                                                    pair,
-                                                    probe_key_begin,
-                                                    probe_val_begin,
-                                                    contained_key_begin,
-                                                    contained_val_begin,
-                                                    pair_equal);
+  impl_.template pair_retrieve<is_outer, uses_vector_load()>(probing_cg,
+                                                             pair,
+                                                             probe_key_begin,
+                                                             probe_val_begin,
+                                                             contained_key_begin,
+                                                             contained_val_begin,
+                                                             pair_equal);
 }
 
 template <typename Key,
@@ -852,27 +926,27 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::pair_
 {
   constexpr bool is_outer = true;
   if constexpr (uses_vector_load()) {
-    impl_.pair_retrieve<buffer_size, is_outer>(flushing_cg,
-                                               probing_cg,
-                                               pair,
-                                               flushing_cg_counter,
-                                               probe_output_buffer,
-                                               contained_output_buffer,
-                                               num_matches,
-                                               probe_output_begin,
-                                               contained_output_begin,
-                                               pair_equal);
+    impl_.template pair_retrieve<buffer_size, is_outer>(flushing_cg,
+                                                        probing_cg,
+                                                        pair,
+                                                        flushing_cg_counter,
+                                                        probe_output_buffer,
+                                                        contained_output_buffer,
+                                                        num_matches,
+                                                        probe_output_begin,
+                                                        contained_output_begin,
+                                                        pair_equal);
   } else  // In the case of scalar load, flushing CG is the same as probing CG
   {
-    impl_.pair_retrieve<buffer_size, is_outer>(probing_cg,
-                                               pair,
-                                               flushing_cg_counter,
-                                               probe_output_buffer,
-                                               contained_output_buffer,
-                                               num_matches,
-                                               probe_output_begin,
-                                               contained_output_begin,
-                                               pair_equal);
+    impl_.template pair_retrieve<buffer_size, is_outer>(probing_cg,
+                                                        pair,
+                                                        flushing_cg_counter,
+                                                        probe_output_buffer,
+                                                        contained_output_buffer,
+                                                        num_matches,
+                                                        probe_output_begin,
+                                                        contained_output_begin,
+                                                        pair_equal);
   }
 }
 
@@ -887,7 +961,7 @@ std::size_t static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::get_si
   auto begin  = thrust::make_transform_iterator(raw_slots(), detail::slot_to_tuple<Key, Value>{});
   auto filled = cuco::detail::slot_is_filled<Key>{get_empty_key_sentinel()};
 
-  return thrust::count_if(thrust::cuda::par.on(stream), begin, begin + get_capacity(), filled);
+  return thrust::count_if(thrust::hip::par.on(stream), begin, begin + get_capacity(), filled);
 }
 
 template <typename Key,

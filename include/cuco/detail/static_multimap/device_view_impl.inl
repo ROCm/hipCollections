@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <cuco/detail/bitwise_compare.cuh>
 #include <cuco/detail/static_multimap/kernels.cuh>
 #include <cuco/detail/utils.cuh>
@@ -21,8 +38,10 @@
 #include <thrust/tuple.h>
 #include <thrust/type_traits/is_contiguous_iterator.h>
 
-#include <cooperative_groups.h>
+#include <hip/hip_cooperative_groups.h>
+#ifndef __HIP_PLATFORM_AMD__
 #include <cooperative_groups/memcpy_async.h>
+#endif
 
 namespace cuco {
 template <typename Key,
@@ -352,10 +371,11 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
   __device__ __forceinline__ std::enable_if_t<uses_vector_load, void> insert(
     CG g, value_type const& insert_pair) noexcept
   {
-    auto current_slot = initial_slot(g, insert_pair.first);
+    auto current_slot = this->initial_slot(g, insert_pair.first);
+
     while (true) {
       value_type arr[2];
-      load_pair_array(&arr[0], current_slot);
+      this->load_pair_array(&arr[0], current_slot);
 
       // The user provide `key_equal` can never be used to compare against `empty_key_sentinel` as
       // the sentinel is not a valid key value. Therefore, first check for the sentinel
@@ -368,7 +388,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       if (window_contains_empty) {
         // the first lane in the group with an empty slot will attempt the insert
         insert_result status{insert_result::CONTINUE};
-        uint32_t src_lane = __ffs(window_contains_empty) - 1;
+        uint32_t src_lane = detail::__FFS((lane_mask)window_contains_empty) - 1;
         if (g.thread_rank() == src_lane) {
           auto insert_location = first_slot_is_empty ? current_slot : current_slot + 1;
           // One single CAS operation since vector loads are dedicated to packable pairs
@@ -384,7 +404,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       // if there are no empty slots in the current window,
       // we move onto the next window
       else {
-        current_slot = next_slot(current_slot);
+        current_slot = this->next_slot(current_slot);
       }
     }  // while true
   }
@@ -403,7 +423,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
   __device__ __forceinline__ std::enable_if_t<not uses_vector_load, void> insert(
     CG g, value_type const& insert_pair) noexcept
   {
-    auto current_slot = initial_slot(g, insert_pair.first);
+    auto current_slot = this->initial_slot(g, insert_pair.first);
 
     while (true) {
       value_type slot_contents = *reinterpret_cast<value_type const*>(current_slot);
@@ -418,7 +438,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       if (window_contains_empty) {
         // the first lane in the group with an empty slot will attempt the insert
         insert_result status{insert_result::CONTINUE};
-        uint32_t src_lane = __ffs(window_contains_empty) - 1;
+        uint32_t src_lane = detail::__FFS((lane_mask)window_contains_empty) - 1;
 
         if (g.thread_rank() == src_lane) {
 #if (__CUDA_ARCH__ < 700)
@@ -437,7 +457,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
       // if there are no empty slots in the current window,
       // we move onto the next window
       else {
-        current_slot = next_slot(current_slot);
+        current_slot = this->next_slot(current_slot);
       }
     }  // while true
   }
@@ -490,14 +510,21 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                                       atomicT* num_matches,
                                                       OutputIt output_begin) noexcept
   {
-    std::size_t offset;
+    std::size_t offset = 0;
     const auto lane_id = g.thread_rank();
     if (0 == lane_id) {
       offset = num_matches->fetch_add(num_outputs, cuda::std::memory_order_relaxed);
     }
     offset = g.shfl(offset, 0);
 
-    if constexpr (thrust::is_contiguous_iterator_v<OutputIt>) {
+#if defined(CUCO_HAS_CG_MEMCPY_ASYNC) && !defined(__HIP_PLATFORM_AMD__)
+    constexpr bool uses_memcpy_async = thrust::is_contiguous_iterator_v<OutputIt>;
+#else
+    constexpr bool uses_memcpy_async = false;
+#endif  // end CUCO_HAS_CG_MEMCPY_ASYNC
+
+#if !defined(__HIP_PLATFORM_AMD__)
+    if constexpr (uses_memcpy_async) {
 #if defined(CUCO_HAS_CUDA_BARRIER)
       cooperative_groups::memcpy_async(
         g,
@@ -510,7 +537,10 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                        output_buffer,
                                        sizeof(value_type) * num_outputs);
 #endif  // end CUCO_HAS_CUDA_BARRIER
-    } else {
+    }
+#endif
+
+    if constexpr (not uses_memcpy_async) {
       for (auto index = lane_id; index < num_outputs; index += g.size()) {
         *(output_begin + offset + index) = output_buffer[index];
       }
@@ -549,7 +579,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
                                                       OutputIt1 probe_output_begin,
                                                       OutputIt2 contained_output_begin) noexcept
   {
-    std::size_t offset;
+    std::size_t offset = 0;
     const auto lane_id = g.thread_rank();
     if (0 == lane_id) {
       offset = num_matches->fetch_add(num_outputs, cuda::std::memory_order_relaxed);
@@ -591,13 +621,13 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     Equal equal) const noexcept
   {
     auto current_slot = [&]() {
-      if constexpr (is_pair_contains) { return initial_slot(g, element.first); }
-      if constexpr (not is_pair_contains) { return initial_slot(g, element); }
+      if constexpr (is_pair_contains) { return this->initial_slot(g, element.first); }
+      if constexpr (not is_pair_contains) { return this->initial_slot(g, element); }
     }();
 
     while (true) {
       value_type arr[2];
-      load_pair_array(&arr[0], current_slot);
+      this->load_pair_array(&arr[0], current_slot);
 
       auto const first_slot_is_empty =
         detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -628,7 +658,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       // otherwise, all slots in the current window are full with other keys, so we move onto the
       // next window
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }
   }
 
@@ -657,8 +687,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     Equal equal) const noexcept
   {
     auto current_slot = [&]() {
-      if constexpr (is_pair_contains) { return initial_slot(g, element.first); }
-      if constexpr (not is_pair_contains) { return initial_slot(g, element); }
+      if constexpr (is_pair_contains) { return this->initial_slot(g, element.first); }
+      if constexpr (not is_pair_contains) { return this->initial_slot(g, element); }
     }();
 
     while (true) {
@@ -687,7 +717,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       // otherwise, all slots in the current window are full with other keys, so we move onto the
       // next window
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }
   }
 
@@ -709,13 +739,13 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     CG const& g, Key const& k, KeyEqual key_equal) noexcept
   {
     std::size_t count = 0;
-    auto current_slot = initial_slot(g, k);
+    auto current_slot = this->initial_slot(g, k);
 
     [[maybe_unused]] bool found_match = false;
 
     while (true) {
       value_type arr[2];
-      load_pair_array(&arr[0], current_slot);
+      this->load_pair_array(&arr[0], current_slot);
 
       auto const first_slot_is_empty =
         detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -737,7 +767,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         return count;
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }
   }
 
@@ -759,7 +789,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     CG const& g, Key const& k, KeyEqual key_equal) noexcept
   {
     std::size_t count = 0;
-    auto current_slot = initial_slot(g, k);
+    auto current_slot = this->initial_slot(g, k);
 
     [[maybe_unused]] bool found_match = false;
 
@@ -784,7 +814,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         return count;
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }
   }
 
@@ -808,13 +838,13 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   {
     std::size_t count = 0;
     auto key          = pair.first;
-    auto current_slot = initial_slot(g, key);
+    auto current_slot = this->initial_slot(g, key);
 
     [[maybe_unused]] bool found_match = false;
 
     while (true) {
       value_type arr[2];
-      load_pair_array(&arr[0], current_slot);
+      this->load_pair_array(&arr[0], current_slot);
 
       auto const first_slot_is_empty =
         detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -837,7 +867,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         return count;
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }
   }
 
@@ -861,7 +891,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   {
     std::size_t count = 0;
     auto key          = pair.first;
-    auto current_slot = initial_slot(g, key);
+    auto current_slot = this->initial_slot(g, key);
 
     [[maybe_unused]] bool found_match = false;
 
@@ -886,7 +916,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         return count;
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }
   }
 
@@ -934,7 +964,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   {
     const uint32_t cg_lane_id = probing_cg.thread_rank();
 
-    auto current_slot = initial_slot(probing_cg, k);
+    auto current_slot = this->initial_slot(probing_cg, k);
 
     bool running                      = true;
     [[maybe_unused]] bool found_match = false;
@@ -942,7 +972,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     while (flushing_cg.any(running)) {
       if (running) {
         value_type arr[2];
-        load_pair_array(&arr[0], current_slot);
+        this->load_pair_array(&arr[0], current_slot);
 
         auto const first_slot_is_empty =
           detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -956,10 +986,10 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         if (first_exists or second_exists) {
           if constexpr (is_outer) { found_match = true; }
 
-          auto const num_first_matches  = __popc(first_exists);
-          auto const num_second_matches = __popc(second_exists);
+          auto const num_first_matches  = detail::__POPC(first_exists);
+          auto const num_second_matches = detail::__POPC(second_exists);
 
-          uint32_t output_idx;
+          uint32_t output_idx = 0;
           if (0 == cg_lane_id) {
             output_idx = atomicAdd(flushing_cg_counter, (num_first_matches + num_second_matches));
           }
@@ -999,7 +1029,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         flushing_cg.sync();
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while running
   }
 
@@ -1043,7 +1073,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   {
     const uint32_t lane_id = g.thread_rank();
 
-    auto current_slot = initial_slot(g, k);
+    auto current_slot = this->initial_slot(g, k);
 
     bool running                      = true;
     [[maybe_unused]] bool found_match = false;
@@ -1064,7 +1094,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       if (exists) {
         if constexpr (is_outer) { found_match = true; }
-        auto const num_matches = __popc(exists);
+        auto const num_matches = detail::__POPC(exists);
         if (equals) {
           // Each match computes its lane-level offset
           auto const lane_offset = detail::count_least_significant_bits(exists, lane_id);
@@ -1094,7 +1124,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         if (lane_id == 0) { *cg_counter = 0; }
         g.sync();
       }
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while running
   }
 
@@ -1150,14 +1180,14 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     PairEqual pair_equal) noexcept
   {
     auto const lane_id                = probing_cg.thread_rank();
-    auto current_slot                 = initial_slot(probing_cg, pair.first);
+    auto current_slot                 = this->initial_slot(probing_cg, pair.first);
     [[maybe_unused]] auto found_match = false;
 
     auto num_matches = 0;
 
     while (true) {
       value_type arr[2];
-      load_pair_array(&arr[0], current_slot);
+      this->load_pair_array(&arr[0], current_slot);
 
       auto const first_slot_is_empty =
         detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -1171,7 +1201,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       if (first_exists or second_exists) {
         if constexpr (is_outer) { found_match = true; }
 
-        auto const num_first_matches = __popc(first_exists);
+        auto const num_first_matches = detail::__POPC(first_exists);
 
         if (first_equals) {
           auto lane_offset      = detail::count_least_significant_bits(first_exists, lane_id);
@@ -1191,7 +1221,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
           *(contained_key_begin + output_idx) = arr[1].first;
           *(contained_val_begin + output_idx) = arr[1].second;
         }
-        num_matches += (num_first_matches + __popc(second_exists));
+        num_matches += (num_first_matches + detail::__POPC(second_exists));
       }
       if (probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
         if constexpr (is_outer) {
@@ -1205,7 +1235,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         return;  // exit if any slot in the current window is empty
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while
   }
 
@@ -1261,7 +1291,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     PairEqual pair_equal) noexcept
   {
     auto const lane_id                = probing_cg.thread_rank();
-    auto current_slot                 = initial_slot(probing_cg, pair.first);
+    auto current_slot                 = this->initial_slot(probing_cg, pair.first);
     [[maybe_unused]] auto found_match = false;
 
     auto num_matches = 0;
@@ -1290,8 +1320,9 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
           *(contained_key_begin + output_idx) = slot_contents.first;
           *(contained_val_begin + output_idx) = slot_contents.second;
         }
-        num_matches += __popc(exists);
+        num_matches += detail::__POPC(exists);
       }
+
       if (probing_cg.any(slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) and lane_id == 0) {
@@ -1304,7 +1335,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         return;  // exit if any slot in the current window is empty
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while
   }
 
@@ -1362,7 +1393,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     const uint32_t cg_lane_id = probing_cg.thread_rank();
 
     auto key          = pair.first;
-    auto current_slot = initial_slot(probing_cg, key);
+    auto current_slot = this->initial_slot(probing_cg, key);
 
     bool running                      = true;
     [[maybe_unused]] bool found_match = false;
@@ -1370,7 +1401,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     while (flushing_cg.any(running)) {
       if (running) {
         value_type arr[2];
-        load_pair_array(&arr[0], current_slot);
+        this->load_pair_array(&arr[0], current_slot);
 
         auto const first_slot_is_empty =
           detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
@@ -1384,10 +1415,10 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         if (first_exists or second_exists) {
           if constexpr (is_outer) { found_match = true; }
 
-          auto const num_first_matches  = __popc(first_exists);
-          auto const num_second_matches = __popc(second_exists);
+          auto const num_first_matches  = detail::__POPC(first_exists);
+          auto const num_second_matches = detail::__POPC(second_exists);
 
-          uint32_t output_idx;
+          uint32_t output_idx = 0;
           if (0 == cg_lane_id) {
             output_idx = atomicAdd(flushing_cg_counter, (num_first_matches + num_second_matches));
           }
@@ -1435,7 +1466,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         flushing_cg.sync();
       }
 
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while running
   }
 
@@ -1489,7 +1520,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
     const uint32_t lane_id = g.thread_rank();
 
     auto key          = pair.first;
-    auto current_slot = initial_slot(g, key);
+    auto current_slot = this->initial_slot(g, key);
 
     bool running                      = true;
     [[maybe_unused]] bool found_match = false;
@@ -1510,7 +1541,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       if (exists) {
         if constexpr (is_outer) { found_match = true; }
-        auto const num_matches = __popc(exists);
+        auto const num_matches = detail::__POPC(exists);
         if (equals) {
           // Each match computes its lane-level offset
           auto const lane_offset = detail::count_least_significant_bits(exists, lane_id);
@@ -1549,7 +1580,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         if (lane_id == 0) { *cg_counter = 0; }
         g.sync();
       }
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }  // while running
   }
 };  // class device_view_impl

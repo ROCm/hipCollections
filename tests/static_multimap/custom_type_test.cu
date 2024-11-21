@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <utils.hpp>
 
 #include <cuco/static_multimap.cuh>
@@ -32,27 +49,27 @@
 #include <tuple>
 
 // User-defined key type
-struct key_pair {
+struct alignas(8) key_pair { //FIXME(HIP): no hip support for unaligned atomics SWDEV-393058
   int32_t a;
   int32_t b;
   __device__ bool operator!=(key_pair const& other) const { return a != other.a and b != other.b; }
 };
 
-struct hash_key_pair {
+struct alignas(8)  hash_key_pair { //FIXME(HIP): no hip support for unaligned atomics SWDEV-393058
   __host__ __device__ hash_key_pair() : hash_key_pair{0} {}
   __host__ __device__ hash_key_pair(uint32_t offset) : offset_(offset) {}
   __device__ uint32_t operator()(key_pair k) const { return k.a + offset_; };
   uint32_t offset_;
 };
 
-struct key_pair_equals {
+struct alignas(8) key_pair_equals { //FIXME(HIP): no hip support for unaligned atomics SWDEV-393058
   __device__ bool operator()(const key_pair& lhs, const key_pair& rhs)
   {
     return std::tie(lhs.a, lhs.b) == std::tie(rhs.a, rhs.b);
   }
 };
 
-struct value_pair {
+struct alignas(8) value_pair { //FIXME(HIP): no hip support for unaligned atomics SWDEV-393058
   int32_t f;
   int32_t s;
 };

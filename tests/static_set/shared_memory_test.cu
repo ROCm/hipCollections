@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <utils.hpp>
 
 #include <cuco/static_set.cuh>
@@ -27,7 +44,7 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 
-#include <cuda/functional>
+//#include <cuda/functional>
 
 #include <limits>
 
@@ -65,7 +82,7 @@ __global__ void shared_memory_test_kernel(Ref* sets,
   }
 }
 
-TEMPLATE_TEST_CASE_SIG("Shared memory static set", "", ((typename Key), Key), (int32_t), (int64_t))
+TEMPLATE_TEST_CASE_SIG("Shared memory static set", "", ((typename Key, int dummy), Key, dummy), (int32_t, 1), (int64_t, 1))  //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
 {
   constexpr std::size_t number_of_sets  = 1000;
   constexpr std::size_t elements_in_set = 500;
@@ -94,7 +111,7 @@ TEMPLATE_TEST_CASE_SIG("Shared memory static set", "", ((typename Key), Key), (i
   thrust::device_vector<bool> d_keys_exist(number_of_sets * elements_in_set);
   thrust::device_vector<bool> d_keys_correct(number_of_sets * elements_in_set);
 
-  using ref_type = typename set_type::ref_type<cuco::op::insert_tag>;
+  using ref_type = typename set_type::template ref_type<cuco::op::insert_tag>;
 
   SECTION("Keys are all found after insertion.")
   {
@@ -123,7 +140,7 @@ TEMPLATE_TEST_CASE_SIG("Shared memory static set", "", ((typename Key), Key), (i
 
     REQUIRE(cuco::test::all_of(zip,
                                zip + d_keys_exist.size(),
-                               cuda::proclaim_return_type<bool>([] __device__(auto const& z) {
+                               proclaim_return_type<bool>([] __device__(auto const& z) {
                                  return thrust::get<0>(z) and thrust::get<1>(z);
                                })));
   }

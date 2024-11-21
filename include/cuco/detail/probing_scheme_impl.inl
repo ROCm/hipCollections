@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <cuco/detail/utils.cuh>
@@ -133,9 +150,9 @@ __host__ __device__ constexpr auto double_hashing<CGSize, Hash1, Hash2>::operato
   using size_type = typename Extent::value_type;
   return detail::probing_iterator<Extent>{
     cuco::detail::sanitize_hash<size_type>(hash1_(probe_key)) % upper_bound,
-    max(size_type{1},
+    static_cast<size_type>(max(size_type{1}, //TODO(HIP/AMD): Added casting
         cuco::detail::sanitize_hash<size_type>(hash2_(probe_key)) %
-          upper_bound),  // step size in range [1, prime - 1]
+          upper_bound)),  // step size in range [1, prime - 1]
     upper_bound};
 }
 

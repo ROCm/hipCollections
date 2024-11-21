@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /*
  * Copyright (c) 2020-2022, NVIDIA CORPORATION.
  *
@@ -13,14 +14,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
-#include <cub/block/block_reduce.cuh>
+#include <hipcub/block/block_reduce.hpp>
+namespace cub = hipcub;
 
-#include <cuda/std/atomic>
+#include <hip/std/atomic>
 
-#include <cooperative_groups.h>
-
+#include <hip/hip_cooperative_groups.h>
 namespace cuco::legacy::detail {
 namespace cg = cooperative_groups;
 
@@ -444,7 +463,11 @@ CUCO_KERNEL void find(
   auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
-  __shared__ Value writeBuffer[block_size / tile_size];
+  // NOTE(HIP/AMD): We need to change "block_size / tile_size" to this one to avoid the following error for STATIC_MAP_BLOCK_BENCH
+  // clang-17: llvm/include/llvm/Support/OptimizedStructLayout.h:53: 
+  // llvm::OptimizedStructLayoutField::OptimizedStructLayoutField(const void*, uint64_t, llvm::Align, uint64_t): 
+  // Assertion `Size > 0 && "adding an empty field to the layout"' failed.
+  __shared__ Value writeBuffer[(block_size + tile_size - 1)/ tile_size]; 
 
   while (idx < n) {
     auto key   = *(first + idx);
@@ -558,7 +581,11 @@ CUCO_KERNEL void contains(
   auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
-  __shared__ bool writeBuffer[block_size / tile_size];
+  // NOTE(HIP/AMD): We need to change "block_size / tile_size" to this one to avoid the following error for STATIC_MAP_BLOCK_BENCH
+  // clang-17: llvm/include/llvm/Support/OptimizedStructLayout.h:53: 
+  // llvm::OptimizedStructLayoutField::OptimizedStructLayoutField(const void*, uint64_t, llvm::Align, uint64_t): 
+  // Assertion `Size > 0 && "adding an empty field to the layout"' failed.
+  __shared__ bool writeBuffer[(block_size + tile_size - 1) / tile_size];
 
   while (idx < n) {
     auto key   = *(first + idx);
