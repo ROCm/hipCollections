@@ -14,37 +14,54 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
-#include <cuco/detail/error.hpp>
-#include <cuco/utility/key_generator.hpp>
+#include <hipco/detail/error.hpp>
+#include <hipco/utility/key_generator.hpp>
 
 #include <nvbench/nvbench.cuh>
 
-namespace cuco::benchmark {
+namespace hipco::benchmark {
 
 template <typename Dist>
 auto dist_from_state(nvbench::state const& state)
 {
-  if constexpr (std::is_same_v<Dist, cuco::utility::distribution::unique>) {
+  if constexpr (std::is_same_v<Dist, hipco::utility::distribution::unique>) {
     return Dist{};
-  } else if constexpr (std::is_same_v<Dist, cuco::utility::distribution::uniform>) {
+  } else if constexpr (std::is_same_v<Dist, hipco::utility::distribution::uniform>) {
     auto const multiplicity = state.get_int64_or_default("Multiplicity", defaults::MULTIPLICITY);
     return Dist{multiplicity};
-  } else if constexpr (std::is_same_v<Dist, cuco::utility::distribution::gaussian>) {
+  } else if constexpr (std::is_same_v<Dist, hipco::utility::distribution::gaussian>) {
     auto const skew = state.get_float64_or_default("Skew", defaults::SKEW);
     return Dist{skew};
   } else {
-    CUCO_FAIL("Unexpected distribution type");
+    HIPCO_FAIL("Unexpected distribution type");
   }
 }
 
-}  // namespace cuco::benchmark
+}  // namespace hipco::benchmark
 
-NVBENCH_DECLARE_TYPE_STRINGS(cuco::utility::distribution::unique, "UNIQUE", "distribution::unique");
-NVBENCH_DECLARE_TYPE_STRINGS(cuco::utility::distribution::uniform,
+NVBENCH_DECLARE_TYPE_STRINGS(hipco::utility::distribution::unique, "UNIQUE", "distribution::unique");
+NVBENCH_DECLARE_TYPE_STRINGS(hipco::utility::distribution::uniform,
                              "UNIFORM",
                              "distribution::uniform");
-NVBENCH_DECLARE_TYPE_STRINGS(cuco::utility::distribution::gaussian,
+NVBENCH_DECLARE_TYPE_STRINGS(hipco::utility::distribution::gaussian,
                              "GAUSSIAN",
                              "distribution::gaussian");
