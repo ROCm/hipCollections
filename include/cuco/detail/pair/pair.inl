@@ -36,6 +36,11 @@
 #include <type_traits>
 #include <utility>
 
+// FIXME/WAR(HIP/AMD): We need to include libhipcxx __config here to make
+// the macro _LIBCUDACXX_BEGIN_NAMESPACE_STD_NOVERSION from libhipcxx available
+// in order to add the symbols from tuple_helpers.inl to the correct namespace.
+#include <cuda/std/detail/__config>
+
 namespace cuco {
 
 template <typename First, typename Second>
@@ -67,6 +72,11 @@ __host__ __device__ constexpr bool operator==(cuco::pair<T1, T2> const& lhs,
 
 }  // namespace cuco
 
-namespace hip::std {
+// NOTE(HIP/AMD): Older libhipcxx versions use
+// the "hip" namespace name while more recent ones use
+// "cuda". We therefore use the macros from libhipcxx
+// to put the tuple_helpers.inl symbols into the correct 
+// namespace.
+_LIBCUDACXX_BEGIN_NAMESPACE_STD_NOVERSION
 #include <cuco/detail/pair/tuple_helpers.inl>
-}  // namespace hip::std
+_LIBCUDACXX_END_NAMESPACE_STD_NOVERSION 
