@@ -99,9 +99,8 @@ if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}")
   set(default_build_option_state ON)
 endif()
 
-option(BUILD_TESTS "Configure CMake to build tests" ON)
-#TODO(HIP/AMD): Enable building benchmarks, NVbench is required
-option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ON)
+option(BUILD_TESTS "Configure CMake to build tests" ${default_build_option_state})
+option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ${default_build_option_state})
 option(BUILD_EXAMPLES "Configure CMake to build examples" ${default_build_option_state})
 option(INSTALL_CUCO "Enable CMake install rules for cuco" ${default_build_option_state})
 
