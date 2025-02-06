@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, NVIDIA CORPORATION.
+ * Copyright (c) 2023-2025, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ namespace cub = hipcub;
 #endif
 
 #include <cuda/atomic>
+#include <cuda/std/functional>
 #include <thrust/iterator/constant_iterator.h>
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/iterator/transform_iterator.h>
@@ -296,7 +297,7 @@ class open_addressing_impl {
   size_type insert(InputIt first, InputIt last, Ref container_ref, cuda::stream_ref stream)
   {
     auto const always_true = thrust::constant_iterator<bool>{true};
-    return this->insert_if(first, last, always_true, thrust::identity{}, container_ref, stream);
+    return this->insert_if(first, last, always_true, cuda::std::identity{}, container_ref, stream);
   }
 
   /**
@@ -319,7 +320,7 @@ class open_addressing_impl {
                     cuda::stream_ref stream) noexcept
   {
     auto const always_true = thrust::constant_iterator<bool>{true};
-    this->insert_if_async(first, last, always_true, thrust::identity{}, container_ref, stream);
+    this->insert_if_async(first, last, always_true, cuda::std::identity{}, container_ref, stream);
   }
 
   /**
@@ -517,7 +518,7 @@ class open_addressing_impl {
   {
     auto const always_true = thrust::constant_iterator<bool>{true};
     this->contains_if_async(
-      first, last, always_true, thrust::identity{}, output_begin, container_ref, stream);
+      first, last, always_true, cuda::std::identity{}, output_begin, container_ref, stream);
   }
 
   /**
@@ -592,7 +593,7 @@ class open_addressing_impl {
     auto const always_true = thrust::constant_iterator<bool>{true};
 
     this->find_if_async(
-      first, last, always_true, thrust::identity{}, output_begin, container_ref, stream);
+      first, last, always_true, cuda::std::identity{}, output_begin, container_ref, stream);
   }
 
   /**

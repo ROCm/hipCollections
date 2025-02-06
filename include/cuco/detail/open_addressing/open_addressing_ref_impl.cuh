@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, NVIDIA CORPORATION.
+ * Copyright (c) 2023-2025, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@
 #include <cuco/probing_scheme.cuh>
 
 #include <cuda/atomic>
+#include <cuda/std/functional>
 #include <cuda/std/type_traits>
 #include <thrust/distance.h>
 #include <thrust/execution_policy.h>
@@ -1268,7 +1269,7 @@ class open_addressing_ref_impl {
 
             // Fill the buffer if any matching keys are found
             auto const lane_id = probing_tile.thread_rank();
-            if (thrust::any_of(thrust::seq, exists, exists + bucket_size, thrust::identity{})) {
+            if (thrust::any_of(thrust::seq, exists, exists + bucket_size, cuda::std::identity{})) {
               if constexpr (IsOuter) { found_match = true; }
 
               int32_t num_matches[bucket_size];
