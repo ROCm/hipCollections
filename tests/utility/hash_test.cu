@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, NVIDIA CORPORATION.
+ * Copyright (c) 2023-2025, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@
 #include <cuco/hash_functions.cuh>
 
 #include <cuda/std/cstddef>
+#include <cuda/std/functional>
 #include <cuda/std/limits>
 #include <thrust/device_vector.h>
 
@@ -107,7 +108,7 @@ TEST_CASE("utility cuco::identity_hash test", "")
 
     check_identity_hash_result_kernel<<<1, 1>>>(result.begin());
 
-    CHECK(cuco::test::all_of(result.begin(), result.end(), thrust::identity<bool>{}));
+    CHECK(cuco::test::all_of(result.begin(), result.end(), cuda::std::identity{}));
   }
 }
 
@@ -171,7 +172,7 @@ TEST_CASE("utility cuco::xxhash_64 test", "")
 
     check_hash_result_kernel_64<<<1, 1>>>(result.begin());
 
-    CHECK(cuco::test::all_of(result.begin(), result.end(), thrust::identity<bool>{}));
+    CHECK(cuco::test::all_of(result.begin(), result.end(), cuda::std::identity{}));
   }
 }
 
@@ -234,7 +235,7 @@ TEST_CASE("utility cuco::xxhash_32 test", "")
 
     check_hash_result_kernel_32<<<1, 1>>>(result.begin());
 
-    CHECK(cuco::test::all_of(result.begin(), result.end(), thrust::identity<bool>{}));
+    CHECK(cuco::test::all_of(result.begin(), result.end(), cuda::std::identity{}));
   }
 }
 
@@ -412,6 +413,6 @@ TEST_CASE("utility cuco::murmurhash3_x64_128 test", "")
 
     check_murmurhash3_128_result_kernel<<<1, 1>>>(result.begin());
 
-    CHECK(cuco::test::all_of(result.begin(), result.end(), thrust::identity<bool>{}));
+    CHECK(cuco::test::all_of(result.begin(), result.end(), cuda::std::identity{}));
   }
 }
