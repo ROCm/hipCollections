@@ -69,25 +69,6 @@ include(rapids-hip)
 include(rapids-export)
 include(rapids-find)
 
-
-list(APPEND SUPPORTED_ARCHS "gfx90a" "gfx908" "gfx940" "gfx941" "gfx942" "gfx1100"
-                            "gfx90a:sramecc+:xnack-" "gfx908:sramecc+:xnack-"
-                            "gfx940:sramecc+:xnack-" "gfx941:sramecc+:xnack-"
-                            "gfx942:sramecc+:xnack-"
-                            "gfx90a:xnack+" "gfx940:xnack+" "gfx941:xnack+"
-                            "gfx942:xnack+")
-# WAR for not supporting all architectures yet
-# build only for supported architectures per default
-if(NOT (DEFINED CMAKE_HIP_ARCHITECTURES))
-  set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx908;gfx940;gfx941;gfx942")
-else()
-  foreach(arch ${CMAKE_HIP_ARCHITECTURES})
-    if(NOT ${arch} IN_LIST SUPPORTED_ARCHS) 
-      message(FATAL_ERROR "Aborting, as the provided architecture ${arch} is not supported")
-    endif()
-  endforeach()
-endif()
-
 # * Enable the HIP language
 rapids_hip_init_architectures(CUCO "NATIVE")
 
@@ -104,7 +85,40 @@ option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ${default
 option(BUILD_EXAMPLES "Configure CMake to build examples" ${default_build_option_state})
 option(INSTALL_CUCO "Enable CMake install rules for cuco" ${default_build_option_state})
 
-option(USE_WARPSIZE_32 "Use wave size 32, e.g., for gfx1100 devices." OFF)
+option(USE_WARPSIZE_32 "Use wave size 32, e.g., for gfx1100 devices (experimental)." OFF)
+mark_as_advanced(USE_WARPSIZE_32)
+
+list(APPEND SUPPORTED_WS_64_ARCHS "gfx90a" "gfx908" "gfx940" "gfx941" "gfx942" 
+                            "gfx90a:sramecc+:xnack-" "gfx908:sramecc+:xnack-"
+                            "gfx940:sramecc+:xnack-" "gfx941:sramecc+:xnack-"
+                            "gfx942:sramecc+:xnack-"
+                            "gfx90a:xnack+" "gfx940:xnack+" "gfx941:xnack+"
+                            "gfx942:xnack+")
+list(APPEND SUPPORTED_WS_32_ARCHS "gfx1100")
+
+if(USE_WARPSIZE_32)
+  message(WARNING "Support for warp size 32 is currently in the experimental stage."
+                  "Features and functionality may change and are not guaranteed to be stable or production-ready."
+                  "Use at your own risk.")
+endif()
+
+# WAR for not supporting all architectures yet
+# build only for supported warp size 64 architectures per default
+if(NOT (DEFINED CMAKE_HIP_ARCHITECTURES))
+  set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx908;gfx940;gfx941;gfx942")
+else()
+  foreach(arch ${CMAKE_HIP_ARCHITECTURES})
+    if(NOT ${arch} IN_LIST SUPPORTED_WS_32_ARCHS AND NOT ${arch} IN_LIST SUPPORTED_WS_64_ARCHS) 
+      message(FATAL_ERROR "Aborting, as the provided architecture ${arch} is not supported")
+    endif()
+    if(USE_WARPSIZE_32 AND NOT ${arch} IN_LIST SUPPORTED_WS_32_ARCHS)
+      message(FATAL_ERROR "Aborting, as at least one of the provided architectures is not supported with warp size 32 (${arch}).")
+    endif()
+    if(NOT USE_WARPSIZE_32 AND NOT ${arch} IN_LIST SUPPORTED_WS_64_ARCHS)
+      message(FATAL_ERROR "Aborting, as at least one of the provided architectures is not supported with warp size 64 (${arch}).")
+    endif()
+  endforeach()
+endif()
 
 # Write the version header
 rapids_cmake_write_version_file(include/cuco/version_config.hpp)
