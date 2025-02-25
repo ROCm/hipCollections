@@ -23,8 +23,6 @@
 
 #include <hip/hip_runtime_api.h>
 
-#define CUDART_VERSION 0
-
 // types
 #ifndef cudaError_t
 #  define cudaError_t hipError_t
