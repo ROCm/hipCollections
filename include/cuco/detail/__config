@@ -62,6 +62,7 @@
 // WAR for libcudacxx/296
 #define CUCO_CUDA_MINIMUM_ARCH _NV_FIRST_ARG(__CUDA_ARCH_LIST__)
 
+// NOTE(HIP/AMD): No IFP on AMD GPUs. -> No support for barrier.
 #if defined(CUDART_VERSION) && (CUDART_VERSION >= 11000) && (CUCO_CUDA_MINIMUM_ARCH >= 700)
 #define CUCO_HAS_CUDA_BARRIER
 #endif
