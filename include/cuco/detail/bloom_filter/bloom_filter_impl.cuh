@@ -76,7 +76,6 @@ class bloom_filter_impl {
   static constexpr auto thread_scope    = Scope;
   static constexpr auto words_per_block = policy_type::words_per_block;
 
- private:
   __host__ __device__ static constexpr size_t max_vec_bytes() noexcept
   {
     constexpr auto word_bytes  = sizeof(word_type);
@@ -85,7 +84,6 @@ class bloom_filter_impl {
                           block_bytes);  // aiming for 2xLDG128 -> 1 sector per thread
   }
 
- public:
   struct alignas(max_vec_bytes()) filter_block_type {
    private:
     word_type data_[words_per_block];
