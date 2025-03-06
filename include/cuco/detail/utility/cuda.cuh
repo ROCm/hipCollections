@@ -34,7 +34,7 @@
 
 #include <cuco/detail/utility/cuda.hpp>
 
-#include <cooperative_groups.h>
+#include <hip/hip_cooperative_groups.h>
 
 #include <cstdint>
 
