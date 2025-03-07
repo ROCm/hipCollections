@@ -236,3 +236,7 @@
 #ifndef cudaStreamQuery
 #  define cudaStreamQuery hipStreamQuery
 #endif
+
+#ifndef cudaDevAttrMultiProcessorCount
+#   define cudaDevAttrMultiProcessorCount hipDeviceAttributeMultiprocessorCount
+#endif
