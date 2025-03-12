@@ -590,7 +590,7 @@ CUCO_KERNEL void contains(
   // clang-17: llvm/include/llvm/Support/OptimizedStructLayout.h:53: 
   // llvm::OptimizedStructLayoutField::OptimizedStructLayoutField(const void*, uint64_t, llvm::Align, uint64_t): 
   // Assertion `Size > 0 && "adding an empty field to the layout"' failed.
-  __shared__ Value writeBuffer[(block_size + tile_size - 1)/ tile_size]; 
+  __shared__ bool writeBuffer[(block_size + tile_size - 1)/ tile_size]; 
 
   while (idx < n) {
     auto key   = *(first + idx);
