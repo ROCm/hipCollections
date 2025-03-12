@@ -742,7 +742,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void rehash(
       auto const bucket = storage_ref[idx];
 
       for (auto const& slot : bucket) {
-        if (is_filled(slot)) { buffer[atomicAdd_block(&buffer_size, 1)] = slot; }
+        if (is_filled(slot)) { buffer[atomicAdd(&buffer_size, 1)] = slot; } // TODO(HIP/AMD): switch back to atomicAdd_block if available.
       }
     }
     block.sync();
