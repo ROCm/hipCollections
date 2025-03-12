@@ -252,7 +252,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void insert_or_apply_shmem(
   }
 
   // insert-or-apply from shared map to global map
-  auto bucket_idx = thread_idx;
+  int bucket_idx = thread_idx;
   while (bucket_idx < num_buckets) {
     auto const slot = storage[bucket_idx][0];
     if (not cuco::detail::bitwise_compare(slot.first, ref.empty_key_sentinel())) {
