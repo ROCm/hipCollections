@@ -198,14 +198,14 @@ bucket_storage_ref<T, BucketSize, Extent>::end() const noexcept
 }
 
 template <typename T, int32_t BucketSize, typename Extent>
-__device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::bucket_type*
+__device__ __host__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::bucket_type*
 bucket_storage_ref<T, BucketSize, Extent>::data() noexcept
 {
   return buckets_;
 }
 
 template <typename T, int32_t BucketSize, typename Extent>
-__device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::bucket_type*
+__device__ __host__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::bucket_type*
 bucket_storage_ref<T, BucketSize, Extent>::data() const noexcept
 {
   return buckets_;
