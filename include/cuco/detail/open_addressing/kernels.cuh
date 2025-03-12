@@ -37,7 +37,14 @@
 
 #include <cuco/detail/utility/cuda.cuh>
 
-#include <cub/block/block_reduce.cuh>
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
+#include "cub/block/block_reduce.cuh"
+#else
+#include "hipcub/hipcub.hpp"
+namespace cub = hipcub;
+#endif
+#include <cuco/detail/__config>
+
 #include <cuda/atomic>
 
 #ifndef __HIP_PLATFORM_AMD__

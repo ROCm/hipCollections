@@ -45,8 +45,21 @@
 #include <cuco/storage.cuh>
 #include <cuco/utility/traits.hpp>
 
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
 #include <cub/device/device_for.cuh>
 #include <cub/device/device_select.cuh>
+#else
+#include "hipcub/hipcub.hpp"
+// FIXME(HIP/AMD): WAR 'ForEachCopyN' in namespace 'hipcub'
+#include "hipcub/device/device_for.hpp" // TODO(HIP/AMD): remove again once not needed
+
+//namespace cub::device = hipcub;
+//namespace cub::DeviceFor = hipcub;
+namespace cub = hipcub;
+
+
+#endif
+
 #include <cuda/atomic>
 #include <thrust/iterator/constant_iterator.h>
 #include <thrust/iterator/counting_iterator.h>
@@ -871,7 +884,8 @@ class open_addressing_impl {
       }
     };
 
-    CUCO_CUDA_TRY(cub::DeviceFor::ForEachCopyN(
+    // FIXME(HIP/AMD): WAR 'ForEachCopyN' in namespace 'hipcub'
+    CUCO_CUDA_TRY(cub::ForEachCopyN( // TODO(HIP/AMD): add ::DeviceFor namespace again once possible
       storage_ref.data(), storage_ref.num_buckets(), op, stream.get()));
   }
 
