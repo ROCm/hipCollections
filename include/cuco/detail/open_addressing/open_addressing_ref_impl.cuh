@@ -978,7 +978,7 @@ class open_addressing_ref_impl {
 
         for (auto& slot_content : bucket_slots) {
           switch (
-            this->predicate_.operator()<is_insert::NO>(key, this->extract_key(slot_content))) {
+            this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(slot_content))) {
             case detail::equal_result::EMPTY: return count;
             case detail::equal_result::EQUAL: ++count; break;
             default: continue;
@@ -1014,7 +1014,7 @@ class open_addressing_ref_impl {
       auto const state = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto& slot : bucket_slots) {
-          res = this->predicate_.operator()<is_insert::NO>(key, this->extract_key(slot));
+          res = this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(slot));
           if (res == detail::equal_result::EMPTY) { return res; }
           count += static_cast<size_type>(res);
         }
@@ -1241,7 +1241,7 @@ class open_addressing_ref_impl {
               equals[i] = false;
               if (running) {
                 // inspect slot content
-                switch (this->predicate_.operator()<is_insert::NO>(
+                switch (this->predicate_.template operator()<is_insert::NO>(
                   probe_key, this->extract_key(bucket_slots[i]))) {
                   case detail::equal_result::EMPTY: {
                     running = false;
@@ -1362,7 +1362,7 @@ class open_addressing_ref_impl {
 
       for (int32_t i = 0; i < bucket_size; ++i) {
         switch (
-          this->predicate_.operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]))) {
+          this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]))) {
           case detail::equal_result::EMPTY: {
             return;
           }
@@ -1412,7 +1412,7 @@ class open_addressing_ref_impl {
 
       for (int32_t i = 0; i < bucket_size and !empty; ++i) {
         switch (
-          this->predicate_.operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]))) {
+          this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]))) {
           case detail::equal_result::EMPTY: {
             empty = true;
             continue;
@@ -1476,7 +1476,7 @@ class open_addressing_ref_impl {
 
       for (int32_t i = 0; i < bucket_size and !empty; ++i) {
         switch (
-          this->predicate_.operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]))) {
+          this->predicate_.template operator()<is_insert::NO>(key, this->extract_key(bucket_slots[i]))) {
           case detail::equal_result::EMPTY: {
             empty = true;
             continue;

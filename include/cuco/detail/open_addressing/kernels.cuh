@@ -654,7 +654,7 @@ CUCO_KERNEL void retrieve(InputProbeIt input_probe,
                                     output_match,
                                     atomic_counter);
     } else {
-      ref.retrieve<BlockSize>(block,
+      ref.template retrieve<BlockSize>(block,
                               input_probe + block_begin_offset,
                               input_probe + block_end_offset,
                               output_probe,
