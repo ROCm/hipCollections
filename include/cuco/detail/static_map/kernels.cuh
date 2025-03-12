@@ -36,7 +36,13 @@
 #include <cuco/detail/bitwise_compare.cuh>
 #include <cuco/detail/utility/cuda.cuh>
 
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
 #include <cub/block/block_reduce.cuh>
+#else
+#include "hipcub/hipcub.hpp"
+namespace cub = hipcub;
+#endif
+
 #include <cuda/atomic>
 
 #include <hip/hip_cooperative_groups.h>
