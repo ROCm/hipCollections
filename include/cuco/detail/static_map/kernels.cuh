@@ -46,7 +46,7 @@ namespace cub = hipcub;
 #include <cuda/atomic>
 
 #include <hip/hip_cooperative_groups.h>
-#include <hip/hip_cooperative_groups/reduce.h>
+//#include <hip/hip_cooperative_groups/reduce.h>
 
 #include <iterator>
 
@@ -155,6 +155,7 @@ __global__ void insert_or_apply(
   }
 }
 
+#ifdef ENABLE_CG_REDUCE
 /**
  * @brief For any key-value pair `{k, v}` in the range `[first, first + n)`, if a key equivalent to
  * `k` already exists in the container, then binary operation is applied using `op` callable object
@@ -286,4 +287,6 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void insert_or_apply_shmem(
     }
   }
 }
+#endif
 }  // namespace cuco::detail::static_map_ns
+
