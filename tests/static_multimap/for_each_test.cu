@@ -42,8 +42,9 @@
 #include <thrust/iterator/transform_iterator.h>
 
 #include <hip/hip_cooperative_groups.h>
+#ifdef ENABLE_CG_REDUCE
 #include <hip/hip_cooperative_groups/reduce.h>
-
+#endif
 #include <catch2/catch_template_test_macros.hpp>
 
 #include <cstddef>
@@ -70,7 +71,7 @@ CUCO_KERNEL void for_each_check_scalar(Ref ref,
     idx += loop_stride;
   }
 }
-
+#ifdef ENABLE_CG_REDUCE
 template <bool Synced, class Ref, class InputIt, class AtomicErrorCounter>
 CUCO_KERNEL void for_each_check_cooperative(Ref ref,
                                             InputIt first,
@@ -114,7 +115,7 @@ CUCO_KERNEL void for_each_check_cooperative(Ref ref,
     idx += loop_stride;
   }
 }
-
+#endif
 TEMPLATE_TEST_CASE_SIG(
   "static_multimap for_each tests",
   "",
@@ -172,7 +173,7 @@ TEMPLATE_TEST_CASE_SIG(
     REQUIRE(error_counter->load() == 0);
     error_counter->store(0);
   }
-
+#ifdef ENABLE_CG_REDUCE
   // test CG for_each
   for_each_check_cooperative<false><<<grid_size, block_size>>>(
     set.ref(cuco::for_each), unique_keys_begin, num_unique_keys, key_multiplicity, error_counter);
@@ -185,6 +186,6 @@ TEMPLATE_TEST_CASE_SIG(
     set.ref(cuco::for_each), unique_keys_begin, num_unique_keys, key_multiplicity, error_counter);
   CUCO_CUDA_TRY(cudaDeviceSynchronize());
   REQUIRE(error_counter->load() == 0);
-
+#endif
   CUCO_CUDA_TRY(cudaFreeHost(error_counter));
 }

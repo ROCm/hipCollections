@@ -46,8 +46,9 @@ namespace cub = hipcub;
 #include <cuda/atomic>
 
 #include <hip/hip_cooperative_groups.h>
-//#include <hip/hip_cooperative_groups/reduce.h>
-
+#ifdef ENABLE_CG_REDUCE
+#include <hip/hip_cooperative_groups/reduce.h>
+#endif
 #include <iterator>
 
 namespace cuco::detail::static_map_ns {
