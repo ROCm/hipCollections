@@ -787,7 +787,7 @@ static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::find
 
     // otherwise, all slots in the current bucket are full with other keys, so we move onto the
     // next bucket
-    current_slot = next_slot(g, current_slot);
+    current_slot = this->next_slot(g, current_slot);
   }
 }
 
