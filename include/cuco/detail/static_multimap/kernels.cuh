@@ -38,7 +38,9 @@
 #include <cuco/detail/utility/cuda.cuh>
 #include <cuco/pair.cuh>
 
-#include <cub/block/block_reduce.cuh>
+#include <hipcub/block/block_reduce.hpp>
+namespace cub = hipcub;
+
 #include <cuda/std/atomic>
 #include <thrust/type_traits/is_contiguous_iterator.h>
 
