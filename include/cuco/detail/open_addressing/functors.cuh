@@ -34,6 +34,7 @@
 
 #include <cuco/detail/bitwise_compare.cuh>
 #include <cuco/detail/pair/traits.hpp>
+#include <type_traits>
 
 namespace cuco::detail::open_addressing_ns {
 
@@ -114,6 +115,8 @@ struct slot_is_filled {
       if constexpr (HasPayload) {
         // required by thrust zip iterator in `retrieve_all`
         if constexpr (cuco::detail::is_cuda_std_pair_like<S>::value) {
+          return thrust::get<0>(slot);
+        } else if constexpr (cuco::detail::is_thrust_pair_like<S>::value) {
           return thrust::get<0>(slot);
         } else {
           return slot.first;
