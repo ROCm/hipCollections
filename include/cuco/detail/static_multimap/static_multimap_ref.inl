@@ -831,7 +831,7 @@ class operator_impl<
                            AtomicCounter* atomic_counter) const
   {
     auto const& ref_ = static_cast<ref_type const&>(*this);
-    ref_.impl_.retrieve<BlockSize>(
+    ref_.impl_.template retrieve<BlockSize>(
       block, input_probe_begin, input_probe_end, output_probe, output_match, atomic_counter);
   }
 };
