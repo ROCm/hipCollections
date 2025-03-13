@@ -718,7 +718,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
       // otherwise, all slots in the current bucket are full with other keys, so we move onto the
       // next bucket
-      current_slot = next_slot(current_slot);
+      current_slot = this->next_slot(current_slot);
     }
   }
 
