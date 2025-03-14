@@ -542,8 +542,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
     if constexpr (not uses_memcpy_async) {
       for (auto index = lane_id; index < num_outputs; index += g.size()) {
-        thrust::get<0>(*(output_begin + offset + index)) = output_buffer[index].first;
-        thrust::get<1>(*(output_begin + offset + index)) = output_buffer[index].second;
+        *(output_begin + offset + index) = output_buffer[index];
       }
     }
   }
