@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <test_utils.hpp>
 
 #include <cuco/bloom_filter.cuh>
@@ -87,11 +104,11 @@ void test_unique_sequence(Filter& filter, size_type num_keys)
 TEMPLATE_TEST_CASE_SIG(
   "bloom_filter default policy tests",
   "",
-  ((class Key, class Policy), Key, Policy),
-  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint32_t, 1>),
-  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint32_t, 8>),
-  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint64_t, 1>),
-  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint64_t, 8>))
+  ((class Key, class Policy, int dummy), Key, Policy, dummy),  //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
+  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint32_t, 1>, 1),
+  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint32_t, 8>, 1),
+  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint64_t, 1>, 1),
+  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint64_t, 8>, 1))
 {
   using filter_type =
     cuco::bloom_filter<Key, cuco::extent<size_t>, cuda::thread_scope_device, Policy>;
@@ -107,10 +124,10 @@ TEMPLATE_TEST_CASE_SIG(
 
 TEMPLATE_TEST_CASE_SIG("bloom_filter arrow policy tests",
                        "",
-                       ((class Key, class Policy), Key, Policy),
-                       (int32_t, cuco::arrow_filter_policy<int32_t>),
-                       (uint64_t, cuco::arrow_filter_policy<uint64_t>),
-                       (float, cuco::arrow_filter_policy<float>))
+                       ((class Key, class Policy, int dummy), Key, Policy, dummy),  //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
+                       (int32_t, cuco::arrow_filter_policy<int32_t>, 1),
+                       (uint64_t, cuco::arrow_filter_policy<uint64_t>, 1),
+                       (float, cuco::arrow_filter_policy<float>, 1))
 {
   using filter_type =
     cuco::bloom_filter<Key, cuco::extent<size_t>, cuda::thread_scope_device, Policy>;
