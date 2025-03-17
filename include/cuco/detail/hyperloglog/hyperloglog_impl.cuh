@@ -53,7 +53,9 @@
 #include <thrust/type_traits/is_contiguous_iterator.h>
 
 #include <hip/hip_cooperative_groups.h>
+#ifdef CUCO_ENABLE_CG_REDUCE
 #include <hip/hip_cooperative_groups/reduce.h>
+#endif
 
 #include <vector>
 

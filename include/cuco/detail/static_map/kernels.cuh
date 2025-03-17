@@ -46,7 +46,7 @@ namespace cub = hipcub;
 #include <cuda/atomic>
 
 #include <hip/hip_cooperative_groups.h>
-#ifdef ENABLE_CG_REDUCE
+#ifdef CUCO_ENABLE_CG_REDUCE
 #include <hip/hip_cooperative_groups/reduce.h>
 #endif
 #include <iterator>
@@ -156,7 +156,7 @@ __global__ void insert_or_apply(
   }
 }
 
-#ifdef ENABLE_CG_REDUCE
+#ifdef CUCO_ENABLE_CG_REDUCE
 /**
  * @brief For any key-value pair `{k, v}` in the range `[first, first + n)`, if a key equivalent to
  * `k` already exists in the container, then binary operation is applied using `op` callable object

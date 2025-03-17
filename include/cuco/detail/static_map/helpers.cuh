@@ -72,7 +72,7 @@ void dispatch_insert_or_apply(
   if (num == 0) { return; }
 
   int32_t const default_grid_size = cuco::detail::grid_size(num, CGSize);
-#ifdef ENABLE_CG_REDUCE
+#ifdef CUCO_ENABLE_CG_REDUCE
   if constexpr (CGSize == 1) {
     using shmem_size_type = int32_t;
 

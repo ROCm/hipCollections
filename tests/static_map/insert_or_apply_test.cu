@@ -84,7 +84,7 @@ void test_insert_or_apply(Map& map, size_type num_keys, size_type num_unique_key
                             thrust::equal_to<Value>{}));
 }
 
-#ifdef ENABLE_CG_REDUCE
+#ifdef CUCO_ENABLE_CG_REDUCE
 template <bool HasInit, typename Map, typename Init>
 void test_insert_or_apply_shmem(Map& map, size_type num_keys, size_type num_unique_keys, Init init)
 {
@@ -257,7 +257,7 @@ TEMPLATE_TEST_CASE_SIG(
   }
 }
 
-#ifdef ENABLE_CG_REDUCE
+#ifdef CUCO_ENABLE_CG_REDUCE
 TEMPLATE_TEST_CASE_SIG(
   "static_map insert_or_apply shared memory", "", ((typename Key)), (int32_t), (int64_t))
 {
