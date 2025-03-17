@@ -92,7 +92,7 @@ class default_filter_policy_impl {
       (if (pattern_bits_ > max_pattern_bits_from_hash or pattern_bits_ < min_pattern_bits or
            pattern_bits_ > max_pattern_bits) {
           assert(false);
-          __throw_runtime_error;
+          std::__throw_runtime_error;
           //__trap();  // TODO this kills the kernel and corrupts the CUDA context. Not ideal.
       }))
   }
