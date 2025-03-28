@@ -33,35 +33,47 @@
 
 cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 
-if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
-  if(DEFINED ENV{RAPIDS_CMAKE_SCRIPT_BRANCH})
-    set(RAPIDS_CMAKE_SCRIPT_BRANCH "$ENV{RAPIDS_CMAKE_SCRIPT_BRANCH}")
-  else()
-    set(RAPIDS_CMAKE_SCRIPT_BRANCH branch-24.06)
+set(DEFAULT_RAPIDS_CMAKE_FROM_MODULE_PATH OFF)
+if(DEFINED ENV{RAPIDS_CMAKE_FROM_MODULE_PATH})
+  set(DEFAULT_RAPIDS_CMAKE_FROM_MODULE_PATH "$ENV{RAPIDS_CMAKE_FROM_MODULE_PATH}")
+endif()
+option(
+  RAPIDS_CMAKE_FROM_MODULE_PATH
+  "Do not fetch ROCmDS-CMake, assume it to be preinstalled and available via the CMAKE_MODULE_PATH."
+  ${DEFAULT_RAPIDS_CMAKE_FROM_MODULE_PATH}
+)
+
+if (NOT RAPIDS_CMAKE_FROM_MODULE_PATH)
+  if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
+    if(DEFINED ENV{RAPIDS_CMAKE_SCRIPT_BRANCH})
+      set(RAPIDS_CMAKE_SCRIPT_BRANCH "$ENV{RAPIDS_CMAKE_SCRIPT_BRANCH}")
+    else()
+      set(RAPIDS_CMAKE_SCRIPT_BRANCH branch-24.06)
+    endif()
+
+    set(URL "https://raw.githubusercontent.com/ROCm/rapids-cmake/${RAPIDS_CMAKE_SCRIPT_BRANCH}/RAPIDS.cmake")
+    file(DOWNLOAD ${URL}
+      ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake
+      STATUS DOWNLOAD_STATUS
+    )
+    list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+    list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
+
+    if(${STATUS_CODE} EQUAL 0)
+      message(STATUS "Downloaded 'CUCO_RAPIDS.cmake' successfully!")
+    else()
+      file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
+      # for debuging: message(FATAL_ERROR "Failed to download 'CUCO_RAPIDS.cmake'. URL: ${URL}, Reason: ${ERROR_MESSAGE}")
+      message(FATAL_ERROR "Failed to download 'CUCO_RAPIDS.cmake'. Reason: ${ERROR_MESSAGE}")
+    endif()
   endif()
 
-  set(URL "https://raw.githubusercontent.com/ROCm/rapids-cmake/${RAPIDS_CMAKE_SCRIPT_BRANCH}/RAPIDS.cmake")
-  file(DOWNLOAD ${URL}
-    ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake
-    STATUS DOWNLOAD_STATUS
-  )
-  list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
-  list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
-
-  if(${STATUS_CODE} EQUAL 0)
-    message(STATUS "Downloaded 'CUCO_RAPIDS.cmake' successfully!")
-  else()
-    file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
-    # for debuging: message(FATAL_ERROR "Failed to download 'CUCO_RAPIDS.cmake'. URL: ${URL}, Reason: ${ERROR_MESSAGE}")
-    message(FATAL_ERROR "Failed to download 'CUCO_RAPIDS.cmake'. Reason: ${ERROR_MESSAGE}")
+  if(DEFINED ENV{RAPIDS_CMAKE_BRANCH})
+    set(rapids-cmake-branch $ENV{RAPIDS_CMAKE_BRANCH})
   endif()
-endif()
 
-if(DEFINED ENV{RAPIDS_CMAKE_BRANCH})
-  set(rapids-cmake-branch $ENV{RAPIDS_CMAKE_BRANCH})
+  include(${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
 endif()
-
-include(${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
 
 include(rapids-cmake)
 include(rapids-cpm)
