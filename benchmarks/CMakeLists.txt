@@ -56,6 +56,7 @@ function(ConfigureBench BENCH_NAME)
 endfunction(ConfigureBench)
 
 file(GLOB CU_SOURCES
+  hash_bench.cu
   ./*/*/*.cu)
 
 set_source_files_properties(${CU_SOURCES} 
