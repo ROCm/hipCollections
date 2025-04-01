@@ -105,6 +105,10 @@ option(CUCO_ONLY_CREATE_PACKAGE "Only create a standalone package of cuCollectio
 if(CUCO_ONLY_CREATE_PACKAGE)
   add_library(cuco INTERFACE)
   install(TARGETS cuco EXPORT cuco-exports)
+
+  # Write the version header
+  rapids_cmake_write_version_file(include/cuco/version_config.hpp)
+
   install(DIRECTORY include/cuco/ DESTINATION include/cuco)
   install(FILES ${CUCO_BINARY_DIR}/include/cuco/version_config.hpp DESTINATION include/cuco)
   # install directory cuco-config generation
