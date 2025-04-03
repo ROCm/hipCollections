@@ -33,17 +33,16 @@
 
 cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 
-set(DEFAULT_RAPIDS_CMAKE_FROM_MODULE_PATH OFF)
-if(DEFINED ENV{RAPIDS_CMAKE_FROM_MODULE_PATH})
-  set(DEFAULT_RAPIDS_CMAKE_FROM_MODULE_PATH "$ENV{RAPIDS_CMAKE_FROM_MODULE_PATH}")
-endif()
-option(
-  RAPIDS_CMAKE_FROM_MODULE_PATH
-  "Do not fetch ROCmDS-CMake, assume it to be preinstalled and available via the CMAKE_MODULE_PATH."
-  ${DEFAULT_RAPIDS_CMAKE_FROM_MODULE_PATH}
+set(
+  RAPIDS_CMAKE_MODULE_PATH
+  "$ENV{RAPIDS_CMAKE_MODULE_PATH}"
+  CACHE FILEPATH
+  "Announce that ROCmDS-CMake is available via the provided module path."
 )
-
-if (NOT RAPIDS_CMAKE_FROM_MODULE_PATH)
+if (NOT "${RAPIDS_CMAKE_MODULE_PATH}" STREQUAL "")
+  list(APPEND CMAKE_MODULE_PATH "${RAPIDS_CMAKE_MODULE_PATH}")
+  include(rapids-cmake)  # ensure rapids-cmake-dir is set
+else()
   if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
     if(DEFINED ENV{RAPIDS_CMAKE_SCRIPT_BRANCH})
       set(RAPIDS_CMAKE_SCRIPT_BRANCH "$ENV{RAPIDS_CMAKE_SCRIPT_BRANCH}")
@@ -266,7 +265,7 @@ set(doc_string
 Provide targets for hipCollections.
 
 hipCollections (hipco) is an open-source, header-only library of GPU-accelerated,
-concurrent data structures. 
+concurrent data structures.
 
 Similar to how Thrust and hipCUB provide STL-like, GPU accelerated algorithms and
 primitives, hipCollections provides STL-like concurrent data structures.
