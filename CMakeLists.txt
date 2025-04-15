@@ -95,47 +95,7 @@ option(BUILD_TESTS "Configure CMake to build tests" ${default_build_option_state
 option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ${default_build_option_state})
 option(BUILD_EXAMPLES "Configure CMake to build examples" ${default_build_option_state})
 option(INSTALL_CUCO "Enable CMake install rules for cuco" ${default_build_option_state})
-option(CUCO_ONLY_CREATE_PACKAGE "Only create a standalone package of cuCollections (disables all other options)." OFF)
-
-#------
-# Packaging
-# NOTE For the time being, we put everything into the same package.
-# NOTE We need to consider to move to ROCm CMake from raw CPACK
-if(CUCO_ONLY_CREATE_PACKAGE)
-  add_library(cuco INTERFACE)
-  install(TARGETS cuco EXPORT cuco-exports)
-
-  # Write the version header
-  rapids_cmake_write_version_file(include/cuco/version_config.hpp)
-
-  install(DIRECTORY include/cuco/ DESTINATION include/cuco)
-  install(FILES ${CUCO_BINARY_DIR}/include/cuco/version_config.hpp DESTINATION include/cuco)
-  # install directory cuco-config generation
-  rapids_export(
-      INSTALL cuco
-      EXPORT_SET cuco-exports
-      GLOBAL_TARGETS cuco
-      NAMESPACE cuco::)
-
-  set(DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX "dev")
-  if (DEFINED ENV{CUCO_DEVEL_PACKAGE_SUFFIX})
-    set(DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX "$ENV{CUCO_DEVEL_PACKAGE_SUFFIX}")
-  endif()
-
-  set(CUCO_DEVEL_PACKAGE_SUFFIX "${DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX}" CACHE STRING "Overwrite development package suffix.")
-  set(CPACK_PACKAGE_NAME "rocm-hipcollections-${CUCO_DEVEL_PACKAGE_SUFFIX}")
-  set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc.")
-  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_VENDOR}")
-  set(CPACK_OUTPUT_FILE_PREFIX "dist" CACHE PATH "Package output file prefix.")
-  set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-  set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-  set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-  set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Package install prefix.")
-  include(CPack)
-
-  return()
-endif()
+option(CUCO_CREATE_PACKAGE "Create a standalone package of hipCollections (NOTE: all dependencies that are downloaded via CPM are added into the package)." OFF)
 
 option(USE_WARPSIZE_32 "Use wave size 32, e.g., for gfx1100 devices (experimental)." OFF)
 mark_as_advanced(USE_WARPSIZE_32)
@@ -283,7 +243,7 @@ rapids_export(
     NAMESPACE cuco::
     DOCUMENTATION doc_string)
 
-if(INSTALL_CUCO)
+if(INSTALL_CUCO OR CUCO_CREATE_PACKAGE)
     install(DIRECTORY include/cuco/ DESTINATION include/cuco)
     install(FILES ${CUCO_BINARY_DIR}/include/cuco/version_config.hpp DESTINATION include/cuco)
     # install directory cuco-config generation
@@ -293,4 +253,23 @@ if(INSTALL_CUCO)
         GLOBAL_TARGETS cuco
         NAMESPACE cuco::
         DOCUMENTATION doc_string)
+endif()
+
+if(CUCO_CREATE_PACKAGE)
+  set(DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX "dev")
+  if (DEFINED ENV{CUCO_DEVEL_PACKAGE_SUFFIX})
+    set(DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX "$ENV{CUCO_DEVEL_PACKAGE_SUFFIX}")
+  endif()
+
+  set(CUCO_DEVEL_PACKAGE_SUFFIX "${DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX}" CACHE STRING "Overwrite development package suffix.")
+  set(CPACK_PACKAGE_NAME "rocm-hipcollections-${DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX}")
+  set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc.")
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_VENDOR}")
+  set(CPACK_OUTPUT_FILE_PREFIX "dist" CACHE PATH "Package output file prefix.")
+  set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+  set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+  set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+  set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Package install prefix.")
+  include(CPack)
 endif()
