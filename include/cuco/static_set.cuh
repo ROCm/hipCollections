@@ -45,8 +45,8 @@
 #include <cuco/utility/traits.hpp>
 
 #include <cuda/atomic>
+#include <cuda/std/functional>
 #include <cuda/stream_ref>
-#include <thrust/functional.h>
 
 #if defined(CUCO_HAS_CUDA_BARRIER)
 #include <hip/barrier>
@@ -109,7 +109,7 @@ namespace cuco {
 template <class Key,
           class Extent             = cuco::extent<std::size_t>,
           cuda::thread_scope Scope = cuda::thread_scope_device,
-          class KeyEqual           = thrust::equal_to<Key>,
+          class KeyEqual           = cuda::std::equal_to<Key>,
           class ProbingScheme      = cuco::double_hashing<CUCO_STATIC_SET_CG_SIZE,  // CG size
                                                           cuco::default_hash_function<Key>>,
           class Allocator          = cuco::cuda_allocator<Key>,
