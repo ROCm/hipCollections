@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /*
  * Copyright (c) 2021-2023, NVIDIA CORPORATION.
  *
@@ -13,6 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <cuco/detail/utility/cuda.cuh>
@@ -20,14 +39,16 @@
 
 #include <thrust/type_traits/is_contiguous_iterator.h>
 
-#include <cub/block/block_reduce.cuh>
+#include <hipcub/block/block_reduce.hpp>
+namespace cub = hipcub;
 
-#include <cuda/std/atomic>
+#include <hip/std/atomic>
 
 #include <iterator>
 
 namespace cuco {
 namespace detail {
+
 namespace cg = cooperative_groups;
 
 CUCO_SUPPRESS_KERNEL_WARNINGS
@@ -398,23 +419,23 @@ CUCO_KERNEL void retrieve(InputIt first,
     if (active_flag) {
       auto key = *(first + idx);
       if constexpr (is_outer) {
-        view.retrieve_outer<buffer_size>(active_flushing_cg,
-                                         probing_cg,
-                                         key,
-                                         &flushing_cg_counter[flushing_cg_id],
-                                         output_buffer[flushing_cg_id],
-                                         num_matches,
-                                         output_begin,
-                                         key_equal);
+        view.template retrieve_outer<buffer_size>(active_flushing_cg,
+                                                  probing_cg,
+                                                  key,
+                                                  &flushing_cg_counter[flushing_cg_id],
+                                                  output_buffer[flushing_cg_id],
+                                                  num_matches,
+                                                  output_begin,
+                                                  key_equal);
       } else {
-        view.retrieve<buffer_size>(active_flushing_cg,
-                                   probing_cg,
-                                   key,
-                                   &flushing_cg_counter[flushing_cg_id],
-                                   output_buffer[flushing_cg_id],
-                                   num_matches,
-                                   output_begin,
-                                   key_equal);
+        view.template retrieve<buffer_size>(active_flushing_cg,
+                                            probing_cg,
+                                            key,
+                                            &flushing_cg_counter[flushing_cg_id],
+                                            output_buffer[flushing_cg_id],
+                                            num_matches,
+                                            output_begin,
+                                            key_equal);
       }
     }
     idx += loop_stride;
@@ -513,27 +534,27 @@ CUCO_KERNEL void pair_retrieve(InputIt first,
     if (active_flag) {
       pair_type pair = *(first + idx);
       if constexpr (is_outer) {
-        view.pair_retrieve_outer<buffer_size>(active_flushing_cg,
-                                              probing_cg,
-                                              pair,
-                                              &flushing_cg_counter[flushing_cg_id],
-                                              probe_output_buffer[flushing_cg_id],
-                                              contained_output_buffer[flushing_cg_id],
-                                              num_matches,
-                                              probe_output_begin,
-                                              contained_output_begin,
-                                              pair_equal);
+        view.template pair_retrieve_outer<buffer_size>(active_flushing_cg,
+                                                       probing_cg,
+                                                       pair,
+                                                       &flushing_cg_counter[flushing_cg_id],
+                                                       probe_output_buffer[flushing_cg_id],
+                                                       contained_output_buffer[flushing_cg_id],
+                                                       num_matches,
+                                                       probe_output_begin,
+                                                       contained_output_begin,
+                                                       pair_equal);
       } else {
-        view.pair_retrieve<buffer_size>(active_flushing_cg,
-                                        probing_cg,
-                                        pair,
-                                        &flushing_cg_counter[flushing_cg_id],
-                                        probe_output_buffer[flushing_cg_id],
-                                        contained_output_buffer[flushing_cg_id],
-                                        num_matches,
-                                        probe_output_begin,
-                                        contained_output_begin,
-                                        pair_equal);
+        view.template pair_retrieve<buffer_size>(active_flushing_cg,
+                                                 probing_cg,
+                                                 pair,
+                                                 &flushing_cg_counter[flushing_cg_id],
+                                                 probe_output_buffer[flushing_cg_id],
+                                                 contained_output_buffer[flushing_cg_id],
+                                                 num_matches,
+                                                 probe_output_begin,
+                                                 contained_output_begin,
+                                                 pair_equal);
       }
     }
     idx += loop_stride;

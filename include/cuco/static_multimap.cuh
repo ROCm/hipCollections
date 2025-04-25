@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <cuco/detail/__config>
@@ -26,13 +43,12 @@
 
 #include <thrust/functional.h>
 
-#include <cuda/std/atomic>
-
+#include <hip/std/atomic>
 #if defined(CUCO_HAS_CUDA_BARRIER)
-#include <cuda/barrier>
+#include <hip/barrier>
 #endif
 
-#include <cooperative_groups.h>
+#include <hip/hip_cooperative_groups.h>
 
 #include <cstddef>
 #include <memory>
@@ -40,7 +56,6 @@
 #include <utility>
 
 namespace cuco {
-
 /**
  * @brief A GPU-accelerated, unordered, associative container of key-value pairs that supports
  * equivalent keys.
@@ -126,11 +141,14 @@ namespace cuco {
  * and `cuco::legacy::double_hashing`. (see `probe_sequences.cuh`)
  * @tparam Allocator Type of allocator used for device storage
  */
+#ifndef CUCO_CG_SIZE
+#define CUCO_CG_SIZE 8
+#endif
 template <typename Key,
           typename Value,
           cuda::thread_scope Scope = cuda::thread_scope_device,
           typename Allocator       = cuco::cuda_allocator<char>,
-          class ProbeSequence = cuco::legacy::double_hashing<8, cuco::default_hash_function<Key>>>
+          class ProbeSequence = cuco::legacy::double_hashing<CUCO_CG_SIZE, cuco::default_hash_function<Key>>>
 class static_multimap {
   static_assert(
     cuco::is_bitwise_comparable_v<Key>,
@@ -158,10 +176,10 @@ class static_multimap {
                atomic_mapped_type>;  ///< Pair type of atomic key and atomic mapped value
   using atomic_ctr_type     = cuda::atomic<std::size_t, Scope>;  ///< Atomic counter type
   using allocator_type      = Allocator;                         ///< Allocator type
-  using slot_allocator_type = typename std::allocator_traits<Allocator>::rebind_alloc<
+  using slot_allocator_type = typename std::allocator_traits<Allocator>::template rebind_alloc<
     pair_atomic_type>;  ///< Type of the allocator to (de)allocate slots
-  using counter_allocator_type = typename std::allocator_traits<Allocator>::rebind_alloc<
-    atomic_ctr_type>;  ///< Type of the allocator to (de)allocate atomic counters
+  using counter_allocator_type = typename std::allocator_traits<Allocator>::template rebind_alloc<
+    atomic_ctr_type>;   ///< Type of the allocator to (de)allocate atomic counters
   using probe_sequence_type =
     cuco::legacy::detail::probe_sequence<ProbeSequence, Key, Value, Scope>;  ///< Probe scheme type
 
@@ -225,7 +243,7 @@ class static_multimap {
   static_multimap(std::size_t capacity,
                   empty_key<Key> empty_key_sentinel,
                   empty_value<Value> empty_value_sentinel,
-                  cudaStream_t stream    = 0,
+                  cudaStream_t stream     = 0,
                   Allocator const& alloc = Allocator{});
 
   /**
@@ -290,7 +308,7 @@ class static_multimap {
   void contains(InputIt first,
                 InputIt last,
                 OutputIt output_begin,
-                KeyEqual key_equal  = KeyEqual{},
+                KeyEqual key_equal = KeyEqual{},
                 cudaStream_t stream = 0) const;
 
   /**
@@ -340,7 +358,7 @@ class static_multimap {
   std::size_t count(InputIt first,
                     InputIt last,
                     cudaStream_t stream = 0,
-                    KeyEqual key_equal  = KeyEqual{}) const;
+                    KeyEqual key_equal = KeyEqual{}) const;
 
   /**
    * @brief Counts the occurrences of keys in `[first, last)` contained in the multimap.
@@ -362,7 +380,7 @@ class static_multimap {
   std::size_t count_outer(InputIt first,
                           InputIt last,
                           cudaStream_t stream = 0,
-                          KeyEqual key_equal  = KeyEqual{}) const;
+                          KeyEqual key_equal = KeyEqual{}) const;
 
   /**
    * @brief Counts the occurrences of key/value pairs in `[first, last)` contained in the multimap.
@@ -436,7 +454,7 @@ class static_multimap {
                     InputIt last,
                     OutputIt output_begin,
                     cudaStream_t stream = 0,
-                    KeyEqual key_equal  = KeyEqual{}) const;
+                    KeyEqual key_equal = KeyEqual{}) const;
 
   /**
    * @brief Retrieves all the matches corresponding to all keys in the range `[first, last)`.
@@ -465,7 +483,7 @@ class static_multimap {
                           InputIt last,
                           OutputIt output_begin,
                           cudaStream_t stream = 0,
-                          KeyEqual key_equal  = KeyEqual{}) const;
+                          KeyEqual key_equal = KeyEqual{}) const;
 
   /**
    * @brief Retrieves all pairs matching the input probe pair in the range `[first, last)`.
@@ -562,7 +580,13 @@ class static_multimap {
   /**
    * @brief Returns the warp size.
    */
-  static constexpr uint32_t warp_size() noexcept { return 32u; }
+  static constexpr uint32_t warp_size() noexcept { 
+#ifdef CUCO_USE_WARPSIZE_32
+    return 32u;
+#else
+    return 64u;
+#endif
+  }
 
   /**
    * @brief Custom deleter for unique pointer of device counter.
@@ -696,7 +720,7 @@ class static_multimap {
     using key_type    = typename view_base_type::key_type;     ///< Key type
     using mapped_type = typename view_base_type::mapped_type;  ///< Type of the mapped values
     using iterator =
-      typename view_base_type::iterator;  ///< Type of the forward iterator to `value_type`
+      typename view_base_type::iterator;        ///< Type of the forward iterator to `value_type`
     using const_iterator =
       typename view_base_type::const_iterator;  ///< Type of the forward iterator to `const
                                                 ///< value_type`
@@ -730,6 +754,13 @@ class static_multimap {
       cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& g,
       value_type const& insert_pair) noexcept;
 
+    /**
+     * @brief Inserts the specified key/value pair into the map.
+     *
+     * @param insert_pair The pair to insert
+     */
+    __device__ __forceinline__ void insert(value_type const& insert_pair) noexcept;
+
    private:
     using device_view_base<device_mutable_view_impl>::impl_;
   };  // class device mutable view
@@ -749,7 +780,7 @@ class static_multimap {
     using key_type       = typename view_base_type::key_type;     ///< Key type
     using mapped_type    = typename view_base_type::mapped_type;  ///< Type of the mapped values
     using iterator =
-      typename view_base_type::iterator;  ///< Type of the forward iterator to `value_type`
+      typename view_base_type::iterator;        ///< Type of the forward iterator to `value_type`
     using const_iterator =
       typename view_base_type::const_iterator;  ///< Type of the forward iterator to `const
                                                 ///< value_type`
@@ -879,6 +910,31 @@ class static_multimap {
       KeyEqual key_equal = KeyEqual{}) const noexcept;
 
     /**
+     * @brief Indicates whether the key `k` exists in the map.
+     *
+     * If the key `k` was inserted into the map, `contains` returns
+     * true. Otherwise, it returns false.
+     *
+     * ProbeSequence hashers should be callable with both ProbeKey and Key type.
+     * `std::invoke_result<KeyEqual, ProbeKey, Key>` must be well-formed.
+     *
+     * If `key_equal(probe_key, slot_key)` returns true, `hash(probe_key) == hash(slot_key)` must
+     * also be true.
+     *
+     * @tparam ProbeKey Probe key type
+     * @tparam KeyEqual Binary callable type
+     *
+     * @param k The key to search for
+     * @param key_equal The binary callable used to compare two keys
+     * for equality
+     * @return A boolean indicating whether the key/value pair
+     * containing `k` was inserted
+     */
+    template <typename ProbeKey, typename KeyEqual = thrust::equal_to<key_type>>
+    __device__ __forceinline__ bool contains(ProbeKey const& k,
+                                             KeyEqual key_equal = KeyEqual{}) const noexcept;
+
+    /**
      * @brief Indicates whether the pair `p` exists in the map.
      *
      * If the pair `p` was inserted into the map, `contains` returns
@@ -928,6 +984,22 @@ class static_multimap {
       KeyEqual key_equal = KeyEqual{}) noexcept;
 
     /**
+     * @brief Counts the occurrence of a given key contained in multimap.
+     *
+     * For a given key, `k`, counts all matching keys, `k'`, as determined by `key_equal(k, k')` and
+     * returns the sum of all matches for `k`.
+     *
+     * @tparam KeyEqual Binary callable type
+     * @param k The key to search for
+     * @param key_equal The binary callable used to compare two keys
+     * for equality
+     * @return Number of matches found by the current thread
+     */
+    template <typename KeyEqual = thrust::equal_to<key_type>>
+    __device__ __forceinline__ std::size_t count(Key const& k,
+                                                 KeyEqual key_equal = KeyEqual{}) noexcept;
+
+    /**
      * @brief Counts the occurrence of a given key contained in multimap. If no
      * matches can be found for a given key, the corresponding occurrence is 1.
      *
@@ -946,6 +1018,23 @@ class static_multimap {
       cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& g,
       Key const& k,
       KeyEqual key_equal = KeyEqual{}) noexcept;
+
+    /**
+     * @brief Counts the occurrence of a given key contained in multimap. If no
+     * matches can be found for a given key, the corresponding occurrence is 1.
+     *
+     * For a given key, `k`, counts all matching keys, `k'`, as determined by `key_equal(k, k')` and
+     * returns the sum of all matches for `k`. If `k` does not have any matches, returns 1.
+     *
+     * @tparam KeyEqual Binary callable type
+     * @param k The key to search for
+     * @param key_equal The binary callable used to compare two keys
+     * for equality
+     * @return Number of matches found by the current thread
+     */
+    template <typename KeyEqual = thrust::equal_to<key_type>>
+    __device__ __forceinline__ std::size_t count_outer(Key const& k,
+                                                       KeyEqual key_equal = KeyEqual{}) noexcept;
 
     /**
      * @brief Counts the occurrence of a given key/value pair contained in multimap.

@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <cuco/detail/equal_wrapper.cuh>
@@ -22,18 +39,21 @@
 #include <cuco/pair.cuh>
 #include <cuco/probing_scheme.cuh>
 
+#include <cuco/detail/utils.cuh>
+
 #include <thrust/distance.h>
 #include <thrust/tuple.h>
 
-#include <cuda/atomic>
+#include <hip/atomic>
 
-#include <cooperative_groups.h>
+#include <hip/hip_cooperative_groups.h>
 
 #include <cstdint>
 #include <type_traits>
 
 namespace cuco {
 namespace detail {
+
 
 /// Three-way insert result enum
 enum class insert_result : int32_t { CONTINUE = 0, SUCCESS = 1, DUPLICATE = 2 };
@@ -364,7 +384,7 @@ class open_addressing_ref_impl {
 
       for (auto& slot_content : window_slots) {
         auto const eq_res =
-          this->predicate_.operator()<is_insert::YES>(this->extract_key(slot_content), key);
+          this->predicate_.template operator()<is_insert::YES>(this->extract_key(slot_content), key);
 
         if constexpr (not allows_duplicates) {
           // If the key is already in the container, return false
@@ -391,6 +411,10 @@ class open_addressing_ref_impl {
     }
   }
 
+  template <typename T>
+  constexpr typename std::underlying_type<T>::type to_underlying_t(T t) noexcept {
+    return static_cast<typename std::underlying_type<T>::type>(t);
+  }
   /**
    * @brief Inserts an element.
    *
@@ -415,7 +439,7 @@ class open_addressing_ref_impl {
       auto const [state, intra_window_index] = [&]() {
         for (auto i = 0; i < window_size; ++i) {
           switch (
-            this->predicate_.operator()<is_insert::YES>(this->extract_key(window_slots[i]), key)) {
+            this->predicate_.template operator()<is_insert::YES>(this->extract_key(window_slots[i]), key)) {
             case detail::equal_result::AVAILABLE:
               return window_probing_results{detail::equal_result::AVAILABLE, i};
             case detail::equal_result::EQUAL: {
@@ -439,15 +463,15 @@ class open_addressing_ref_impl {
 
       auto const group_contains_available = group.ballot(state == detail::equal_result::AVAILABLE);
       if (group_contains_available) {
-        auto const src_lane = __ffs(group_contains_available) - 1;
+        auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_available) - 1;
         auto const status =
           (group.thread_rank() == src_lane)
             ? attempt_insert((storage_ref_.data() + *probing_iter)->data() + intra_window_index,
                              window_slots[intra_window_index],
                              val)
             : insert_result::CONTINUE;
-
-        switch (group.shfl(status, src_lane)) {
+        // TODO(HIP/AMD): 
+        switch (static_cast<insert_result>(group.shfl(to_underlying_t(status), src_lane))) {
           case insert_result::SUCCESS: return true;
           case insert_result::DUPLICATE: {
             if constexpr (allows_duplicates) {
@@ -499,7 +523,7 @@ class open_addressing_ref_impl {
 
       for (auto i = 0; i < window_size; ++i) {
         auto const eq_res =
-          this->predicate_.operator()<is_insert::YES>(this->extract_key(window_slots[i]), key);
+          this->predicate_.template operator()<is_insert::YES>(this->extract_key(window_slots[i]), key);
         auto* window_ptr = (storage_ref_.data() + *probing_iter)->data();
 
         // If the key is already in the container, return false
@@ -572,7 +596,7 @@ class open_addressing_ref_impl {
         auto res = detail::equal_result::UNEQUAL;
         for (auto i = 0; i < window_size; ++i) {
           res =
-            this->predicate_.operator()<is_insert::YES>(this->extract_key(window_slots[i]), key);
+            this->predicate_.template operator()<is_insert::YES>(this->extract_key(window_slots[i]), key);
           if (res != detail::equal_result::UNEQUAL) { return window_probing_results{res, i}; }
         }
         // returns dummy index `-1` for UNEQUAL
@@ -584,7 +608,7 @@ class open_addressing_ref_impl {
       // If the key is already in the container, return false
       auto const group_finds_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_finds_equal) {
-        auto const src_lane = __ffs(group_finds_equal) - 1;
+        auto const src_lane = cuco::detail::__FFS((lane_mask)group_finds_equal) - 1;
         auto const res      = group.shfl(reinterpret_cast<intptr_t>(slot_ptr), src_lane);
         if (group.thread_rank() == src_lane) {
           if constexpr (has_payload) {
@@ -598,14 +622,14 @@ class open_addressing_ref_impl {
 
       auto const group_contains_available = group.ballot(state == detail::equal_result::AVAILABLE);
       if (group_contains_available) {
-        auto const src_lane = __ffs(group_contains_available) - 1;
+        auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_available) - 1;
         auto const res      = group.shfl(reinterpret_cast<intptr_t>(slot_ptr), src_lane);
         auto const status   = [&, target_idx = intra_window_index]() {
           if (group.thread_rank() != src_lane) { return insert_result::CONTINUE; }
           return this->attempt_insert_stable(slot_ptr, window_slots[target_idx], val);
         }();
 
-        switch (group.shfl(status, src_lane)) {
+        switch (static_cast<insert_result>(group.shfl(to_underlying_t(status), src_lane))) {
           case insert_result::SUCCESS: {
             if (group.thread_rank() == src_lane) {
               if constexpr (has_payload) {
@@ -655,7 +679,7 @@ class open_addressing_ref_impl {
 
       for (auto& slot_content : window_slots) {
         auto const eq_res =
-          this->predicate_.operator()<is_insert::NO>(this->extract_key(slot_content), key);
+          this->predicate_.template operator()<is_insert::NO>(this->extract_key(slot_content), key);
 
         // Key doesn't exist, return false
         if (eq_res == detail::equal_result::EMPTY) { return false; }
@@ -697,7 +721,7 @@ class open_addressing_ref_impl {
       auto const [state, intra_window_index] = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto i = 0; i < window_size; ++i) {
-          res = this->predicate_.operator()<is_insert::NO>(this->extract_key(window_slots[i]), key);
+          res = this->predicate_.template operator()<is_insert::NO>(this->extract_key(window_slots[i]), key);
           if (res != detail::equal_result::UNEQUAL) { return window_probing_results{res, i}; }
         }
         // returns dummy index `-1` for UNEQUAL
@@ -706,7 +730,7 @@ class open_addressing_ref_impl {
 
       auto const group_contains_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_contains_equal) {
-        auto const src_lane = __ffs(group_contains_equal) - 1;
+        auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_equal) - 1;
         auto const status =
           (group.thread_rank() == src_lane)
             ? attempt_insert((storage_ref_.data() + *probing_iter)->data() + intra_window_index,
@@ -714,7 +738,7 @@ class open_addressing_ref_impl {
                              this->erased_slot_sentinel())
             : insert_result::CONTINUE;
 
-        switch (group.shfl(status, src_lane)) {
+        switch (static_cast<insert_result>(group.shfl(to_underlying_t(status), src_lane))) {
           case insert_result::SUCCESS: return true;
           case insert_result::DUPLICATE: return false;
           default: continue;
@@ -751,10 +775,11 @@ class open_addressing_ref_impl {
       auto const window_slots = storage_ref_[*probing_iter];
 
       for (auto& slot_content : window_slots) {
-        switch (this->predicate_.operator()<is_insert::NO>(this->extract_key(slot_content), key)) {
+        switch (this->predicate_.template operator()<is_insert::NO>(this->extract_key(slot_content), key)) {
           case detail::equal_result::UNEQUAL: continue;
           case detail::equal_result::EMPTY: return false;
           case detail::equal_result::EQUAL: return true;
+          case detail::equal_result::AVAILABLE: /*this case should never happen*/ assert(false); return false; // NOTE(HIP/AMD): fix warnings
         }
       }
       ++probing_iter;
@@ -786,7 +811,7 @@ class open_addressing_ref_impl {
       auto const state = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto& slot : window_slots) {
-          res = this->predicate_.operator()<is_insert::NO>(this->extract_key(slot), key);
+          res = this->predicate_.template operator()<is_insert::NO>(this->extract_key(slot), key);
           if (res != detail::equal_result::UNEQUAL) { return res; }
         }
         return res;
@@ -823,7 +848,7 @@ class open_addressing_ref_impl {
 
       for (auto i = 0; i < window_size; ++i) {
         switch (
-          this->predicate_.operator()<is_insert::NO>(this->extract_key(window_slots[i]), key)) {
+          this->predicate_.template operator()<is_insert::NO>(this->extract_key(window_slots[i]), key)) {
           case detail::equal_result::EMPTY: {
             return this->end();
           }
@@ -862,7 +887,7 @@ class open_addressing_ref_impl {
       auto const [state, intra_window_index] = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto i = 0; i < window_size; ++i) {
-          res = this->predicate_.operator()<is_insert::NO>(this->extract_key(window_slots[i]), key);
+          res = this->predicate_.template operator()<is_insert::NO>(this->extract_key(window_slots[i]), key);
           if (res != detail::equal_result::UNEQUAL) { return window_probing_results{res, i}; }
         }
         // returns dummy index `-1` for UNEQUAL
@@ -872,7 +897,7 @@ class open_addressing_ref_impl {
       // Find a match for the probe key, thus return an iterator to the entry
       auto const group_finds_match = group.ballot(state == detail::equal_result::EQUAL);
       if (group_finds_match) {
-        auto const src_lane = __ffs(group_finds_match) - 1;
+        auto const src_lane = detail::__FFS((lane_mask)group_finds_match) - 1;
         auto const res      = group.shfl(
           reinterpret_cast<intptr_t>(&(*(storage_ref_.data() + *probing_iter))[intra_window_index]),
           src_lane);
@@ -912,7 +937,7 @@ class open_addressing_ref_impl {
       } else if constexpr (Scope == cuda::thread_scope_device) {
         return atomicCAS(slot_ptr, *expected_ptr, *desired_ptr);
       } else if constexpr (Scope == cuda::thread_scope_block) {
-        return atomicCAS_block(slot_ptr, *expected_ptr, *desired_ptr);
+        return atomicCAS(slot_ptr, *expected_ptr, *desired_ptr);
       } else {
         static_assert(cuco::dependent_false<decltype(Scope)>, "Unsupported thread scope");
       }
@@ -925,7 +950,7 @@ class open_addressing_ref_impl {
       } else if constexpr (Scope == cuda::thread_scope_device) {
         return atomicCAS(slot_ptr, *expected_ptr, *desired_ptr);
       } else if constexpr (Scope == cuda::thread_scope_block) {
-        return atomicCAS_block(slot_ptr, *expected_ptr, *desired_ptr);
+        return atomicCAS(slot_ptr, *expected_ptr, *desired_ptr);
       } else {
         static_assert(cuco::dependent_false<decltype(Scope)>, "Unsupported thread scope");
       }
@@ -951,7 +976,7 @@ class open_addressing_ref_impl {
       } else if constexpr (Scope == cuda::thread_scope_device) {
         atomicExch(slot_ptr, *value_ptr);
       } else if constexpr (Scope == cuda::thread_scope_block) {
-        atomicExch_block(slot_ptr, *value_ptr);
+        atomicExch(slot_ptr, *value_ptr);
       } else {
         static_assert(cuco::dependent_false<decltype(Scope)>, "Unsupported thread scope");
       }
@@ -963,7 +988,7 @@ class open_addressing_ref_impl {
       } else if constexpr (Scope == cuda::thread_scope_device) {
         atomicExch(slot_ptr, *value_ptr);
       } else if constexpr (Scope == cuda::thread_scope_block) {
-        atomicExch_block(slot_ptr, *value_ptr);
+        atomicExch(slot_ptr, *value_ptr);
       } else {
         static_assert(cuco::dependent_false<decltype(Scope)>, "Unsupported thread scope");
       }
@@ -982,7 +1007,7 @@ class open_addressing_ref_impl {
   template <typename Value>
   [[nodiscard]] __device__ constexpr auto const& extract_key(Value const& value) const noexcept
   {
-    if constexpr (this->has_payload) {
+    if constexpr (has_payload) {
       return thrust::raw_reference_cast(value).first;
     } else {
       return thrust::raw_reference_cast(value);
@@ -1001,7 +1026,7 @@ class open_addressing_ref_impl {
    * @return The payload
    */
   template <typename Value, typename Enable = std::enable_if_t<has_payload and sizeof(Value)>>
-  [[nodiscard]] __device__ constexpr auto const& extract_payload(Value const& value) const noexcept
+  [[nodiscard]] __host__ __device__ constexpr auto const& extract_payload(Value const& value) const noexcept
   {
     return thrust::raw_reference_cast(value).second;
   }
@@ -1018,7 +1043,7 @@ class open_addressing_ref_impl {
   template <typename T>
   [[nodiscard]] __device__ constexpr value_type native_value(T const& value) const noexcept
   {
-    if constexpr (this->has_payload) {
+    if constexpr (has_payload) {
       return {static_cast<key_type>(this->extract_key(value)), this->extract_payload(value)};
     } else {
       return static_cast<value_type>(value);
@@ -1038,7 +1063,7 @@ class open_addressing_ref_impl {
   template <typename T>
   [[nodiscard]] __device__ constexpr auto heterogeneous_value(T const& value) const noexcept
   {
-    if constexpr (this->has_payload and not cuda::std::is_same_v<T, value_type>) {
+    if constexpr (has_payload and not cuda::std::is_same_v<T, value_type>) {
       using mapped_type = decltype(this->empty_slot_sentinel_.second);
       if constexpr (cuco::detail::is_cuda_std_pair_like<T>::value) {
         return cuco::pair{cuda::std::get<0>(value),
@@ -1062,7 +1087,7 @@ class open_addressing_ref_impl {
    */
   [[nodiscard]] __device__ constexpr value_type const erased_slot_sentinel() const noexcept
   {
-    if constexpr (this->has_payload) {
+    if constexpr (has_payload) {
       return cuco::pair{this->erased_key_sentinel(), this->empty_slot_sentinel().second};
     } else {
       return this->erased_key_sentinel();
@@ -1159,7 +1184,8 @@ class open_addressing_ref_impl {
   [[nodiscard]] __device__ constexpr insert_result cas_dependent_write(
     value_type* address, value_type const& expected, Value const& desired) noexcept
   {
-    using mapped_type = decltype(this->empty_slot_sentinel_.second);
+    // NOTE(HPI/AMD): unused
+    //using mapped_type = decltype(this->empty_slot_sentinel_.second);
 
     auto const expected_key = expected.first;
 

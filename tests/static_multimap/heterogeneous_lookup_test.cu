@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <utils.hpp>
 
 #include <cuco/static_multimap.cuh>
@@ -27,13 +44,13 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 
-#include <cuda/functional>
+//#include <cuda/functional>
 
 #include <tuple>
 
 // insert key type
 template <typename T>
-struct key_pair {
+struct alignas(8) key_pair {
   T a;
   T b;
 
@@ -47,7 +64,7 @@ struct key_pair {
 
 // probe key type
 template <typename T>
-struct key_triplet {
+struct alignas(8) key_triplet {
   T a;
   T b;
   T c;
@@ -64,7 +81,7 @@ struct key_triplet {
 };
 
 // User-defined device hasher
-struct custom_hasher {
+struct alignas(8) custom_hasher {
   template <typename CustomKey>
   __device__ uint32_t operator()(CustomKey const& k) const
   {
@@ -73,7 +90,7 @@ struct custom_hasher {
 };
 
 // User-defined device key equality
-struct custom_key_equal {
+struct alignas(8) custom_key_equal {
   template <typename LHS, typename RHS>
   __device__ bool operator()(LHS const& lhs, RHS const& rhs)
   {
@@ -107,11 +124,12 @@ TEMPLATE_TEST_CASE("Heterogeneous lookup",
 
   auto insert_pairs = thrust::make_transform_iterator(
     thrust::counting_iterator<int>(0),
-    cuda::proclaim_return_type<cuco::pair<Key, Value>>(
+    proclaim_return_type<cuco::pair<Key, Value>>(
       [] __device__(auto i) { return cuco::pair<Key, Value>(i, i); }));
   auto probe_keys = thrust::make_transform_iterator(
     thrust::counting_iterator<int>(0),
-    cuda::proclaim_return_type<ProbeKey>([] __device__(auto i) { return ProbeKey(i); }));
+    proclaim_return_type<ProbeKey>(
+    [] __device__(auto i) { return ProbeKey(i); }));
 
   SECTION("All inserted keys-value pairs should be contained")
   {

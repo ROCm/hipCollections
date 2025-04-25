@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <cuco/cuda_stream_ref.hpp>
@@ -22,7 +39,7 @@
 #include <cuco/detail/utility/cuda.hpp>
 #include <cuco/extent.cuh>
 
-#include <cuda/std/array>
+#include <hip/std/array>
 
 #include <cstddef>
 #include <cstdint>
@@ -42,21 +59,21 @@ constexpr aow_storage<T, WindowSize, Extent, Allocator>::aow_storage(
 }
 
 template <typename T, int32_t WindowSize, typename Extent, typename Allocator>
-constexpr aow_storage<T, WindowSize, Extent, Allocator>::window_type*
+constexpr typename aow_storage<T, WindowSize, Extent, Allocator>::window_type*
 aow_storage<T, WindowSize, Extent, Allocator>::data() const noexcept
 {
   return windows_.get();
 }
 
 template <typename T, int32_t WindowSize, typename Extent, typename Allocator>
-constexpr aow_storage<T, WindowSize, Extent, Allocator>::allocator_type
+constexpr typename aow_storage<T, WindowSize, Extent, Allocator>::allocator_type
 aow_storage<T, WindowSize, Extent, Allocator>::allocator() const noexcept
 {
   return allocator_;
 }
 
 template <typename T, int32_t WindowSize, typename Extent, typename Allocator>
-constexpr aow_storage<T, WindowSize, Extent, Allocator>::ref_type
+constexpr typename aow_storage<T, WindowSize, Extent, Allocator>::ref_type
 aow_storage<T, WindowSize, Extent, Allocator>::ref() const noexcept
 {
   return ref_type{this->window_extent(), this->data()};
@@ -165,35 +182,35 @@ struct aow_storage_ref<T, WindowSize, Extent>::iterator {
 };
 
 template <typename T, int32_t WindowSize, typename Extent>
-__device__ constexpr aow_storage_ref<T, WindowSize, Extent>::iterator
+__device__ constexpr typename aow_storage_ref<T, WindowSize, Extent>::iterator
 aow_storage_ref<T, WindowSize, Extent>::end() noexcept
 {
   return iterator{reinterpret_cast<value_type*>(this->data() + this->capacity())};
 }
 
 template <typename T, int32_t WindowSize, typename Extent>
-__device__ constexpr aow_storage_ref<T, WindowSize, Extent>::const_iterator
+__device__ constexpr typename aow_storage_ref<T, WindowSize, Extent>::const_iterator
 aow_storage_ref<T, WindowSize, Extent>::end() const noexcept
 {
   return const_iterator{reinterpret_cast<value_type*>(this->data() + this->capacity())};
 }
 
 template <typename T, int32_t WindowSize, typename Extent>
-__device__ constexpr aow_storage_ref<T, WindowSize, Extent>::window_type*
+__device__ constexpr typename aow_storage_ref<T, WindowSize, Extent>::window_type*
 aow_storage_ref<T, WindowSize, Extent>::data() noexcept
 {
   return windows_;
 }
 
 template <typename T, int32_t WindowSize, typename Extent>
-__device__ constexpr aow_storage_ref<T, WindowSize, Extent>::window_type*
+__device__ constexpr typename aow_storage_ref<T, WindowSize, Extent>::window_type*
 aow_storage_ref<T, WindowSize, Extent>::data() const noexcept
 {
   return windows_;
 }
 
 template <typename T, int32_t WindowSize, typename Extent>
-__device__ constexpr aow_storage_ref<T, WindowSize, Extent>::window_type
+__device__ constexpr typename aow_storage_ref<T, WindowSize, Extent>::window_type
 aow_storage_ref<T, WindowSize, Extent>::operator[](size_type index) const noexcept
 {
   return *reinterpret_cast<window_type*>(

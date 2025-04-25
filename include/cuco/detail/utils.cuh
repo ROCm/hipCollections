@@ -13,26 +13,122 @@
  * See the License for the specific language governing permissions and
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #pragma once
 
 #include <cuco/detail/bitwise_compare.cuh>
 
 #include <thrust/tuple.h>
 
-#include <cuda/std/bit>
-#include <cuda/std/cmath>
-#include <cuda/std/type_traits>
+#include <hip/std/bit>
+#include <hip/std/cmath>
+#include <hip/std/type_traits>
 
 namespace cuco {
 namespace detail {
 
+//TODO(HIP/AMD): find a better place for this
+#if __AMDGCN_WAVEFRONT_SIZE == 32
+using lane_mask = unsigned int;
+#else
+using lane_mask = unsigned long long int;
+#endif
+
 /**
- * @brief For the `n` least significant bits in the given unsigned 32-bit integer `x`,
+ * \brief Find First Set
+ * \return index of first set bit of lowest significance.
+ * \note Return value type matches that of the underlying device builtin.
+ * \note While `uint64_t` is defined as `unsigned long int` on x86_64,
+ *       the HIP `__ffsll` device function provides `__ffsll` with `unsigned long long int`
+ *       argument, which is also an 64-bit integer type on x86_64.
+ *       However, the compilers typically see both as different types.
+ *       We work with `uint64t` and `uint32t` here, so explicit instantiations
+ *       for both are added here.
+ */
+template <typename T>
+__device__ inline int __FFS(T v);
+
+template <>
+__device__ inline int __FFS<int32_t>(int32_t v) {
+  return __ffs(v);
+}
+
+template <>
+__device__ inline int __FFS<int64_t>(int64_t v) {
+  return __ffsll(static_cast<unsigned long long int>(v));
+}
+
+template <>
+__device__ inline int __FFS<uint32_t>(uint32_t v) {
+  return __ffs(v);
+}
+
+template <>
+__device__ inline int __FFS<unsigned long long>(unsigned long long v) {
+  return __ffsll(static_cast<unsigned long long int>(v));
+}
+
+template <>
+__device__ inline int __FFS<uint64_t>(uint64_t v) {
+  return __ffsll(static_cast<unsigned long long int>(v));
+}
+
+/**
+ * \return Number of bits set to 1.
+ * \note Return value type matches that of the underlying device builtin.
+ */
+template <typename T>
+__device__ inline int __POPC(T v);
+
+
+template <>
+__device__ inline int __POPC<int32_t>(int32_t v) {
+  return __popc(v);
+}
+
+template <>
+__device__ inline int __POPC<int64_t>(int64_t v) {
+  return __popcll(v);
+}
+
+template <>
+__device__ inline int __POPC<uint32_t>(uint32_t v) {
+  return __popc(v);
+}
+
+template <>
+__device__ inline int __POPC<uint64_t>(uint64_t v) {
+  return __popcll(v);
+}
+
+template <>
+__device__ inline int __POPC<unsigned long long>(unsigned long long v) {
+  return __popcll(v);
+}  
+
+/**
+ * @brief For the `n` least significant bits in the given unsigned 64-bit integer `x`,
  * returns the number of set bits.
  */
-__device__ __forceinline__ int32_t count_least_significant_bits(uint32_t x, int32_t n)
+__device__ __forceinline__ int32_t count_least_significant_bits(uint64_t x, int32_t n)
 {
-  return __popc(x & (1 << n) - 1);
+  return __popcll(x & (1UL << n) - 1UL);
 }
 
 /**
@@ -52,7 +148,7 @@ struct slot_to_tuple {
    * @return A thrust::tuple containing `s.first` and `s.second`
    */
   template <typename S>
-  __device__ thrust::tuple<Key, Value> operator()(S const& s)
+  __host__ __device__ thrust::tuple<Key, Value> operator()(S const& s)  // todo(hip): double check if __host__ is needed, file ticket?
   {
     return thrust::tuple<Key, Value>(s.first, s.second);
   }

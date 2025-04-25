@@ -48,8 +48,11 @@ struct get_slot {
     auto const window_idx = idx / StorageRef::window_size;
     auto const intra_idx  = idx % StorageRef::window_size;
     if constexpr (HasPayload) {
-      auto const& [first, second] = storage_[window_idx][intra_idx];
-      return thrust::make_tuple(first, second);
+      // FIXME(HIP/AMD): original code uses:
+      // auto const& [first, second] = storage_[window_idx][intra_idx];
+      // This leads to corrupted tuples with invalid data being created/returned.
+      // Potentially, this is a compiler issue.
+      return thrust::make_tuple(storage_[window_idx][intra_idx].first, storage_[window_idx][intra_idx].second);
     } else {
       return storage_[window_idx][intra_idx];
     }

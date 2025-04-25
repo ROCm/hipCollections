@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <utils.hpp>
 
 #include <cuco/static_set.cuh>
@@ -29,7 +46,7 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 
-#include <cuda/functional>
+//#include <cuda/functional>
 
 using size_type = int32_t;
 
@@ -45,10 +62,10 @@ __inline__ void test_unique_sequence(Set& set, size_type num_keys)
   auto keys_begin = d_keys.begin();
   thrust::device_vector<bool> d_contained(num_keys);
 
-  auto zip_equal = cuda::proclaim_return_type<bool>(
+  auto zip_equal = proclaim_return_type<bool>(
     [] __device__(auto const& p) { return thrust::get<0>(p) == thrust::get<1>(p); });
   auto is_even =
-    cuda::proclaim_return_type<bool>([] __device__(auto const& i) { return i % 2 == 0; });
+    proclaim_return_type<bool>([] __device__(auto const& i) { return i % 2 == 0; });
 
   SECTION("Non-inserted keys should not be contained.")
   {
@@ -81,7 +98,7 @@ __inline__ void test_unique_sequence(Set& set, size_type num_keys)
       d_contained.begin(),
       d_contained.end(),
       thrust::counting_iterator<std::size_t>(0),
-      cuda::proclaim_return_type<bool>([] __device__(auto const& idx_contained, auto const& idx) {
+      proclaim_return_type<bool>([] __device__(auto const& idx_contained, auto const& idx) {
         return ((idx % 2) == 0) == idx_contained;
       })));
   }

@@ -55,7 +55,7 @@ __inline__ void test_insert(Set& set)
   }
 
   auto const is_even =
-    cuda::proclaim_return_type<bool>([] __device__(size_type const& i) { return i % 2 == 0; });
+    proclaim_return_type<bool>([] __device__(size_type const& i) { return i % 2 == 0; });
 
   SECTION("Inserting all even values between [0, 300) should get 150 entries in the multiset")
   {

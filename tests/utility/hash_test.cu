@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <utils.hpp>
 
 #include <cuco/detail/__config>
@@ -53,19 +70,19 @@ __global__ void check_hash_result_kernel_64(OutputIter result)
 {
   int i = 0;
 
-  result[i++] = check_hash_result<cuco::xxhash_64<char>>(0, 0, 16804241149081757544);
+  result[i++] = check_hash_result<cuco::xxhash_64<char>>(0, 0, 16804241149081757544u);
   result[i++] = check_hash_result<cuco::xxhash_64<char>>(42, 0, 765293966243412708);
-  result[i++] = check_hash_result<cuco::xxhash_64<char>>(0, 42, 9486749600008296231);
+  result[i++] = check_hash_result<cuco::xxhash_64<char>>(0, 42, 9486749600008296231u);
 
   result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(0, 0, 4246796580750024372);
   result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(0, 42, 3614696996920510707);
-  result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(42, 0, 15516826743637085169);
-  result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(123456789, 0, 9462334144942111946);
+  result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(42, 0, 15516826743637085169u);
+  result[i++] = check_hash_result<cuco::xxhash_64<int32_t>>(123456789, 0, 9462334144942111946u);
 
   result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(0, 0, 3803688792395291579);
-  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(0, 42, 13194218611613725804);
-  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(42, 0, 13066772586158965587);
-  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(123456789, 0, 14662639848940634189);
+  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(0, 42, 13194218611613725804u);
+  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(42, 0, 13066772586158965587u);
+  result[i++] = check_hash_result<cuco::xxhash_64<int64_t>>(123456789, 0, 14662639848940634189u);
 
 #if defined(CUCO_HAS_INT128)
   result[i++] = check_hash_result<cuco::xxhash_64<__int128>>(123456789, 0, 7986913354431084250);
@@ -80,19 +97,19 @@ TEST_CASE("Test cuco::xxhash_64", "")
   // Reference hash values were computed using https://github.com/Cyan4973/xxHash
   SECTION("Check if host-generated hash values match the reference implementation.")
   {
-    CHECK(check_hash_result<cuco::xxhash_64<char>>(0, 0, 16804241149081757544));
+    CHECK(check_hash_result<cuco::xxhash_64<char>>(0, 0, 16804241149081757544u));
     CHECK(check_hash_result<cuco::xxhash_64<char>>(42, 0, 765293966243412708));
-    CHECK(check_hash_result<cuco::xxhash_64<char>>(0, 42, 9486749600008296231));
+    CHECK(check_hash_result<cuco::xxhash_64<char>>(0, 42, 9486749600008296231u));
 
     CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(0, 0, 4246796580750024372));
     CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(0, 42, 3614696996920510707));
-    CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(42, 0, 15516826743637085169));
-    CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(123456789, 0, 9462334144942111946));
+    CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(42, 0, 15516826743637085169u));
+    CHECK(check_hash_result<cuco::xxhash_64<int32_t>>(123456789, 0, 9462334144942111946u));
 
     CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(0, 0, 3803688792395291579));
-    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(0, 42, 13194218611613725804));
-    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(42, 0, 13066772586158965587));
-    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(123456789, 0, 14662639848940634189));
+    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(0, 42, 13194218611613725804u));
+    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(42, 0, 13066772586158965587u));
+    CHECK(check_hash_result<cuco::xxhash_64<int64_t>>(123456789, 0, 14662639848940634189u));
 
 #if defined(CUCO_HAS_INT128)
     CHECK(check_hash_result<cuco::xxhash_64<__int128>>(123456789, 0, 7986913354431084250));
@@ -177,13 +194,13 @@ TEST_CASE("Test cuco::xxhash_32", "")
 
 TEMPLATE_TEST_CASE_SIG("Static vs. dynamic key hash test",
                        "",
-                       ((typename Hash), Hash),
-                       (cuco::murmurhash3_32<char>),
-                       (cuco::murmurhash3_32<int32_t>),
-                       (cuco::xxhash_32<char>),
-                       (cuco::xxhash_32<int32_t>),
-                       (cuco::xxhash_64<char>),
-                       (cuco::xxhash_64<int32_t>))
+                       ((typename Hash, int dummy), Hash, dummy),
+                       (cuco::murmurhash3_32<char>, 1),
+                       (cuco::murmurhash3_32<int32_t>, 1),
+                       (cuco::xxhash_32<char>, 1),
+                       (cuco::xxhash_32<int32_t>, 1),
+                       (cuco::xxhash_64<char>, 1),
+                       (cuco::xxhash_64<int32_t>, 1))
 {
   using key_type = typename Hash::argument_type;
 

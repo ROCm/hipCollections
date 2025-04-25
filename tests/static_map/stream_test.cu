@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <utils.hpp>
 
 #include <cuco/static_map.cuh>
@@ -29,18 +46,18 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 
-#include <cuda/functional>
+//#include <cuda/functional>
 
 TEMPLATE_TEST_CASE_SIG("static_map: unique sequence of keys on given stream",
                        "",
-                       ((typename Key, typename Value), Key, Value),
-                       (int32_t, int32_t),
-                       (int32_t, int64_t),
-                       (int64_t, int32_t),
-                       (int64_t, int64_t))
+                       ((typename Key, typename Value, int dummy), Key, Value, dummy), //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
+                       (int32_t, int32_t, 1),
+                       (int32_t, int64_t, 1),
+                       (int64_t, int32_t, 1),
+                       (int64_t, int64_t, 1))
 {
   cudaStream_t stream;
-  CUCO_CUDA_TRY(cudaStreamCreate(&stream));
+  CUCO_CUDA_TRY(hipStreamCreate(&stream));
 
   constexpr std::size_t num_keys{500'000};
   auto map = cuco::static_map{num_keys * 2,
@@ -61,7 +78,7 @@ TEMPLATE_TEST_CASE_SIG("static_map: unique sequence of keys on given stream",
 
   auto pairs_begin = thrust::make_transform_iterator(
     thrust::make_counting_iterator<int>(0),
-    cuda::proclaim_return_type<cuco::pair<Key, Value>>(
+    proclaim_return_type<cuco::pair<Key, Value>>(
       [] __device__(auto i) { return cuco::pair<Key, Value>(i, i); }));
 
   // bulk function test cases
@@ -75,7 +92,7 @@ TEMPLATE_TEST_CASE_SIG("static_map: unique sequence of keys on given stream",
 
     REQUIRE(cuco::test::all_of(zip,
                                zip + num_keys,
-                               cuda::proclaim_return_type<bool>([] __device__(auto const& p) {
+                               proclaim_return_type<bool>([] __device__(auto const& p) {
                                  return thrust::get<0>(p) == thrust::get<1>(p);
                                }),
                                stream));
@@ -91,5 +108,5 @@ TEMPLATE_TEST_CASE_SIG("static_map: unique sequence of keys on given stream",
     REQUIRE(cuco::test::all_of(d_contained.begin(), d_contained.end(), thrust::identity{}, stream));
   }
 
-  CUCO_CUDA_TRY(cudaStreamDestroy(stream));
+  CUCO_CUDA_TRY(hipStreamDestroy(stream));
 }

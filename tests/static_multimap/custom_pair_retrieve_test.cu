@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <utils.hpp>
 
 #include <cuco/static_multimap.cuh>
@@ -30,9 +47,9 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 
-#include <cuda/functional>
+//#include <cuda/functional>
 
-#include <cooperative_groups.h>
+#include <hip/hip_cooperative_groups.h>
 
 // Custom pair equal
 template <typename Key, typename Value>
@@ -82,12 +99,28 @@ __global__ void custom_pair_retrieve_outer(InputIt first,
   }
 }
 
-template <typename Map>
-void test_non_shmem_pair_retrieve(Map& map, std::size_t const num_pairs)
+TEMPLATE_TEST_CASE_SIG(
+  "Tests of non-shared-memory pair_retrieve",
+  "",
+  ((typename Key, typename Value, cuco::test::probe_sequence Probe), Key, Value, Probe),
+  (int32_t, int32_t, cuco::test::probe_sequence::linear_probing),
+  (int32_t, int64_t, cuco::test::probe_sequence::linear_probing),
+  (int64_t, int64_t, cuco::test::probe_sequence::linear_probing),
+  (int32_t, int32_t, cuco::test::probe_sequence::double_hashing),
+  (int32_t, int64_t, cuco::test::probe_sequence::double_hashing),
+  (int64_t, int64_t, cuco::test::probe_sequence::double_hashing))
 {
-  using Key   = typename Map::key_type;
-  using Value = typename Map::mapped_type;
+  constexpr std::size_t num_pairs{200};
 
+  using probe = std::conditional_t<
+    Probe == cuco::test::probe_sequence::linear_probing,
+    cuco::legacy::linear_probing<1, cuco::default_hash_function<Key>>,
+    cuco::legacy::double_hashing<8, cuco::default_hash_function<Key>>>;
+
+  cuco::static_multimap<Key, Value, cuda::thread_scope_device, cuco::cuda_allocator<char>, probe>
+    map{num_pairs * 2, cuco::empty_key<Key>{-1}, cuco::empty_value<Value>{-1}};
+  //test_non_shmem_pair_retrieve(map, num_pairs);
+  
   thrust::device_vector<cuco::pair<Key, Value>> d_pairs(num_pairs);
 
   // pair multiplicity = 2
@@ -95,7 +128,7 @@ void test_non_shmem_pair_retrieve(Map& map, std::size_t const num_pairs)
                     thrust::counting_iterator<int>(0),
                     thrust::counting_iterator<int>(num_pairs),
                     d_pairs.begin(),
-                    cuda::proclaim_return_type<cuco::pair<Key, Value>>([] __device__(auto i) {
+                    proclaim_return_type<cuco::pair<Key, Value>>([] __device__(auto i) {
                       return cuco::pair<Key, Value>{i / 2, i};
                     }));
 
@@ -108,7 +141,7 @@ void test_non_shmem_pair_retrieve(Map& map, std::size_t const num_pairs)
                     thrust::counting_iterator<int>(0),
                     thrust::counting_iterator<int>(num_pairs),
                     pair_begin,
-                    cuda::proclaim_return_type<cuco::pair<Key, Value>>([] __device__(auto i) {
+                    proclaim_return_type<cuco::pair<Key, Value>>([] __device__(auto i) {
                       return cuco::pair<Key, Value>{i, i};
                     }));
 
@@ -116,7 +149,8 @@ void test_non_shmem_pair_retrieve(Map& map, std::size_t const num_pairs)
   thrust::device_vector<int> d_scan(num_pairs);
   auto count_begin =
     thrust::make_transform_iterator(thrust::make_counting_iterator<int>(0),
-                                    cuda::proclaim_return_type<int>([num_pairs] __device__(auto i) {
+                                    proclaim_return_type<int>(
+                                    [num_pairs] __device__(auto i) {
                                       return i < (num_pairs / 2) ? 2 : 1;
                                     }));
   thrust::exclusive_scan(thrust::device, count_begin, count_begin + num_pairs, d_scan.begin(), 0);
@@ -157,19 +191,22 @@ void test_non_shmem_pair_retrieve(Map& map, std::size_t const num_pairs)
   // set gold references
   auto gold_probe =
     thrust::make_transform_iterator(thrust::make_counting_iterator<int>(0),
-                                    cuda::proclaim_return_type<int>([num_pairs] __device__(auto i) {
+                                    proclaim_return_type<int>(
+                                    [num_pairs] __device__(auto i) {
                                       if (i < num_pairs) { return i / 2; }
                                       return i - (int(num_pairs) / 2);
                                     }));
   auto gold_contained_key =
     thrust::make_transform_iterator(thrust::make_counting_iterator<int>(0),
-                                    cuda::proclaim_return_type<int>([num_pairs] __device__(auto i) {
+                                    proclaim_return_type<int>(
+                                    [num_pairs] __device__(auto i) {
                                       if (i < num_pairs / 2) { return -1; }
                                       return (i - (int(num_pairs) / 2)) / 2;
                                     }));
   auto gold_contained_val =
     thrust::make_transform_iterator(thrust::make_counting_iterator<int>(0),
-                                    cuda::proclaim_return_type<int>([num_pairs] __device__(auto i) {
+                                    proclaim_return_type<int>(
+                                    [num_pairs] __device__(auto i) {
                                       if (i < num_pairs / 2) { return -1; }
                                       return i - (int(num_pairs) / 2);
                                     }));
@@ -188,27 +225,4 @@ void test_non_shmem_pair_retrieve(Map& map, std::size_t const num_pairs)
 
   REQUIRE(cuco::test::equal(
     contained_vals.begin(), contained_vals.begin() + gold_size, gold_contained_val, value_equal));
-}
-
-TEMPLATE_TEST_CASE_SIG(
-  "Tests of non-shared-memory pair_retrieve",
-  "",
-  ((typename Key, typename Value, cuco::test::probe_sequence Probe), Key, Value, Probe),
-  (int32_t, int32_t, cuco::test::probe_sequence::linear_probing),
-  (int32_t, int64_t, cuco::test::probe_sequence::linear_probing),
-  (int64_t, int64_t, cuco::test::probe_sequence::linear_probing),
-  (int32_t, int32_t, cuco::test::probe_sequence::double_hashing),
-  (int32_t, int64_t, cuco::test::probe_sequence::double_hashing),
-  (int64_t, int64_t, cuco::test::probe_sequence::double_hashing))
-{
-  constexpr std::size_t num_pairs{200};
-
-  using probe =
-    std::conditional_t<Probe == cuco::test::probe_sequence::linear_probing,
-                       cuco::legacy::linear_probing<1, cuco::default_hash_function<Key>>,
-                       cuco::legacy::double_hashing<8, cuco::default_hash_function<Key>>>;
-
-  cuco::static_multimap<Key, Value, cuda::thread_scope_device, cuco::cuda_allocator<char>, probe>
-    map{num_pairs * 2, cuco::empty_key<Key>{-1}, cuco::empty_value<Value>{-1}};
-  test_non_shmem_pair_retrieve(map, num_pairs);
 }

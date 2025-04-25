@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /*
  * Copyright (c) 2022, Jonas Hahnfeld, CERN.
  * Copyright (c) 2022-2024, NVIDIA CORPORATION.
@@ -15,6 +16,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <utils.hpp>
 
 #include <cuco/static_map.cuh>
@@ -26,7 +44,7 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 
-#include <cuda/functional>
+//#include <cuda/functional>
 
 static constexpr int Iters = 10'000;
 
@@ -35,7 +53,7 @@ __global__ void parallel_sum(Ref v)
 {
   for (int i = 0; i < Iters; i++) {
 #if __CUDA_ARCH__ < 700
-    if constexpr (cuco::detail::is_packable<Ref::value_type>())
+    if constexpr (cuco::detail::is_packable<typename Ref::value_type>())
 #endif
     {
       auto constexpr cg_size = Ref::cg_size;
@@ -129,7 +147,7 @@ TEMPLATE_TEST_CASE_SIG(
   map.find(d_keys.begin(), d_keys.end(), d_values.begin());
 
   REQUIRE(cuco::test::all_of(
-    d_values.begin(), d_values.end(), cuda::proclaim_return_type<bool>([] __device__(Value v) {
+    d_values.begin(), d_values.end(), proclaim_return_type<bool>([] __device__(Value v) {
       return v == (Blocks * Threads) / CGSize;
     })));
 }

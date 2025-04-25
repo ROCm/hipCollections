@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 /*
  * Copyright (c) 2020-2024, NVIDIA CORPORATION.
  *
@@ -13,6 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// Modifications Copyright (c) 2024 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
 
 #pragma once
 
@@ -30,15 +48,32 @@
 
 #include <thrust/functional.h>
 
-#include <cuda/std/atomic>
+#include <hip/std/atomic>
 
 #if defined(CUCO_HAS_CUDA_BARRIER)
-#include <cuda/barrier>
+#include <hip/barrier>
 #endif
 
 #include <cstddef>
 #include <memory>
 #include <utility>
+
+#ifndef CUCO_TILE_SIZE
+#define CUCO_TILE_SIZE 4
+#endif
+#ifndef CUCO_BLOCK_SIZE
+#define CUCO_BLOCK_SIZE 128
+#endif
+
+#ifndef NOINLINE_WAR
+// A compiler bug in older ROCm versions requires this WAR to
+// avoid invalid hash table slot computations (that result in segfaults).
+#if HIP_VERSION <= 60200000
+#define NOINLINE_WAR __attribute__((noinline))
+#else
+#define NOINLINE_WAR
+#endif
+#endif
 
 namespace cuco {
 /**
@@ -90,7 +125,7 @@ template <class Key,
           class Extent             = cuco::extent<std::size_t>,
           cuda::thread_scope Scope = cuda::thread_scope_device,
           class KeyEqual           = thrust::equal_to<Key>,
-          class ProbingScheme      = cuco::linear_probing<4,  // CG size
+          class ProbingScheme      = cuco::linear_probing<CUCO_TILE_SIZE,  // CG size
                                                      cuco::default_hash_function<Key>>,
           class Allocator          = cuco::cuda_allocator<cuco::pair<Key, T>>,
           class Storage            = cuco::storage<1>>
@@ -824,7 +859,9 @@ namespace legacy {
 template <typename Key,
           typename Value,
           cuda::thread_scope Scope = cuda::thread_scope_device,
-          typename Allocator       = cuco::cuda_allocator<char>>
+          typename Allocator       = cuco::cuda_allocator<char>,
+          uint32_t TileSize  = CUCO_TILE_SIZE,
+          uint32_t BlockSize = CUCO_BLOCK_SIZE>
 class static_map {
   static_assert(
     cuco::is_bitwise_comparable_v<Key>,
@@ -1152,11 +1189,11 @@ class static_map {
                                          empty_key<Key> empty_key_sentinel,
                                          empty_value<Value> empty_value_sentinel,
                                          erased_key<Key> erased_key_sentinel) noexcept
-      : slots_{slots},
-        capacity_{capacity},
-        empty_key_sentinel_{empty_key_sentinel.value},
+      : empty_key_sentinel_{empty_key_sentinel.value},
         erased_key_sentinel_{erased_key_sentinel.value},
-        empty_value_sentinel_{empty_value_sentinel.value}
+        empty_value_sentinel_{empty_value_sentinel.value},
+        slots_{slots},
+        capacity_{capacity}
     {
     }
 
@@ -1171,7 +1208,7 @@ class static_map {
      * @return Pointer to the initial slot for `k`
      */
     template <typename ProbeKey, typename Hash>
-    __device__ iterator initial_slot(ProbeKey const& k, Hash hash) noexcept
+    NOINLINE_WAR __device__ iterator initial_slot(ProbeKey const& k, Hash hash) noexcept
     {
       return &slots_[hash(k) % capacity_];
     }
@@ -1187,7 +1224,7 @@ class static_map {
      * @return Pointer to the initial slot for `k`
      */
     template <typename ProbeKey, typename Hash>
-    __device__ const_iterator initial_slot(ProbeKey const& k, Hash hash) const noexcept
+    NOINLINE_WAR __device__ const_iterator initial_slot(ProbeKey const& k, Hash hash) const noexcept
     {
       return &slots_[hash(k) % capacity_];
     }
