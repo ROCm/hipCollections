@@ -416,7 +416,7 @@ CUCO_KERNEL void find(InputIt first,
       auto submap_view = submap_views[i];
       auto found       = submap_view.find(key, hash, key_equal);
       if (found != submap_view.end()) {
-        found_value = found->second;
+        found_value = found->second.load(cuda::std::memory_order_relaxed);
         break;
       }
     }
@@ -493,7 +493,7 @@ CUCO_KERNEL void find(InputIt first,
       auto submap_view = submap_views[i];
       auto found       = submap_view.find(tile, key, hash, key_equal);
       if (found != submap_view.end()) {
-        found_value = found->second;
+        found_value = found->second.load(cuda::std::memory_order_relaxed);
         break;
       }
     }
