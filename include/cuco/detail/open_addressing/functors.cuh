@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024, NVIDIA CORPORATION.
+ * Copyright (c) 2023-2025, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@
 #include <cuco/detail/pair/traits.hpp>
 #include <type_traits>
 
+#include <thrust/tuple.h>
+
 namespace cuco::detail::open_addressing_ns {
 
 /**
@@ -70,7 +72,7 @@ struct get_slot {
       // auto const& [first, second] = storage_[bucket_idx][intra_idx];
       // This leads to corrupted tuples with invalid data being created/returned.
       // Potentially, this is a compiler issue.
-      return thrust::make_tuple(storage_[bucket_idx][intra_idx].first, storage_[bucket_idx][intra_idx].second);
+      return thrust::tuple(storage_[bucket_idx][intra_idx].first, storage_[bucket_idx][intra_idx].second);
     } else {
       return storage_[bucket_idx][intra_idx];
     }

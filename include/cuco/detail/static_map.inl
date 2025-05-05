@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.
+ * Copyright (c) 2020-2025, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@
 #include <cuco/detail/utils.cuh>
 #include <cuco/detail/utils.hpp>
 
+#include <cuda/std/utility>
 #include <thrust/iterator/transform_iterator.h>
 #include <thrust/iterator/zip_iterator.h>
-#include <thrust/tuple.h>
 
 #if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
 #include <cub/device/device_select.cuh>
@@ -241,7 +241,7 @@ std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator, TileSize, B
   auto begin =
     thrust::make_transform_iterator(slots_begin, cuco::detail::slot_to_tuple<Key, Value>{});
   auto filled           = cuco::detail::slot_is_filled<Key>{get_empty_key_sentinel()};
-  auto zipped_out_begin = thrust::make_zip_iterator(thrust::make_tuple(keys_out, values_out));
+  auto zipped_out_begin = thrust::make_zip_iterator(thrust::tuple{keys_out, values_out});
 
   std::size_t temp_storage_bytes = 0;
   using temp_allocator_type =
@@ -454,8 +454,8 @@ __device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::d
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename Hash, typename KeyEqual>
 __device__
-  thrust::pair<typename static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::iterator,
-               bool>
+  cuda::std::pair<typename static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::iterator,
+                  bool>
   static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::insert_and_find(
     value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
 {
@@ -489,7 +489,7 @@ __device__
         }
       }
 
-      return thrust::make_pair(current_slot, false);
+      return cuda::std::pair{current_slot, false};
     }
 
     if (slot_is_available) {
@@ -516,7 +516,7 @@ __device__
       if (status == insert_result::SUCCESS) {
         // This thread did the insertion, so the iterator is guaranteed to be
         // valid without any special care.
-        return thrust::make_pair(current_slot, true);
+        return cuda::std::pair{current_slot, true};
       }
       // duplicate present during insert
       if (status == insert_result::DUPLICATE) {
@@ -531,7 +531,7 @@ __device__
           }
         }
 
-        return thrust::make_pair(current_slot, false);
+        return cuda::std::pair{current_slot, false};
       }
     }
 
@@ -855,7 +855,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::d
 
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename CG, typename ProbeKey, typename Hash, typename KeyEqual>
-__device__ std::enable_if_t<std::is_invocable_v<KeyEqual, ProbeKey, Key>, bool>
+__device__ cuda::std::enable_if_t<std::is_invocable_v<KeyEqual, ProbeKey, Key>, bool>
 static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::contains(CG const& g,
                                                                 ProbeKey const& k,
                                                                 Hash hash,
