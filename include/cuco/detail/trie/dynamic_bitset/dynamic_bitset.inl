@@ -35,6 +35,7 @@
 #include <cuco/detail/trie/dynamic_bitset/kernels.cuh>
 #include <cuco/detail/utility/cuda.hpp>
 #include <cuco/detail/utils.hpp>
+#include <cuco/detail/utils.cuh>
 #include <hipcub/device/device_scan.hpp>
 #include <hipcub/device/device_select.hpp>
 namespace cub = hipcub;
@@ -320,7 +321,7 @@ dynamic_bitset<Allocator>::reference::find_next(size_type key) const noexcept
   while (word == 0) {
     word = storage_.words_ref_[++word_id];
   }
-  return word_id * bits_per_word + __FFS(word) - 1;  // cuda intrinsic
+  return word_id * bits_per_word + cuco::detail::__FFS(word) - 1;  // cuda intrinsic
 }
 
 template <class Allocator>
@@ -422,7 +423,7 @@ dynamic_bitset<Allocator>::reference::select_bit_in_word(size_type N, word_type 
   for (size_type pos = 0; pos < N; pos++) {
     word &= word - 1;
   }
-  return __FFS(word & -word) - 1;  // cuda intrinsic
+  return cuco::detail::__FFS(word & -word) - 1;  // cuda intrinsic
 }
 }  // namespace detail
 }  // namespace experimental
