@@ -35,9 +35,10 @@
 #include <cuco/detail/trie/dynamic_bitset/kernels.cuh>
 #include <cuco/detail/utility/cuda.hpp>
 #include <cuco/detail/utils.hpp>
+#include <hipcub/device/device_scan.hpp>
+#include <hipcub/device/device_select.hpp>
+namespace cub = hipcub;
 
-#include <cub/device/device_scan.cuh>
-#include <cub/device/device_select.cuh>
 #include <cuda/std/bit>
 #include <thrust/device_vector.h>
 #include <thrust/iterator/discard_iterator.h>
