@@ -15,6 +15,23 @@
  * limitations under the License.
  */
 
+// Modifications Copyright (c) 2025 Advanced Micro Devices, Inc.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include <cuco/detail/trie/dynamic_bitset/kernels.cuh>
 #include <cuco/detail/utility/cuda.hpp>
 #include <cuco/detail/utils.hpp>
@@ -302,7 +319,7 @@ dynamic_bitset<Allocator>::reference::find_next(size_type key) const noexcept
   while (word == 0) {
     word = storage_.words_ref_[++word_id];
   }
-  return word_id * bits_per_word + __ffsll(word) - 1;  // cuda intrinsic
+  return word_id * bits_per_word + __FFS(word) - 1;  // cuda intrinsic
 }
 
 template <class Allocator>
@@ -404,7 +421,7 @@ dynamic_bitset<Allocator>::reference::select_bit_in_word(size_type N, word_type 
   for (size_type pos = 0; pos < N; pos++) {
     word &= word - 1;
   }
-  return __ffsll(word & -word) - 1;  // cuda intrinsic
+  return __FFS(word & -word) - 1;  // cuda intrinsic
 }
 }  // namespace detail
 }  // namespace experimental
