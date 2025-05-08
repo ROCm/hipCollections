@@ -363,8 +363,8 @@ class bloom_filter_impl {
   template <uint32_t NumWords>
   __device__ constexpr cuda::std::array<word_type, NumWords> vec_load_words(size_type index) const
   {
-    return *reinterpret_cast<cuda::std::array<word_type, NumWords>*>(__builtin_assume_aligned(
-      words_ + index, cuda::std::min(sizeof(word_type) * NumWords, max_vec_bytes())));
+    return *reinterpret_cast<cuda::std::array<word_type, NumWords>*>(//__builtin_assume_aligned(
+      words_ + index);//, cuda::std::min(sizeof(word_type) * NumWords, max_vec_bytes())));
   }
 
   [[nodiscard]] __host__ __device__ static constexpr int32_t add_optimal_cg_size()
