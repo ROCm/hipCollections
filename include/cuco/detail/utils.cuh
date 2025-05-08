@@ -93,6 +93,15 @@ __device__ inline int __FFS<uint64_t>(uint64_t v) {
   return __ffsll(static_cast<unsigned long long int>(v));
 }
 
+__host__ __device__ inline void __trap(){
+  #ifndef NDEBUG
+  //#warning "__trap(): the call of __builtin_trap() will abort the host process. \
+  This deviates from the CUDA implementation where __trap() terminates a kernel \
+  and the host process is notified via an error status."
+    __builtin_trap();
+  #endif
+}
+
 /**
  * \return Number of bits set to 1.
  * \note Return value type matches that of the underlying device builtin.
