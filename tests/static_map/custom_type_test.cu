@@ -151,8 +151,7 @@ TEMPLATE_TEST_CASE_SIG("static_map custom key and value type tests",
 
   auto insert_pairs = thrust::make_transform_iterator(
     thrust::make_counting_iterator<int>(0),
-    //  cuda::proclaim_return_type<cuco::pair<Key, Value>>
-    [] __host__ __device__(auto i) { return cuco::pair_type<Key, Value>(i, i); }); //todo(hip): auto keyword not working with rocthrust for parameter i, double check if __host__ is needed
+     cuda::proclaim_return_type<cuco::pair<Key, Value>>([] __device__(auto i) { return cuco::pair<Key, Value>(i, i); }));
 
   SECTION("All inserted keys-value pairs should be correctly recovered during find")
   {
