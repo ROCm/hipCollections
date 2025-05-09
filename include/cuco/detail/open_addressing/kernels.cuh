@@ -46,11 +46,7 @@ namespace cub = hipcub;
 #include <cuco/detail/__config>
 
 #include <cuda/atomic>
-
-#ifndef __HIP_PLATFORM_AMD__
 #include <cuda/functional>
-#endif
-
 #include <hip/hip_cooperative_groups.h>
 
 #include <iterator>
