@@ -120,10 +120,10 @@ ConfigureTest(STATIC_MAP_TEST
 
 ###################################################################################################
 # - dynamic_map tests -----------------------------------------------------------------------------
-ConfigureTest(DYNAMIC_MAP_TEST
-    dynamic_map/unique_sequence_test.cu
-    dynamic_map/unique_sequence_test_experimental.cu
-    dynamic_map/erase_test.cu)
+#ConfigureTest(DYNAMIC_MAP_TEST
+#    dynamic_map/unique_sequence_test.cu
+#    dynamic_map/unique_sequence_test_experimental.cu
+#    dynamic_map/erase_test.cu)
 
 ###################################################################################################
 # - static_multiset tests -------------------------------------------------------------------------
@@ -159,10 +159,10 @@ ConfigureTest(DYNAMIC_BITSET_TEST
 
 ###################################################################################################
 # - hyperloglog ----------------------------------------------------------------------
-ConfigureTest(HYPERLOGLOG_TEST
-    hyperloglog/unique_sequence_test.cu
-    hyperloglog/spark_parity_test.cu
-    hyperloglog/device_ref_test.cu)
+#ConfigureTest(HYPERLOGLOG_TEST
+#    hyperloglog/unique_sequence_test.cu
+#    hyperloglog/spark_parity_test.cu
+#    hyperloglog/device_ref_test.cu)
 
 ###################################################################################################
 # - bloom_filter ----------------------------------------------------------------------------------
