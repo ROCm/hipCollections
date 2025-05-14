@@ -168,7 +168,7 @@ template <typename Key,
           typename ProbingScheme,
           typename StorageRef,
           typename... Operators>
-__host__ __device__ constexpr static_map_ref<Key,
+__host__ __device__ constexpr typename static_map_ref<Key,
                                              T,
                                              Scope,
                                              KeyEqual,

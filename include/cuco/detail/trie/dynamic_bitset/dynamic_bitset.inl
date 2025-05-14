@@ -273,7 +273,7 @@ constexpr void dynamic_bitset<Allocator>::build(cuda::stream_ref stream) noexcep
 }
 
 template <class Allocator>
-constexpr dynamic_bitset<Allocator>::ref_type dynamic_bitset<Allocator>::ref() const noexcept
+constexpr typename dynamic_bitset<Allocator>::ref_type dynamic_bitset<Allocator>::ref() const noexcept
 {
   return ref_type{storage_ref_type{thrust::raw_pointer_cast(words_.data()),
                                    thrust::raw_pointer_cast(ranks_true_.data()),
@@ -283,7 +283,7 @@ constexpr dynamic_bitset<Allocator>::ref_type dynamic_bitset<Allocator>::ref() c
 }
 
 template <class Allocator>
-constexpr dynamic_bitset<Allocator>::size_type dynamic_bitset<Allocator>::size() const noexcept
+constexpr typename dynamic_bitset<Allocator>::size_type dynamic_bitset<Allocator>::size() const noexcept
 {
   return n_bits_;
 }
