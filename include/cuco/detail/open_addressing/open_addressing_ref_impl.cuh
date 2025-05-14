@@ -1277,7 +1277,7 @@ class open_addressing_ref_impl {
                 num_matches[i] = __popc(exists[i]);
               }
 
-              int32_t output_idx;
+              int32_t output_idx{};
               if (lane_id == 0) {
                 auto const total_matches =
                   thrust::reduce(thrust::seq, num_matches, num_matches + bucket_size);
