@@ -878,7 +878,7 @@ class open_addressing_impl {
       this->empty_key_sentinel(), this->erased_key_sentinel()};
 
     auto storage_ref = this->storage_ref();
-    auto const op    = [callback_op, is_filled, storage_ref] __device__(auto const bucket_slots) {
+    auto const op    = [callback_op, is_filled] __device__(auto const bucket_slots) {
       for (auto const slot : bucket_slots) {
         if (is_filled(slot)) { callback_op(slot); }
       }
