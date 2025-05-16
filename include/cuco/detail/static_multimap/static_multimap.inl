@@ -658,7 +658,7 @@ template <class Key,
           class ProbingScheme,
           class Allocator,
           class Storage>
-constexpr static_multimap<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::
+constexpr typename static_multimap<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::
   hasher
   static_multimap<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::
     hash_function() const noexcept
