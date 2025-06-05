@@ -1,5 +1,5 @@
 ﻿#=============================================================================
-# Copyright (c) 2018-2024, NVIDIA CORPORATION.
+# Copyright (c) 2018-2025, NVIDIA CORPORATION.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ function(ConfigureExample EXAMPLE_NAME EXAMPLE_SRC)
                                           RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples")
     target_include_directories(${EXAMPLE_NAME} PRIVATE
                                              "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_compile_options(${EXAMPLE_NAME} PRIVATE -Wall -Wextra -Wno-unused-parameter) #todo(HIP):remove -Wno-unused-parameter
+    target_compile_options(${EXAMPLE_NAME} PRIVATE -Wall -Wextra 
+      -Wno-deprecated-gpu-targets -Xcompiler -Wno-subobject-linkage)  #todo(HIP):remove -Wno-unused-parameter, --expt-extended-lambda
     target_link_libraries(${EXAMPLE_NAME} PRIVATE cuco hip::device hip::hipcub)
 endfunction(ConfigureExample)
 
