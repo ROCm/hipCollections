@@ -257,10 +257,30 @@ __host__ __device__ constexpr typename static_map_ref<Key,
                                              ProbingScheme,
                                              StorageRef,
                                              Operators...>::extent_type
+static_map_ref<Key, T, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::extent()
+  const noexcept
+{
+  return impl_.extent();
+}
+
+template <typename Key,
+          typename T,
+          cuda::thread_scope Scope,
+          typename KeyEqual,
+          typename ProbingScheme,
+          typename StorageRef,
+          typename... Operators>
+__host__ __device__ constexpr static_map_ref<Key,
+                                             T,
+                                             Scope,
+                                             KeyEqual,
+                                             ProbingScheme,
+                                             StorageRef,
+                                             Operators...>::extent_type
 static_map_ref<Key, T, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::bucket_extent()
   const noexcept
 {
-  return impl_.bucket_extent();
+  return this->extent();
 }
 
 template <typename Key,
@@ -385,7 +405,7 @@ template <typename CG, cuda::thread_scope NewScope>
 __device__ constexpr auto
 static_map_ref<Key, T, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>::make_copy(
   CG const& tile,
-  bucket_type* const memory_to_use,
+  typename StorageRef::value_type* const memory_to_use,
   cuda_thread_scope<NewScope> scope) const noexcept
 {
   this->impl_.make_copy(tile, memory_to_use);
@@ -396,7 +416,7 @@ static_map_ref<Key, T, Scope, KeyEqual, ProbingScheme, StorageRef, Operators...>
     this->key_eq(),
     this->probing_scheme(),
     scope,
-    storage_ref_type{this->bucket_extent(), memory_to_use}};
+    storage_ref_type{this->extent(), memory_to_use}};
 }
 
 template <typename Key,
@@ -514,8 +534,8 @@ class operator_impl<
     auto const key            = ref_.impl_.extract_key(val);
     auto const probing_scheme = ref_.impl_.probing_scheme();
     auto storage_ref          = ref_.impl_.storage_ref();
-    auto probing_iter         = probing_scheme(key, storage_ref.bucket_extent());
-    auto const init_idx       = *probing_iter;
+    auto probing_iter   = probing_scheme.make_iterator<bucket_size>(key, storage_ref.extent());
+    auto const init_idx = *probing_iter;
 
     while (true) {
       auto const bucket_slots = storage_ref[*probing_iter];
@@ -524,7 +544,7 @@ class operator_impl<
         auto const eq_res =
           ref_.impl_.predicate_.template operator()<is_insert::YES>(key, slot_content.first);
         auto const intra_bucket_index = cuda::std::distance(bucket_slots.begin(), &slot_content);
-        auto slot_ptr = (storage_ref.data() + *probing_iter)->data() + intra_bucket_index;
+        auto slot_ptr                 = ref_.impl_.get_slot_ptr(*probing_iter, intra_bucket_index);
 
         // If the key is already in the container, update the payload and return
         if (eq_res == detail::equal_result::EQUAL) {
@@ -562,8 +582,8 @@ class operator_impl<
     auto const key            = ref_.impl_.extract_key(val);
     auto const probing_scheme = ref_.impl_.probing_scheme();
     auto storage_ref          = ref_.impl_.storage_ref();
-    auto probing_iter         = probing_scheme(group, key, storage_ref.bucket_extent());
-    auto const init_idx       = *probing_iter;
+    auto probing_iter = probing_scheme.make_iterator<bucket_size>(group, key, storage_ref.extent());
+    auto const init_idx = *probing_iter;
 
     while (true) {
       auto const bucket_slots = storage_ref[*probing_iter];
@@ -580,7 +600,7 @@ class operator_impl<
         return detail::bucket_probing_results{res, -1};
       }();
 
-      auto slot_ptr = (storage_ref.data() + *probing_iter)->data() + intra_bucket_index;
+      auto slot_ptr = ref_.impl_.get_slot_ptr(*probing_iter, intra_bucket_index);
 
       auto const group_contains_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_contains_equal) {
@@ -880,9 +900,9 @@ class operator_impl<
     auto const key            = ref_.impl_.extract_key(val);
     auto const probing_scheme = ref_.impl_.probing_scheme();
     auto storage_ref          = ref_.impl_.storage_ref();
-    auto probing_iter         = probing_scheme(key, storage_ref.bucket_extent());
-    auto const init_idx       = *probing_iter;
-    auto const empty_value    = ref_.empty_value_sentinel();
+    auto probing_iter      = probing_scheme.make_iterator<bucket_size>(key, storage_ref.extent());
+    auto const init_idx    = *probing_iter;
+    auto const empty_value = ref_.empty_value_sentinel();
 
     // wait for payload only when init != sentinel and insert strategy is not `packed_cas`
     auto constexpr wait_for_payload = (not UseDirectApply) and (sizeof(value_type) > 8);
@@ -894,7 +914,7 @@ class operator_impl<
         auto const eq_res =
           ref_.impl_.predicate_.template operator()<is_insert::YES>(key, slot_content.first);
         auto const intra_bucket_index = cuda::std::distance(bucket_slots.begin(), &slot_content);
-        auto slot_ptr = (storage_ref.data() + *probing_iter)->data() + intra_bucket_index;
+        auto slot_ptr                 = ref_.impl_.get_slot_ptr(*probing_iter, intra_bucket_index);
 
         // If the key is already in the container, update the payload and return
         if (eq_res == detail::equal_result::EQUAL) {
@@ -956,9 +976,9 @@ class operator_impl<
     auto const key            = ref_.impl_.extract_key(val);
     auto const probing_scheme = ref_.impl_.probing_scheme();
     auto storage_ref          = ref_.impl_.storage_ref();
-    auto probing_iter         = probing_scheme(group, key, storage_ref.bucket_extent());
-    auto const init_idx       = *probing_iter;
-    auto const empty_value    = ref_.empty_value_sentinel();
+    auto probing_iter = probing_scheme.make_iterator<bucket_size>(group, key, storage_ref.extent());
+    auto const init_idx    = *probing_iter;
+    auto const empty_value = ref_.empty_value_sentinel();
 
     // wait for payload only when init != sentinel and insert strategy is not `packed_cas`
     auto constexpr wait_for_payload = (not UseDirectApply) and (sizeof(value_type) > 8);
@@ -978,7 +998,7 @@ class operator_impl<
         return detail::bucket_probing_results{res, -1};
       }();
 
-      auto* slot_ptr = (storage_ref.data() + *probing_iter)->data() + intra_bucket_index;
+      auto* slot_ptr = ref_.impl_.get_slot_ptr(*probing_iter, intra_bucket_index);
 
       auto const group_contains_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_contains_equal) {
@@ -1297,7 +1317,7 @@ class operator_impl<
    * @return An iterator to the position at which the equivalent key is stored
    */
   template <typename ProbeKey>
-  [[nodiscard]] __device__ const_iterator find(ProbeKey const& key) const noexcept
+  [[nodiscard]] __device__ iterator find(ProbeKey const& key) const noexcept
   {
     // CRTP: cast `this` to the actual ref type
     auto const& ref_ = static_cast<ref_type const&>(*this);
@@ -1318,7 +1338,7 @@ class operator_impl<
    * @return An iterator to the position at which the equivalent key is stored
    */
   template <typename ProbeKey>
-  [[nodiscard]] __device__ const_iterator find(
+  [[nodiscard]] __device__ iterator find(
     cooperative_groups::thread_block_tile<cg_size> const& group, ProbeKey const& key) const noexcept
   {
     auto const& ref_ = static_cast<ref_type const&>(*this);

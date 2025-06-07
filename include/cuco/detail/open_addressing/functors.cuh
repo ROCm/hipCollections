@@ -65,16 +65,14 @@ struct get_slot {
    */
   __device__ constexpr auto operator()(typename StorageRef::size_type idx) const noexcept
   {
-    auto const bucket_idx = idx / StorageRef::bucket_size;
-    auto const intra_idx  = idx % StorageRef::bucket_size;
     if constexpr (HasPayload) {
-      // FIXME(HIP/AMD): original code uses:
-      // auto const& [first, second] = storage_[bucket_idx][intra_idx];
-      // This leads to corrupted tuples with invalid data being created/returned.
+      // FIXME(HIP/AMD): original code may lead to corrupted tuples with invalid data being created/returned.
       // Potentially, this is a compiler issue.
-      return thrust::tuple(storage_[bucket_idx][intra_idx].first, storage_[bucket_idx][intra_idx].second);
+      // Previous Workaround: return thrust::tuple(storage_[bucket_idx][intra_idx].first, storage_[bucket_idx][intra_idx].second);
+      auto const [first, second] = *(storage_.data() + idx);
+      return cuda::std::tuple{first, second};
     } else {
-      return storage_[bucket_idx][intra_idx];
+      return *(storage_.data() + idx);
     }
   }
 };

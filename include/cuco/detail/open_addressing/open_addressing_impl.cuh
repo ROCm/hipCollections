@@ -119,7 +119,7 @@ class open_addressing_impl {
   using hasher              = typename probing_scheme_type::hasher;  ///< Hash function type
   /// Extent type
   using extent_type =
-    decltype(make_bucket_extent<probing_scheme_type, Storage>(std::declval<Extent>()));
+    decltype(make_valid_extent<probing_scheme_type, Storage>(std::declval<Extent>()));
   using size_type = typename extent_type::value_type;  ///< Size type
   using key_equal = KeyEqual;                          ///< Key equality comparator type
   using storage_type =
@@ -133,7 +133,7 @@ class open_addressing_impl {
    * capacity, sentinel values and CUDA stream.
    *
    * @note The actual capacity depends on the given `capacity`, the probing scheme, CG size, and the
-   * bucket size and it is computed via the `make_bucket_extent` factory. Insert operations will not
+   * bucket size and it is computed via the `make_valid_extent` factory. Insert operations will not
    * automatically grow the container. Attempting to insert more unique keys than the capacity of
    * the container results in undefined behavior.
    * @note Any `*_sentinel`s are reserved and behavior is undefined when attempting to insert
@@ -158,7 +158,7 @@ class open_addressing_impl {
       erased_key_sentinel_{this->extract_key(empty_slot_sentinel)},
       predicate_{pred},
       probing_scheme_{probing_scheme},
-      storage_{make_bucket_extent<probing_scheme_type, Storage>(capacity), alloc}
+      storage_{make_valid_extent<probing_scheme_type, Storage>(capacity), alloc}
   {
     this->clear_async(stream);
   }
@@ -171,7 +171,7 @@ class open_addressing_impl {
    * insert and the desired load factor without manually computing the desired capacity. The actual
    * capacity will be a size no smaller than `ceil(n / desired_load_factor)`. It's determined by
    * multiple factors including the given `n`, the desired load factor, the probing scheme, the CG
-   * size, and the bucket size and is computed via the `make_bucket_extent` factory.
+   * size, and the bucket size and is computed via the `make_valid_extent` factory.
    * @note Insert operations will not automatically grow the container.
    * @note Attempting to insert more unique keys than the capacity of the container results in
    * undefined behavior.
@@ -204,7 +204,7 @@ class open_addressing_impl {
       erased_key_sentinel_{this->extract_key(empty_slot_sentinel)},
       predicate_{pred},
       probing_scheme_{probing_scheme},
-      storage_{make_bucket_extent<probing_scheme_type, Storage>(n, desired_load_factor), alloc}
+      storage_{make_valid_extent<probing_scheme_type, Storage>(n, desired_load_factor), alloc}
   {
     this->clear_async(stream);
   }
@@ -214,7 +214,7 @@ class open_addressing_impl {
    * capacity, sentinel values and CUDA stream.
    *
    * @note The actual capacity depends on the given `capacity`, the probing scheme, CG size, and the
-   * bucket size and it is computed via the `make_bucket_extent` factory. Insert operations will not
+   * bucket size and it is computed via the `make_valid_extent` factory. Insert operations will not
    * automatically grow the container. Attempting to insert more unique keys than the capacity of
    * the container results in undefined behavior.
    * @note Any `*_sentinel`s are reserved and behavior is undefined when attempting to insert
@@ -241,7 +241,7 @@ class open_addressing_impl {
       erased_key_sentinel_{erased_key_sentinel},
       predicate_{pred},
       probing_scheme_{probing_scheme},
-      storage_{make_bucket_extent<probing_scheme_type, Storage>(capacity), alloc}
+      storage_{make_valid_extent<probing_scheme_type, Storage>(capacity), alloc}
   {
     CUCO_EXPECTS(this->empty_key_sentinel() != this->erased_key_sentinel(),
                  "The empty key sentinel and erased key sentinel cannot be the same value.",
@@ -931,14 +931,12 @@ class open_addressing_impl {
       this->empty_key_sentinel(), this->erased_key_sentinel()};
 
     auto storage_ref = this->storage_ref();
-    auto const op    = [callback_op, is_filled] __device__(auto const bucket_slots) {
-      for (auto const slot : bucket_slots) {
-        if (is_filled(slot)) { callback_op(slot); }
-      }
+    auto const op    = [callback_op, is_filled] __device__(auto const slot_or_bucket) {
+      if (is_filled(slot_or_bucket)) { callback_op(slot_or_bucket); }
     };
 
     CUCO_CUDA_TRY(cub::DeviceFor::ForEachCopyN(
-      storage_ref.data(), storage_ref.num_buckets(), op, stream.get()));
+      storage_ref.data(), static_cast<size_type>(storage_ref.extent()), op, stream.get()));
   }
 
   /**
@@ -989,7 +987,7 @@ class open_addressing_impl {
       detail::counter_storage<size_type, thread_scope, allocator_type>{this->allocator()};
     counter.reset(stream);
 
-    auto const grid_size = cuco::detail::grid_size(storage_.num_buckets());
+    auto const grid_size = cuco::detail::grid_size(this->capacity());
     auto const is_filled = detail::open_addressing_ns::slot_is_filled<has_payload, key_type>{
       this->empty_key_sentinel(), this->erased_key_sentinel()};
 
@@ -1062,7 +1060,7 @@ class open_addressing_impl {
   template <typename Container>
   void rehash_async(Container const& container, cuda::stream_ref stream)
   {
-    this->rehash_async(this->storage_.bucket_extent(), container, stream);
+    this->rehash_async(storage_.extent(), container, stream);
   }
 
   /**
