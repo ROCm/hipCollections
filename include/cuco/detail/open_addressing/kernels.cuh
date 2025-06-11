@@ -47,6 +47,7 @@ namespace cub = hipcub;
 
 #include <cuda/atomic>
 #include <cuda/functional>
+
 #include <hip/hip_cooperative_groups.h>
 
 #include <iterator>

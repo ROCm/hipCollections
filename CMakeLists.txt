@@ -142,6 +142,7 @@ rapids_cmake_write_version_file(include/cuco/version_config.hpp)
 
 ##############################################################################
 # - build type ---------------------------------------------------------------
+
 # Set a default build type if none was specified
 rapids_cmake_build_type(Release)
 
@@ -161,6 +162,7 @@ rapids_find_package(
 
 ###################################################################################################
 # - find packages we depend on --------------------------------------------------------------------
+
 rapids_cpm_init()
 
 # prescribe dependencies (must come after `rapids_cpm_init()`)
@@ -204,18 +206,21 @@ endif()
 target_compile_options(cuco INTERFACE "-Wno-c++11-narrowing-const-reference")
 ###################################################################################################
 # - optionally build tests ------------------------------------------------------------------------
+
 if(BUILD_TESTS)
     add_subdirectory(tests)
 endif(BUILD_TESTS)
 
 ###################################################################################################
 # - Optionally build google benchmarks ------------------------------------------------------------
+
 if(BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif(BUILD_BENCHMARKS)
 
 ###################################################################################################
 # - Optionally build examples ---------------------------------------------------------------------
+
 if(BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif(BUILD_EXAMPLES)
