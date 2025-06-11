@@ -36,7 +36,7 @@
 #include <cuco/detail/pair/helpers.cuh>
 #include <cuco/detail/pair/traits.hpp>
 
-#include <hip/std/tuple>
+#include <cuda/std/tuple>
 #include <thrust/device_reference.h>
 #include <thrust/tuple.h>
 

@@ -41,7 +41,7 @@
 
 #include <hip/hip_cooperative_groups.h>
 
-#include <hip/std/array>
+#include <cuda/std/array>
 
 #include <algorithm>
 #include <cstddef>

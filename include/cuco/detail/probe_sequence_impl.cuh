@@ -36,7 +36,7 @@
 #include <cuco/detail/utils.cuh>
 #include <cuco/pair.cuh>
 
-#include <hip/std/atomic>
+#include <cuda/std/atomic>
 
 #include <hip/hip_cooperative_groups.h>
 

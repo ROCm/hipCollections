@@ -32,8 +32,8 @@
 
 #pragma once
 
-#include <hip/std/tuple>
-#include <hip/std/type_traits>
+#include <cuda/std/tuple>
+#include <cuda/std/type_traits>
 #include <thrust/device_reference.h>
 
 #include <tuple>
