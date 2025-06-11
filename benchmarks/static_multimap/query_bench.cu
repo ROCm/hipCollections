@@ -77,8 +77,8 @@ std::enable_if_t<(sizeof(Key) == sizeof(Value)), void> static_multimap_query(
   cuco::static_multimap<Key, Value> map{
     size, cuco::empty_key<Key>{-1}, cuco::empty_value<Value>{-1}};
   map.insert(pairs.begin(), pairs.end());
-  auto needed_output_space = map.count_outer(keys.begin(), keys.end());
-  pairs.resize(needed_output_space);
+  // auto needed_output_space = map.count_outer(keys.begin(), keys.end());
+  // pairs.resize(needed_output_space);
 
   auto const output_size = map.count(keys.begin(), keys.end());
   thrust::device_vector<pair_type> output(output_size);
