@@ -38,8 +38,12 @@
 #include <cuco/detail/utility/cuda.cuh>
 #include <cuco/pair.cuh>
 
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
+#include <cub/block/block_reduce.cuh>
+#else
 #include <hipcub/block/block_reduce.hpp>
 namespace cub = hipcub;
+#endif
 
 #include <cuda/std/atomic>
 #include <thrust/type_traits/is_contiguous_iterator.h>

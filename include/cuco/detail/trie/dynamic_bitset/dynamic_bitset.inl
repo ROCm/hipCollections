@@ -36,9 +36,15 @@
 #include <cuco/detail/utility/cuda.hpp>
 #include <cuco/detail/utils.hpp>
 #include <cuco/detail/utils.cuh>
+
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
+#include <cub/device/device_scan.cuh>
+#include <cub/device/device_select.cuh>
+#else
 #include <hipcub/device/device_scan.hpp>
 #include <hipcub/device/device_select.hpp>
 namespace cub = hipcub;
+#endif
 
 #include <cuda/std/bit>
 #include <thrust/device_vector.h>

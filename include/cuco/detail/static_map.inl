@@ -40,8 +40,12 @@
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
 
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
+#include <cub/device/device_select.cuh>
+#else
 #include <hipcub/device/device_select.hpp>
 namespace cub = hipcub;
+#endif
 
 namespace cuco::legacy {
 

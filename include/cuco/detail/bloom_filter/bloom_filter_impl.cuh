@@ -40,9 +40,15 @@
 #include <cuco/detail/utils.hpp>
 #include <cuco/utility/cuda_thread_scope.cuh>
 
-#include "hipcub/hipcub.hpp"
-#include "hipcub/device/device_for.hpp"
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
+#include <cub/device/device_for.cuh>
+#else
+#include <hipcub/hipcub.hpp>
+// FIXME(HIP/AMD): WAR 'ForEachCopyN' in namespace 'hipcub'
+// TODO(HIP/AMD): remove again once not needed
+#include <hipcub/device/device_for.hpp>
 namespace cub = hipcub;
+#endif
 
 #include <cuda/atomic>
 #include <cuda/std/__algorithm/max.h>

@@ -49,15 +49,11 @@
 #include <cub/device/device_for.cuh>
 #include <cub/device/device_select.cuh>
 #else
-#include "hipcub/hipcub.hpp"
+#include <hipcub/hipcub.hpp>
 // FIXME(HIP/AMD): WAR 'ForEachCopyN' in namespace 'hipcub'
-#include "hipcub/device/device_for.hpp" // TODO(HIP/AMD): remove again once not needed
-
-//namespace cub::device = hipcub;
-//namespace cub::DeviceFor = hipcub;
+// TODO(HIP/AMD): remove again once not needed
+#include <hipcub/device/device_for.hpp>
 namespace cub = hipcub;
-
-
 #endif
 
 #include <cuda/atomic>

@@ -35,8 +35,12 @@
 
 #include "hip/hip_runtime.h"
 
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
+#include <cub/block/block_reduce.cuh>
+#else
 #include <hipcub/block/block_reduce.hpp>
 namespace cub = hipcub;
+#endif
 
 #include <cuda/std/atomic>
 

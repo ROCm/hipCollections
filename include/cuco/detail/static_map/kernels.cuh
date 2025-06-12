@@ -39,7 +39,7 @@
 #if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
 #include <cub/block/block_reduce.cuh>
 #else
-#include "hipcub/hipcub.hpp"
+#include <hipcub/hipcub.hpp>
 namespace cub = hipcub;
 #endif
 
