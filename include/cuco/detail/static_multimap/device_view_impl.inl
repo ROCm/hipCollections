@@ -549,7 +549,6 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
         }
 
         // successful insert
-        //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
         if (hip_g.any(status == insert_result::SUCCESS)) { return; }
         // if (g.any(status == insert_result::SUCCESS)) { return; }
         // if we've gotten this far, a different key took our spot
@@ -755,11 +754,9 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       }();
 
       // the key we were searching for was found by one of the threads, so we return true
-      //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
       if (hip_g.any(first_equals or second_equals)) { return true; }
 
       // we found an empty slot, meaning that the key we're searching for isn't present
-      //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
       if (hip_g.any(first_slot_is_empty or second_slot_is_empty)) { return false; }
 
       // otherwise, all slots in the current bucket are full with other keys, so we move onto the
@@ -817,11 +814,9 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       }();
 
       // the key we were searching for was found by one of the threads, so we return true
-      //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
       if (hip_g.any(equals)) { return true; }
 
       // we found an empty slot, meaning that the key we're searching for isn't present
-      //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
       if (hip_g.any(slot_is_empty)) { return false; }
 
       // otherwise, all slots in the current bucket are full with other keys, so we move onto the
@@ -948,8 +943,6 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
 
     [[maybe_unused]] bool found_match = false;
 
-    // todo(HIP): need a workaround for missing any 
-    
     while (true) {
       value_type arr[2];
       this->load_pair_array(&arr[0], current_slot);
@@ -1010,12 +1003,11 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const equals = not slot_is_empty and key_equal(current_key, k);
 
       if constexpr (is_outer) {
-        //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
         if (hip_g.any(equals)) { found_match = true; }
       }
 
       count += equals;
-      //Todo(HIP): Find workaround for any as it does not exist in HIP CG, changed g.any -> __any for now
+
       if (hip_g.any(slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) && (g.thread_rank() == 0)) { count++; }
@@ -1065,13 +1057,11 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const second_slot_equals = (not second_slot_is_empty and pair_equal(arr[1], pair));
 
       if constexpr (is_outer) {
-        //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
         if (hip_g.any(first_slot_equals or second_slot_equals)) { found_match = true; }
       }
 
       count += (first_slot_equals + second_slot_equals);
 
-      //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
       if (hip_g.any(first_slot_is_empty or second_slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) && (g.thread_rank() == 0)) { count++; }
@@ -1117,12 +1107,11 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const equals = not slot_is_empty and pair_equal(slot_contents, pair);
 
       if constexpr (is_outer) {
-        //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
         if (hip_g.any(equals)) { found_match = true; }
       }
 
       count += equals;
-      //Todo(HIP): find workaround for any as it does not exist in HIP CG. Repalced g.any by __any for now
+
       if (hip_g.any(slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) && (g.thread_rank() == 0)) { count++; }
@@ -1346,6 +1335,328 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
   }
 
   /**
+   * @brief Retrieves all the matches of a given key contained in multimap using scalar
+   * loads with per-CG shared memory buffer.
+   *
+   * For key `k` existing in the map, copies `k` and all associated values to unspecified
+   * locations in `[output_begin, output_end)`. If `k` does not have any matches, copies `k` and
+   * `empty_value_sentinel()` into the output only if `is_outer` is true.
+   *
+   * @tparam buffer_size Size of the output buffer
+   * @tparam is_outer Boolean flag indicating whether outer join is peformed
+   * @tparam CG Cooperative Group type
+   * @tparam atomicT Type of atomic storage
+   * @tparam OutputIt Device accessible output iterator whose `value_type` is
+   * constructible from the map's `value_type`
+   * @tparam KeyEqual Binary callable type
+   * @param flushing_cg The Cooperative Group used to retrieve
+   * @param k The key to search for
+   * @param cg_counter Pointer to the CG counter
+   * @param output_buffer Shared memory buffer of the key/value pair sequence
+   * @param num_matches Size of the output sequence
+   * @param output_begin Beginning of the output sequence of key/value pairs
+   * @param key_equal The binary callable used to compare two keys
+   * for equality
+   */
+  template <uint32_t buffer_size,
+            bool is_outer,
+            typename CG,
+            typename atomicT,
+            typename OutputIt,
+            typename KeyEqual>
+  __device__ __forceinline__ void retrieve_no_cg_probe(CG const& flushing_cg,
+                                                       Key const& k,
+                                                       uint32_t* cg_counter,
+                                                       value_type* output_buffer,
+                                                       atomicT* num_matches,
+                                                       OutputIt output_begin,
+                                                       KeyEqual key_equal) noexcept
+  {
+    auto hip_g = hip_warp_primitives::tiled_partition_ext(flushing_cg.size());
+    auto probing_g =
+      cooperative_groups::tiled_partition<1>(cooperative_groups::this_thread_block());
+
+    auto current_slot = this->initial_slot(probing_g, k);
+
+    bool running                      = true;
+    [[maybe_unused]] bool found_match = false;
+
+    while (running) {
+      // TODO: Replace reinterpret_cast with atomic ref when possible. The current implementation
+      // is unsafe!
+      static_assert(sizeof(Key) == sizeof(hip::atomic<Key>));
+      static_assert(sizeof(Value) == sizeof(hip::atomic<Value>));
+      value_type slot_contents = *reinterpret_cast<value_type const*>(current_slot);
+
+      auto const slot_is_empty =
+        detail::bitwise_compare(slot_contents.first, this->get_empty_key_sentinel());
+      auto const equals = (not slot_is_empty and key_equal(slot_contents.first, k));
+      auto const exists = equals;
+
+      uint32_t output_idx = *cg_counter;
+
+      if (equals) {
+        if constexpr (is_outer) { found_match = true; }
+        output_buffer[output_idx] = cuco::make_pair(k, slot_contents.second);
+        (*cg_counter) += 1;
+      }
+      if (slot_is_empty) {
+        running = false;
+        if constexpr (is_outer) {
+          if (not found_match) {
+            output_idx                = (*cg_counter)++;
+            output_buffer[output_idx] = cuco::make_pair(k, this->get_empty_value_sentinel());
+          }
+        }
+      }
+
+      hip_g.sync();
+
+      // Flush if the next iteration won't fit into buffer
+      if ((*cg_counter + hip_g.size()) > buffer_size) {
+        flush_output_buffer(flushing_cg, *cg_counter, output_buffer, num_matches, output_begin);
+        // First lane reset CG-level counter
+        if (flushing_cg.thread_rank() == 0) { *cg_counter = 0; }
+      }
+      current_slot = this->next_slot(current_slot);
+    }  // while running
+  }
+
+  /**
+   * @brief Retrieves all the matches of a given key contained in multimap using vector
+   * loads with per-CG shared memory buffer.
+   *
+   * For key `k` existing in the map, copies `k` and all associated values to unspecified
+   * locations in `[output_begin, output_end)`. If `k` does not have any matches, copies `k` and
+   * `empty_value_sentinel()` into the output only if `is_outer` is true.
+   *
+   * @tparam buffer_size Size of the output buffer
+   * @tparam is_outer Boolean flag indicating whether outer join is peformed
+   * @tparam CG Cooperative Group type
+   * @tparam atomicT Type of atomic storage
+   * @tparam OutputIt Device accessible output iterator whose `value_type` is
+   * constructible from the map's `value_type`
+   * @tparam KeyEqual Binary callable type
+   * @param flushing_cg The Cooperative Group used to retrieve
+   * @param k The key to search for
+   * @param cg_counter Pointer to the CG counter
+   * @param output_buffer Shared memory buffer of the key/value pair sequence
+   * @param num_matches Size of the output sequence
+   * @param output_begin Beginning of the output sequence of key/value pairs
+   * @param key_equal The binary callable used to compare two keys
+   * for equality
+   */
+  template <uint32_t buffer_size,
+            bool is_outer,
+            typename CG,
+            typename atomicT,
+            typename OutputIt,
+            typename KeyEqual>
+  __device__ __forceinline__ void retrieve_no_cg_probe_vector(CG const& flushing_cg,
+                                                              Key const& k,
+                                                              uint32_t* flushing_cg_counter,
+                                                              value_type* output_buffer,
+                                                              atomicT* num_matches,
+                                                              OutputIt output_begin,
+                                                              KeyEqual key_equal) noexcept
+  {
+    auto hip_flushing_cg = hip_warp_primitives::tiled_partition_ext(flushing_cg.size());
+    auto probing_cg =
+      cooperative_groups::tiled_partition<1>(cooperative_groups::this_thread_block());
+
+    auto current_slot = this->initial_slot(probing_cg, k);
+
+    bool running                      = true;
+    [[maybe_unused]] bool found_match = false;
+
+    while (flushing_cg.any(running)) {
+      if (running) {
+        value_type arr[2];
+        this->load_pair_array(&arr[0], current_slot);
+
+        auto const first_slot_is_empty =
+          detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
+        auto const second_slot_is_empty =
+          detail::bitwise_compare(arr[1].first, this->get_empty_key_sentinel());
+        auto const first_equals  = (not first_slot_is_empty and key_equal(arr[0].first, k));
+        auto const second_equals = (not second_slot_is_empty and key_equal(arr[1].first, k));
+
+        if (first_equals or second_equals) {
+          if constexpr (is_outer) { found_match = true; }
+
+          auto const num_first_matches  = static_cast<int>(first_equals);
+          auto const num_second_matches = static_cast<int>(second_equals);
+
+          uint32_t output_idx = 0;
+          output_idx = atomicAdd(flushing_cg_counter, (num_first_matches + num_second_matches));
+
+          if (first_equals) { output_buffer[output_idx] = cuco::make_pair(k, arr[0].second); }
+          if (second_equals) {
+            output_buffer[output_idx + num_first_matches] = cuco::make_pair(k, arr[1].second);
+          }
+        }
+        if (first_slot_is_empty or second_slot_is_empty) {
+          running = false;
+          if constexpr (is_outer) {
+            if ((not found_match)) {
+              auto const output_idx     = atomicAdd(flushing_cg_counter, 1);
+              output_buffer[output_idx] = cuco::make_pair(k, this->get_empty_value_sentinel());
+            }
+          }
+        }
+      }  // if running
+
+      flushing_cg.sync();
+      if (*flushing_cg_counter + flushing_cg.size() * vector_width() > buffer_size) {
+        flush_output_buffer(
+          flushing_cg, *flushing_cg_counter, output_buffer, num_matches, output_begin);
+        // First lane reset warp-level counter
+        if (flushing_cg.thread_rank() == 0) { *flushing_cg_counter = 0; }
+      }
+
+      current_slot = this->next_slot(current_slot);
+    }  // while running
+  }
+
+  /**
+   * @brief Retrieves all the matches of a given key contained in multimap using scalar
+   * loads.
+   *
+   * For key `k` existing in the map, copies `k` and all associated values to unspecified
+   * locations in `[output_begin, output_end)`. If `k` does not have any matches, copies `k` and
+   * `empty_value_sentinel()` into the output only if `is_outer` is true.
+   *
+   * @tparam is_outer Boolean flag indicating whether outer join is peformed
+   * @tparam atomicT Type of atomic storage
+   * @tparam OutputIt Device accessible output iterator whose `value_type` is
+   * constructible from the map's `value_type`
+   * @tparam KeyEqual Binary callable type
+   * @param k The key to search for
+   * @param num_matches Size of the output sequence
+   * @param output_begin Beginning of the output sequence of key/value pairs
+   * @param key_equal The binary callable used to compare two keys
+   * for equality
+   */
+  template <bool is_outer, typename atomicT, typename OutputIt, typename KeyEqual>
+  __device__ __forceinline__ void retrieve_no_cg_probe_no_flushing(Key const& k,
+                                                                   atomicT* num_matches,
+                                                                   OutputIt output_begin,
+                                                                   KeyEqual key_equal) noexcept
+  {
+    auto probing_g =
+      cooperative_groups::tiled_partition<1>(cooperative_groups::this_thread_block());
+
+    auto current_slot = this->initial_slot(probing_g, k);
+
+    bool running                      = true;
+    [[maybe_unused]] bool found_match = false;
+
+    while (running) {
+      // TODO: Replace reinterpret_cast with atomic ref when possible. The current implementation
+      // is unsafe!
+      static_assert(sizeof(Key) == sizeof(hip::atomic<Key>));
+      static_assert(sizeof(Value) == sizeof(hip::atomic<Value>));
+      value_type slot_contents = *reinterpret_cast<value_type const*>(current_slot);
+
+      auto const slot_is_empty =
+        detail::bitwise_compare(slot_contents.first, this->get_empty_key_sentinel());
+      auto const equals = (not slot_is_empty and key_equal(slot_contents.first, k));
+      auto const exists = equals;
+
+      if (equals) {
+        uint32_t output_idx = num_matches->fetch_add(1, hip::std::memory_order_relaxed);
+        if constexpr (is_outer) { found_match = true; }
+        *(output_begin + output_idx) = cuco::make_pair(k, slot_contents.second);
+      }
+      if (slot_is_empty) {
+        running = false;
+        if constexpr (is_outer) {
+          if (not found_match) {
+            uint32_t output_idx = num_matches->fetch_add(1, hip::std::memory_order_relaxed);
+            *(output_begin + output_idx) = cuco::make_pair(k, this->get_empty_value_sentinel());
+          }
+        }
+      }
+      current_slot = this->next_slot(current_slot);
+    }  // while running
+  }
+
+  /**
+   * @brief Retrieves all the matches of a given key contained in multimap using vector
+   * loads with per-CG shared memory buffer.
+   *
+   * For key `k` existing in the map, copies `k` and all associated values to unspecified
+   * locations in `[output_begin, output_end)`. If `k` does not have any matches, copies `k` and
+   * `empty_value_sentinel()` into the output only if `is_outer` is true.
+   *
+   * @tparam buffer_size Size of the output buffer
+   * @tparam is_outer Boolean flag indicating whether outer join is peformed
+   * @tparam CG Cooperative Group type
+   * @tparam atomicT Type of atomic storage
+   * @tparam OutputIt Device accessible output iterator whose `value_type` is
+   * constructible from the map's `value_type`
+   * @tparam KeyEqual Binary callable type
+   * @param k The key to search for
+   * @param num_matches Size of the output sequence
+   * @param output_begin Beginning of the output sequence of key/value pairs
+   * @param key_equal The binary callable used to compare two keys
+   * for equality
+   */
+  template <bool is_outer, typename atomicT, typename OutputIt, typename KeyEqual>
+  __device__ __forceinline__ void retrieve_no_cg_probe_no_flushing_vector(
+    Key const& k, atomicT* num_matches, OutputIt output_begin, KeyEqual key_equal) noexcept
+  {
+    auto probing_cg =
+      cooperative_groups::tiled_partition<1>(cooperative_groups::this_thread_block());
+
+    auto current_slot = this->initial_slot(probing_cg, k);
+
+    bool running                      = true;
+    [[maybe_unused]] bool found_match = false;
+
+    while (running) {
+      if (running) {
+        value_type arr[2];
+        this->load_pair_array(&arr[0], current_slot);
+
+        auto const first_slot_is_empty =
+          detail::bitwise_compare(arr[0].first, this->get_empty_key_sentinel());
+        auto const second_slot_is_empty =
+          detail::bitwise_compare(arr[1].first, this->get_empty_key_sentinel());
+        auto const first_equals  = (not first_slot_is_empty and key_equal(arr[0].first, k));
+        auto const second_equals = (not second_slot_is_empty and key_equal(arr[1].first, k));
+
+        if (first_equals or second_equals) {
+          if constexpr (is_outer) { found_match = true; }
+
+          auto const num_first_matches  = static_cast<int>(first_equals);
+          auto const num_second_matches = static_cast<int>(second_equals);
+
+          uint32_t output_idx = 0;
+          output_idx          = num_matches->fetch_add(num_first_matches + num_second_matches,
+                                              hip::std::memory_order_relaxed);
+
+          if (first_equals) { *(output_begin + output_idx) = cuco::make_pair(k, arr[0].second); }
+          if (second_equals) {
+            *(output_begin + output_idx + num_first_matches) = cuco::make_pair(k, arr[1].second);
+          }
+        }
+        if (first_slot_is_empty or second_slot_is_empty) {
+          running = false;
+          if constexpr (is_outer) {
+            if ((not found_match)) {
+              auto const output_idx = num_matches->fetch_add(1, hip::std::memory_order_relaxed);
+              *(output_begin + output_idx) = cuco::make_pair(k, this->get_empty_value_sentinel());
+            }
+          }
+        }
+      }  // if running
+
+      current_slot = this->next_slot(current_slot);
+    }  // while running
+  }
+
+  /**
    * @brief Retrieves all the matches of a given pair using vector loads.
    *
    * For pair `p` with `n` matching pairs, if `pair_equal(p, slot)` returns true, stores
@@ -1413,7 +1724,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         detail::bitwise_compare(arr[1].first, this->get_empty_key_sentinel());
       auto const first_equals  = (not first_slot_is_empty and pair_equal(arr[0], pair));
       auto const second_equals = (not second_slot_is_empty and pair_equal(arr[1], pair));
-      //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed g.ballot -> __ballot for now
+
       auto const first_exists  = hip_probing_cg.ballot(first_equals);
       auto const second_exists = hip_probing_cg.ballot(second_equals);
 
@@ -1442,7 +1753,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         }
         num_matches += (num_first_matches + __popc(second_exists));
       }
-      //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, using __any for now
+
       if (hip_probing_cg.any(first_slot_is_empty or second_slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) and lane_id == 0) {
@@ -1527,8 +1838,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
       auto const slot_is_empty =
         detail::bitwise_compare(slot_contents.first, this->get_empty_key_sentinel());
       auto const equals = (not slot_is_empty and pair_equal(slot_contents, pair));
-      // auto const exists = probing_cg.ballot(equals);
-      //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed using __ballot for now
+
       auto const exists = hip_probing_cg.ballot(equals);
 
       if (exists) {
@@ -1545,9 +1855,8 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view_
         }
         num_matches += __popc(exists);
       }
-      //Todo(HIP): Find workaround for ballot as it does not exist in HIP CG, changed using __any for now
+
       if (hip_probing_cg.any(slot_is_empty)) {
-      // if (probing_cg.any(slot_is_empty)) {
         if constexpr (is_outer) {
           if ((not found_match) and lane_id == 0) {
             *(probe_key_begin)     = pair.first;
