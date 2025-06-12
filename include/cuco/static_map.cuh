@@ -1251,7 +1251,6 @@ class static_map {
   static_assert(atomic_mapped_type::is_always_lock_free,
                 "A value type larger than 8B is supported for only sm_70 and up.");
 #endif
-  uint32_t TILESize;
 
   static_map(static_map const&) = delete;
   static_map(static_map&&)      = delete;
@@ -1295,7 +1294,6 @@ class static_map {
   static_map(std::size_t capacity,
              empty_key<Key> empty_key_sentinel,
              empty_value<Value> empty_value_sentinel,
-             uint32_t TILESize,
              Allocator const& alloc = Allocator{},
              hipStream_t stream    = 0);
 
@@ -1317,7 +1315,6 @@ class static_map {
              empty_key<Key> empty_key_sentinel,
              empty_value<Value> empty_value_sentinel,
              erased_key<Key> erased_key_sentinel,
-             uint32_t TILESize,
              Allocator const& alloc = Allocator{},
              hipStream_t stream    = 0);
 
