@@ -33,6 +33,7 @@
 
 cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 
+set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "ROCm install path, defaults to '/opt/rocm'")
 set(
   RAPIDS_CMAKE_MODULE_PATH
   "$ENV{RAPIDS_CMAKE_MODULE_PATH}"
@@ -173,8 +174,14 @@ include(cmake/thirdparty/get_rocthrust.cmake)
 include(cmake/thirdparty/get_libhipcxx.cmake)
 
 #TODO(HIP/AMD): Ideally, we could use rapids-cmake to configure hipcub
-find_package(rocprim REQUIRED CONFIG PATHS "/opt/rocm/rocprim")
-find_package(hipcub REQUIRED CONFIG PATHS "/opt/rocm/hipcub")
+if (ROCM_PATH STREQUAL "")
+  find_package(rocprim REQUIRED CONFIG PATHS "/opt/rocm/rocprim")
+  find_package(hipcub REQUIRED CONFIG PATHS "/opt/rocm/hipcub")
+else()
+  find_package(rocprim REQUIRED CONFIG PATHS "${ROCM_PATH}/rocprim")
+  find_package(hipcub REQUIRED CONFIG PATHS "${ROCM_PATH}/hipcub")
+endif()
+
 
 ###################################################################################################
 # - cuco target   ---------------------------------------------------------------------------------
