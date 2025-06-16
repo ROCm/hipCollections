@@ -1069,8 +1069,15 @@ class open_addressing_ref_impl {
   {
     auto constexpr is_outer = false;
     auto const n = cuco::detail::distance(input_probe_begin, input_probe_end);  // TODO include
-    this->retrieve_impl<is_outer, BlockSize>(
-      block, input_probe_begin, n, output_probe, output_match, atomic_counter);
+    if(cuco::detail::warp_size() == 32){
+      this->retrieve_impl<is_outer, BlockSize, 32>(
+        block, input_probe_begin, n, output_probe, output_match, atomic_counter);
+    }
+    else{
+      assert(cuco::detail::warp_size() == 64);
+      this->retrieve_impl<is_outer, BlockSize, 64>(
+        block, input_probe_begin, n, output_probe, output_match, atomic_counter);
+    }
   }
 
   /**
@@ -1118,8 +1125,15 @@ class open_addressing_ref_impl {
   {
     auto constexpr is_outer = true;
     auto const n = cuco::detail::distance(input_probe_begin, input_probe_end);  // TODO include
-    this->retrieve_impl<is_outer, BlockSize>(
-      block, input_probe_begin, n, output_probe, output_match, atomic_counter);
+    if(cuco::detail::warp_size() == 32){
+      this->retrieve_impl<is_outer, BlockSize, 32>(
+        block, input_probe_begin, n, output_probe, output_match, atomic_counter);
+    }
+    else{
+      assert(cuco::detail::warp_size() == 64);
+      this->retrieve_impl<is_outer, BlockSize, 64>(
+        block, input_probe_begin, n, output_probe, output_match, atomic_counter);
+    }
   }
 
   /**
@@ -1156,6 +1170,7 @@ class open_addressing_ref_impl {
    */
   template <bool IsOuter,
             int32_t BlockSize,
+            int32_t warpSize,
             class InputProbeIt,
             class OutputProbeIt,
             class OutputMatchIt,
@@ -1178,7 +1193,7 @@ class open_addressing_ref_impl {
     static_assert(buffer_multiplier > 0);
 
     auto constexpr probing_tile_size  = cg_size;
-    auto constexpr flushing_tile_size = cuco::detail::warp_size();
+    auto constexpr flushing_tile_size = warpSize; // cuco::detail::warp_size();
     static_assert(flushing_tile_size >= probing_tile_size);
 
     auto constexpr num_flushing_tiles   = BlockSize / flushing_tile_size;

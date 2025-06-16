@@ -940,7 +940,7 @@ OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve(
   if (num_keys == 0) { return output_begin; }
 
   // Using per-warp buffer for vector loads and per-CG buffer for scalar loads
-  constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
+  // constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
   constexpr auto is_outer    = false;
 
   auto view                   = get_device_view();
@@ -954,9 +954,19 @@ OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve(
   auto counter = detail::counter_storage<size_type, Scope, allocator_type>{allocator_};
   counter.reset(stream);
 
-  detail::retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
-    <<<grid_size, detail::default_block_size(), 0, stream>>>(
-      first, num_keys, output_begin, counter.data(), view, key_equal);
+  if(warp_size() == 32){
+    constexpr auto buffer_size = uses_vector_load() ? (32 * 3u) : (cg_size() * 3u);
+    detail::retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
+      <<<grid_size, detail::default_block_size(), 0, stream>>>(
+        first, num_keys, output_begin, counter.data(), view, key_equal);
+  }
+  else{
+    assert(warp_size() == 64);
+    constexpr auto buffer_size = uses_vector_load() ? (64 * 3u) : (cg_size() * 3u);
+    detail::retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
+      <<<grid_size, detail::default_block_size(), 0, stream>>>(
+        first, num_keys, output_begin, counter.data(), view, key_equal);
+  }
 
   return output_begin + counter.load_to_host(stream);
 }
@@ -974,7 +984,7 @@ OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve_
   if (num_keys == 0) { return output_begin; }
 
   // Using per-warp buffer for vector loads and per-CG buffer for scalar loads
-  constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
+  // constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
   constexpr auto is_outer    = true;
 
   auto view                   = get_device_view();
@@ -988,9 +998,19 @@ OutputIt static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::retrieve_
   auto counter = detail::counter_storage<size_type, Scope, allocator_type>{allocator_};
   counter.reset(stream);
 
-  detail::retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
-    <<<grid_size, detail::default_block_size(), 0, stream>>>(
-      first, num_keys, output_begin, counter.data(), view, key_equal);
+  if(warp_size() == 32){
+    constexpr auto buffer_size = uses_vector_load() ? (32 * 3u) : (cg_size() * 3u);
+    detail::retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
+      <<<grid_size, detail::default_block_size(), 0, stream>>>(
+        first, num_keys, output_begin, counter.data(), view, key_equal);
+  }
+  else{
+    assert(warp_size() == 64);
+    constexpr auto buffer_size = uses_vector_load() ? (64 * 3u) : (cg_size() * 3u);
+    detail::retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
+      <<<grid_size, detail::default_block_size(), 0, stream>>>(
+        first, num_keys, output_begin, counter.data(), view, key_equal);
+  }
 
   return output_begin + counter.load_to_host(stream);
 }
@@ -1014,7 +1034,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve(
   if (num_pairs == 0) { return std::make_pair(probe_output_begin, contained_output_begin); }
 
   // Using per-warp buffer for vector loads and per-CG buffer for scalar loads
-  constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
+  // constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
   constexpr auto block_size  = 128;
   constexpr auto is_outer    = false;
   constexpr auto stride      = 1;
@@ -1030,14 +1050,29 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve(
   counter.reset(stream);
 
   // todo: add variants without flushing and without cg for probing
-  detail::pair_retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
-    <<<grid_size, block_size, 0, stream>>>(first,
-                                           num_pairs,
-                                           probe_output_begin,
-                                           contained_output_begin,
-                                           counter.data(),
-                                           view,
-                                           pair_equal);
+  if(warp_size() == 32){
+    constexpr auto buffer_size = uses_vector_load() ? (32 * 3u) : (cg_size() * 3u);
+    detail::pair_retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
+      <<<grid_size, block_size, 0, stream>>>(first,
+                                          num_pairs,
+                                          probe_output_begin,
+                                          contained_output_begin,
+                                          counter.data(),
+                                          view,
+                                          pair_equal);
+  }
+  else{
+    assert(warp_size() == 64);
+    constexpr auto buffer_size = uses_vector_load() ? (64 * 3u) : (cg_size() * 3u);
+      detail::pair_retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
+      <<<grid_size, block_size, 0, stream>>>(first,
+                                          num_pairs,
+                                          probe_output_begin,
+                                          contained_output_begin,
+                                          counter.data(),
+                                          view,
+                                          pair_equal);
+  }
 
   auto const h_count = counter.load_to_host(stream);
   return {probe_output_begin + h_count, contained_output_begin + h_count};
@@ -1062,7 +1097,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve_oute
   if (num_pairs == 0) { return std::make_pair(probe_output_begin, contained_output_begin); }
 
   // Using per-warp buffer for vector loads and per-CG buffer for scalar loads
-  constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
+  // constexpr auto buffer_size = uses_vector_load() ? (warp_size() * 3u) : (cg_size() * 3u);
   constexpr auto block_size  = 128;
   constexpr auto is_outer    = true;
   constexpr auto stride      = 1;
@@ -1078,14 +1113,30 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::pair_retrieve_oute
   counter.reset(stream);
 
   // todo: add variants without flushing and without cg for probing
-  detail::pair_retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
-    <<<grid_size, detail::default_block_size(), 0, stream>>>(first,
-                                           num_pairs,
-                                           probe_output_begin,
-                                           contained_output_begin,
-                                           counter.data(),
-                                           view,
-                                           pair_equal);
+  if(warp_size() == 32){
+    constexpr auto buffer_size = uses_vector_load() ? (32 * 3u) : (cg_size() * 3u);
+    detail::pair_retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
+      <<<grid_size, detail::default_block_size(), 0, stream>>>(first,
+                                            num_pairs,
+                                            probe_output_begin,
+                                            contained_output_begin,
+                                            counter.data(),
+                                            view,
+                                            pair_equal);
+  }
+  else{
+    assert(warp_size() == 64);
+    constexpr auto buffer_size = uses_vector_load() ? (64 * 3u) : (cg_size() * 3u);
+    detail::pair_retrieve<detail::default_block_size(), flushing_cg_size, cg_size(), buffer_size, is_outer>
+      <<<grid_size, detail::default_block_size(), 0, stream>>>(first,
+                                            num_pairs,
+                                            probe_output_begin,
+                                            contained_output_begin,
+                                            counter.data(),
+                                            view,
+                                            pair_equal);
+  }
+
 
   auto const h_count = counter.load_to_host(stream);
   return {probe_output_begin + h_count, contained_output_begin + h_count};

@@ -34,6 +34,7 @@
 
 #include <cuco/detail/utility/cuda.hpp>
 
+#include <hip/hip_runtime.h>
 #include <hip/hip_cooperative_groups.h>
 
 #include <cstdint>
@@ -58,12 +59,8 @@ namespace cuco {
 namespace detail {
 
 /// CUDA warp size
-__device__ constexpr int32_t warp_size() noexcept {
-#ifdef CUCO_USE_WARPSIZE_32
-    return 32u;
-#else
-    return 64u;
-#endif  
+__device__ int32_t warp_size() noexcept {
+  return warpSize;
 }
 
 /**

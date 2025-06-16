@@ -51,6 +51,7 @@
 #include <hip/barrier>
 #endif
 
+#include <hip/hip_runtime.h>
 #include <hip/hip_cooperative_groups.h>
 
 #include <cstddef>
@@ -1390,12 +1391,18 @@ class static_multimap {
   /**
    * @brief Returns the warp size.
    */
-  static __host__ __device__ constexpr uint32_t warp_size() noexcept { 
-#ifdef CUCO_USE_WARPSIZE_32
-    return 32u;
-#else
-    return 64u;
-#endif
+  static __host__ __device__ uint32_t warp_size() noexcept {
+  #ifdef __HIP_DEVICE_COMPILE__
+    return warpSize;
+  #else
+    hipDeviceProp_t devProp;
+    auto ierr = hipGetDeviceProperties(&devProp, 0);
+    if ( ierr ) {
+      std::cerr << "error: could not obtain warp size" << std::endl;
+      __builtin_trap();
+    }
+    return devProp.warpSize; // Query warp size from device properties
+  #endif
   }
 
   /**
