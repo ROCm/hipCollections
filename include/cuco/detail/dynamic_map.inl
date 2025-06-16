@@ -44,8 +44,8 @@ dynamic_map<Key, Value, Scope, Allocator>::dynamic_map(std::size_t initial_capac
     erased_key_sentinel_(empty_key_sentinel.value),
     size_(0),
     capacity_(initial_capacity),
-    min_insert_size_(1E4),
     max_load_factor_(0.60),
+    min_insert_size_(1E4),
     alloc_{alloc}
 {
   submaps_.push_back(std::make_unique<cuco::legacy::static_map<Key, Value, Scope, Allocator>>(
