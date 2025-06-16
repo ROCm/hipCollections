@@ -47,8 +47,9 @@
 namespace cuco {
 namespace detail {
 
-//TODO(HIP/AMD): find a better place for this
-#if __AMDGCN_WAVEFRONT_SIZE == 32
+// TODO(HIP/AMD): find a better place for this
+// TODO(HIP/AMD): switched to 64 wavefront version in all cases. Reevaluate in the future.
+#if 0
 using lane_mask = unsigned int;
 #else
 using lane_mask = unsigned long long int;
