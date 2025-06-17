@@ -240,3 +240,9 @@
 #ifndef cudaDevAttrMultiProcessorCount
 #   define cudaDevAttrMultiProcessorCount hipDeviceAttributeMultiprocessorCount
 #endif
+
+#if defined(__GFX9__)
+#define HIPCO_DEVICE_WAVEFRONT_SIZE 64u
+#else
+#define HIPCO_DEVICE_WAVEFRONT_SIZE 32u
+#endif
