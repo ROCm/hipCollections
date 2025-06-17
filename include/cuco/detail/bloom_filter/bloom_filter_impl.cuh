@@ -165,7 +165,7 @@ class bloom_filter_impl {
   {
     constexpr auto num_threads         = tile_size_v<CG>;
     constexpr auto optimal_num_threads = add_optimal_cg_size();
-    constexpr auto words_per_thread    = words_per_block / optimal_num_threads;
+    //constexpr auto words_per_thread    = words_per_block / optimal_num_threads;
 
     // If single thread is optimal, use scalar add
     if constexpr (num_threads == 1 or optimal_num_threads == 1) {
