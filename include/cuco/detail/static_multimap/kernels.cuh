@@ -398,6 +398,11 @@ CUCO_KERNEL void retrieve(InputIt first,
 {
   using pair_type = typename viewT::value_type;
 
+  if constexpr (flushing_cg_size > HIPCO_DEVICE_WAVEFRONT_SIZE or probing_cg_size >  HIPCO_DEVICE_WAVEFRONT_SIZE){
+    assert(false && "Using wrong cg size for architecture. cg size cannot be larger than wavefront size!");
+    return;
+  }
+  else{
   constexpr uint32_t num_flushing_cgs = block_size / flushing_cg_size;
   const uint32_t flushing_cg_id       = threadIdx.x / flushing_cg_size;
 
@@ -453,6 +458,7 @@ CUCO_KERNEL void retrieve(InputIt first,
                              num_matches,
                              output_begin);
   }
+}
 }
 
 /**
