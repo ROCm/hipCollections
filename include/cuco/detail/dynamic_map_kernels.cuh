@@ -35,6 +35,7 @@
 
 #include "hip/hip_runtime.h"
 
+#include <cuco/detail/bitwise_compare.cuh>
 #include <cuco/detail/utility/cuda.cuh>
 
 #if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
