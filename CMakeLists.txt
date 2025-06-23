@@ -89,7 +89,7 @@ include(rapids-find)
 # * Enable the HIP language
 rapids_hip_init_architectures(CUCO "NATIVE")
 
-project(CUCO VERSION 0.2.0 LANGUAGES CXX HIP)
+project(CUCO VERSION 0.3.0 LANGUAGES CXX HIP)
 ###################################################################################################
 # - build options ---------------------------------------------------------------------------------
 set(default_build_option_state OFF)
@@ -288,7 +288,7 @@ if(CUCO_CREATE_PACKAGE)
   set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
   set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
   if( NOT libhipcxx_ADDED )
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libhipcxx-dev (>= 2.2.0)")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libhipcxx-dev (>= 2.7.0)")
   endif()
   set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Package install prefix.")
   include(CPack)
