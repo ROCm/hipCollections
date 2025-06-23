@@ -44,9 +44,6 @@
 #include <cub/device/device_for.cuh>
 #else
 #include <hipcub/hipcub.hpp>
-// FIXME(HIP/AMD): WAR 'ForEachCopyN' in namespace 'hipcub'
-// TODO(HIP/AMD): remove again once not needed
-#include <hipcub/device/device_for.hpp>
 namespace cub = hipcub;
 #endif
 
@@ -136,7 +133,7 @@ class bloom_filter_impl {
 
   __host__ constexpr void clear_async(cuda::stream_ref stream)
   {
-    CUCO_CUDA_TRY(cub::ForEachN(
+    CUCO_CUDA_TRY(cub::DeviceFor::ForEachN(
       words_,
       num_blocks_ * words_per_block,
       [] __device__(word_type & word) { word = 0; },
@@ -201,7 +198,7 @@ class bloom_filter_impl {
     if (num_keys == 0) { return; }
 
     if constexpr (words_per_block == 1) {
-      CUCO_CUDA_TRY(cub::ForEachCopyN(
+      CUCO_CUDA_TRY(cub::DeviceFor::ForEachCopyN(
         first,
         num_keys,
         [*this] __device__(key_type const key) mutable { this->add(key); },

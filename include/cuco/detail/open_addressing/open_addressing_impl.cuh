@@ -50,9 +50,6 @@
 #include <cub/device/device_select.cuh>
 #else
 #include <hipcub/hipcub.hpp>
-// FIXME(HIP/AMD): WAR 'ForEachCopyN' in namespace 'hipcub'
-// TODO(HIP/AMD): remove again once not needed
-#include <hipcub/device/device_for.hpp>
 namespace cub = hipcub;
 #endif
 
@@ -880,8 +877,7 @@ class open_addressing_impl {
       }
     };
 
-    // FIXME(HIP/AMD): WAR 'ForEachCopyN' in namespace 'hipcub'
-    CUCO_CUDA_TRY(cub::ForEachCopyN( // TODO(HIP/AMD): add ::DeviceFor namespace again once possible
+    CUCO_CUDA_TRY(cub::DeviceFor::ForEachCopyN(
       storage_ref.data(), storage_ref.num_buckets(), op, stream.get()));
   }
 
