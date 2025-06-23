@@ -1240,7 +1240,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::flush
   atomicT* num_matches,
   OutputIt output_begin) noexcept
 {
-  impl_.template flush_output_buffer(g, num_outputs, output_buffer, num_matches, output_begin);
+  impl_.flush_output_buffer(g, num_outputs, output_buffer, num_matches, output_begin);
 }
 
 template <typename Key,
@@ -1259,7 +1259,7 @@ static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::flush
   OutputIt1 probe_output_begin,
   OutputIt2 contained_output_begin) noexcept
 {
-  impl_.template flush_output_buffer(g,
+  impl_.flush_output_buffer(g,
                             num_outputs,
                             probe_output_buffer,
                             contained_output_buffer,
