@@ -427,22 +427,22 @@ CUCO_KERNEL void retrieve(InputIt first,
       auto key = *(first + idx);
       if constexpr (is_outer) {
         view.template retrieve_outer<buffer_size>(active_flushing_cg,
-                                         probing_cg,
-                                         key,
-                                         &flushing_cg_counter[flushing_cg_id],
-                                         output_buffer[flushing_cg_id],
-                                         num_matches,
-                                         output_begin,
-                                         key_equal);
+                                                  probing_cg,
+                                                  key,
+                                                  &flushing_cg_counter[flushing_cg_id],
+                                                  output_buffer[flushing_cg_id],
+                                                  num_matches,
+                                                  output_begin,
+                                                  key_equal);
       } else {
         view.template retrieve<buffer_size>(active_flushing_cg,
-                                   probing_cg,
-                                   key,
-                                   &flushing_cg_counter[flushing_cg_id],
-                                   output_buffer[flushing_cg_id],
-                                   num_matches,
-                                   output_begin,
-                                   key_equal);
+                                            probing_cg,
+                                            key,
+                                            &flushing_cg_counter[flushing_cg_id],
+                                            output_buffer[flushing_cg_id],
+                                            num_matches,
+                                            output_begin,
+                                            key_equal);
       }
     }
     idx += loop_stride;

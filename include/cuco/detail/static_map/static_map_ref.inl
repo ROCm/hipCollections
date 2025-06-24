@@ -534,7 +534,8 @@ class operator_impl<
     auto const key            = ref_.impl_.extract_key(val);
     auto const probing_scheme = ref_.impl_.probing_scheme();
     auto storage_ref          = ref_.impl_.storage_ref();
-    auto probing_iter   = probing_scheme.make_iterator<bucket_size>(key, storage_ref.extent());
+    auto probing_iter =
+      probing_scheme.template make_iterator<bucket_size>(key, storage_ref.extent());
     auto const init_idx = *probing_iter;
 
     while (true) {
@@ -582,7 +583,8 @@ class operator_impl<
     auto const key            = ref_.impl_.extract_key(val);
     auto const probing_scheme = ref_.impl_.probing_scheme();
     auto storage_ref          = ref_.impl_.storage_ref();
-    auto probing_iter = probing_scheme.make_iterator<bucket_size>(group, key, storage_ref.extent());
+    auto probing_iter =
+      probing_scheme.template make_iterator<bucket_size>(group, key, storage_ref.extent());
     auto const init_idx = *probing_iter;
 
     while (true) {
@@ -591,7 +593,8 @@ class operator_impl<
       auto const [state, intra_bucket_index] = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto i = 0; i < bucket_size; ++i) {
-          res = ref_.impl_.predicate_.template operator()<is_insert::YES>(key, bucket_slots[i].first);
+          res =
+            ref_.impl_.predicate_.template operator()<is_insert::YES>(key, bucket_slots[i].first);
           if (res != detail::equal_result::UNEQUAL) {
             return detail::bucket_probing_results{res, i};
           }
@@ -900,7 +903,8 @@ class operator_impl<
     auto const key            = ref_.impl_.extract_key(val);
     auto const probing_scheme = ref_.impl_.probing_scheme();
     auto storage_ref          = ref_.impl_.storage_ref();
-    auto probing_iter      = probing_scheme.make_iterator<bucket_size>(key, storage_ref.extent());
+    auto probing_iter =
+      probing_scheme.template make_iterator<bucket_size>(key, storage_ref.extent());
     auto const init_idx    = *probing_iter;
     auto const empty_value = ref_.empty_value_sentinel();
 
@@ -926,7 +930,8 @@ class operator_impl<
           return false;
         }
         if (eq_res == detail::equal_result::AVAILABLE) {
-          switch (ref_.template attempt_insert_or_apply<UseDirectApply>(slot_ptr, slot_content, val, op)) {
+          switch (ref_.template attempt_insert_or_apply<UseDirectApply>(
+            slot_ptr, slot_content, val, op)) {
             case insert_result::SUCCESS: return true;
             case insert_result::DUPLICATE: {
               // wait for payload only when performing insert operation
@@ -976,7 +981,8 @@ class operator_impl<
     auto const key            = ref_.impl_.extract_key(val);
     auto const probing_scheme = ref_.impl_.probing_scheme();
     auto storage_ref          = ref_.impl_.storage_ref();
-    auto probing_iter = probing_scheme.make_iterator<bucket_size>(group, key, storage_ref.extent());
+    auto probing_iter =
+      probing_scheme.template make_iterator<bucket_size>(group, key, storage_ref.extent());
     auto const init_idx    = *probing_iter;
     auto const empty_value = ref_.empty_value_sentinel();
 
@@ -989,7 +995,8 @@ class operator_impl<
       auto const [state, intra_bucket_index] = [&]() {
         auto res = detail::equal_result::UNEQUAL;
         for (auto i = 0; i < bucket_size; ++i) {
-          res = ref_.impl_.predicate_.template operator()<is_insert::YES>(key, bucket_slots[i].first);
+          res =
+            ref_.impl_.predicate_.template operator()<is_insert::YES>(key, bucket_slots[i].first);
           if (res != detail::equal_result::UNEQUAL) {
             return detail::bucket_probing_results{res, i};
           }
