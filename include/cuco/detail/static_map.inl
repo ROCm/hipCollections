@@ -431,7 +431,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::d
         }
 
         if constexpr (not cuco::detail::is_packable<value_type>()) {
-#if (__CUDA_ARCH__ < 700)
+#if (defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 700)
           return cas_dependent_write(current_slot, insert_pair, key_equal, existing_key);
 #else
           return back_to_back_cas(current_slot, insert_pair, key_equal, existing_key);
@@ -459,7 +459,7 @@ __device__
   static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::insert_and_find(
     value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
 {
-#if __CUDA_ARCH__ < 700
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 700
   // Spinning to ensure that the write to the value part took place requires
   // independent thread scheduling introduced with the Volta architecture.
   static_assert(cuco::detail::is_packable<value_type>(),
@@ -578,7 +578,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::d
         }
         // Otherwise, two back-to-back CAS operations
         else {
-#if (__CUDA_ARCH__ < 700)
+#if (defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 700)
           status = cas_dependent_write(current_slot, insert_pair, key_equal, existing_key);
 #else
           status = back_to_back_cas(current_slot, insert_pair, key_equal, existing_key);

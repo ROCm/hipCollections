@@ -441,7 +441,7 @@ class static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutab
         uint32_t src_lane = detail::__FFS((lane_mask)bucket_contains_empty) - 1;
 
         if (g.thread_rank() == src_lane) {
-#if (__CUDA_ARCH__ < 700)
+#if (defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 700)
           status = cas_dependent_write(current_slot, insert_pair);
 #else
           status = back_to_back_cas(current_slot, insert_pair);

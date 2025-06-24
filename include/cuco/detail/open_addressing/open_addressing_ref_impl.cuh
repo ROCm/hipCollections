@@ -530,7 +530,7 @@ class open_addressing_ref_impl {
   __device__ thrust::pair<iterator, bool> insert_and_find(Value const& value) noexcept
   {
     static_assert(cg_size == 1, "Non-CG operation is incompatible with the current probing scheme");
-#if __CUDA_ARCH__ < 700
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 700
     // Spinning to ensure that the write to the value part took place requires
     // independent thread scheduling introduced with the Volta architecture.
     static_assert(
@@ -603,7 +603,7 @@ class open_addressing_ref_impl {
   __device__ thrust::pair<iterator, bool> insert_and_find(
     cooperative_groups::thread_block_tile<cg_size> const& group, Value const& value) noexcept
   {
-#if __CUDA_ARCH__ < 700
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 700
     // Spinning to ensure that the write to the value part took place requires
     // independent thread scheduling introduced with the Volta architecture.
     static_assert(
@@ -1749,7 +1749,7 @@ class open_addressing_ref_impl {
     if constexpr (sizeof(value_type) <= 8) {
       return packed_cas(address, expected, desired);
     } else {
-#if (__CUDA_ARCH__ < 700)
+#if (defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 700)
       return cas_dependent_write(address, expected, desired);
 #else
       return back_to_back_cas(address, expected, desired);
