@@ -57,7 +57,7 @@ endif()
 # build only for supported warp size 64 architectures per default
 message(STATUS "CMAKE_HIP_ARCHITECTURES: ${CMAKE_HIP_ARCHITECTURES}")
 if(NOT (DEFINED CMAKE_HIP_ARCHITECTURES))
-  set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx908;gfx940;gfx941;gfx942")
+  set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx908;gfx942")
 else()
   foreach(arch ${CMAKE_HIP_ARCHITECTURES})
     if(NOT ${arch} IN_LIST SUPPORTED_WS_32_ARCHS AND NOT ${arch} IN_LIST SUPPORTED_WS_64_ARCHS)
