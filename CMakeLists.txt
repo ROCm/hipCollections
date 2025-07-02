@@ -69,7 +69,6 @@ else()
   endforeach()
 endif()
 
-set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "ROCm install path, defaults to '/opt/rocm'")
 set(
   RAPIDS_CMAKE_MODULE_PATH
   "$ENV{RAPIDS_CMAKE_MODULE_PATH}"
@@ -172,16 +171,6 @@ include(cpm/package_override)
 rapids_cpm_package_override(${CMAKE_CURRENT_LIST_DIR}/versions.json)
 
 include(cmake/thirdparty/get_cccl.cmake)
-
-#TODO(HIP/AMD): Ideally, we could use rapids-cmake to configure hipcub
-if (ROCM_PATH STREQUAL "")
-  find_package(rocprim REQUIRED CONFIG PATHS "/opt/rocm/rocprim")
-  find_package(hipcub REQUIRED CONFIG PATHS "/opt/rocm/hipcub")
-else()
-  find_package(rocprim REQUIRED CONFIG PATHS "${ROCM_PATH}/rocprim")
-  find_package(hipcub REQUIRED CONFIG PATHS "${ROCM_PATH}/hipcub")
-endif()
-
 
 ###################################################################################################
 # - cuco target   ---------------------------------------------------------------------------------
