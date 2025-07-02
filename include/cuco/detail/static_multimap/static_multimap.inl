@@ -1098,18 +1098,6 @@ template <typename Key,
           class ProbeSequence>
 __device__ __forceinline__ void
 static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutable_view::insert(
-  value_type const& insert_pair) noexcept
-{
-  impl_.template insert<uses_vector_load()>(insert_pair);
-}
-
-template <typename Key,
-          typename Value,
-          cuda::thread_scope Scope,
-          typename Allocator,
-          class ProbeSequence>
-__device__ __forceinline__ void
-static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_mutable_view::insert(
   cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& g,
   value_type const& insert_pair) noexcept
 {
@@ -1218,21 +1206,6 @@ template <typename Key,
           cuda::thread_scope Scope,
           typename Allocator,
           class ProbeSequence>
-template <typename ProbeKey, typename KeyEqual>
-__device__ __forceinline__ bool
-static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::contains(
-  ProbeKey const& k,
-  KeyEqual key_equal) const noexcept
-{
-  constexpr bool is_pair_contains = false;
-  return impl_.template contains<is_pair_contains, uses_vector_load()>(k, key_equal);
-}
-
-template <typename Key,
-          typename Value,
-          cuda::thread_scope Scope,
-          typename Allocator,
-          class ProbeSequence>
 template <typename ProbePair, typename PairEqual>
 __device__ __forceinline__ bool
 static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::pair_contains(
@@ -1252,41 +1225,12 @@ template <typename Key,
 template <typename KeyEqual>
 __device__ __forceinline__ std::size_t
 static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::count(
-  Key const& k,
-  KeyEqual key_equal) noexcept
-{
-  constexpr bool is_outer = false;
-  return impl_.template count<uses_vector_load(), is_outer>(k, key_equal);
-}
-
-template <typename Key,
-          typename Value,
-          cuda::thread_scope Scope,
-          typename Allocator,
-          class ProbeSequence>
-template <typename KeyEqual>
-__device__ __forceinline__ std::size_t
-static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::count(
   cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& g,
   Key const& k,
   KeyEqual key_equal) noexcept
 {
   constexpr bool is_outer = false;
   return impl_.template count<uses_vector_load(), is_outer>(g, k, key_equal);
-}
-
-template <typename Key,
-          typename Value,
-          cuda::thread_scope Scope,
-          typename Allocator,
-          class ProbeSequence>
-template <typename KeyEqual>
-__device__ __forceinline__ std::size_t
-static_multimap<Key, Value, Scope, Allocator, ProbeSequence>::device_view::count_outer(
-  Key const& k, KeyEqual key_equal) noexcept
-{
-  constexpr bool is_outer = true;
-  return impl_.template count<uses_vector_load(), is_outer>(k, key_equal);
 }
 
 template <typename Key,

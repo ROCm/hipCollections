@@ -1551,14 +1551,6 @@ class static_multimap {
       cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& g,
       value_type const& insert_pair) noexcept;
 
-
-    /**
-     * @brief Inserts the specified key/value pair into the map.
-     *
-     * @param insert_pair The pair to insert
-     */
-    __device__ __forceinline__ void insert(
-      value_type const& insert_pair) noexcept;
    private:
     using device_view_base<device_mutable_view_impl>::impl_;
   };  // class device mutable view
@@ -1708,31 +1700,6 @@ class static_multimap {
       KeyEqual key_equal = KeyEqual{}) const noexcept;
 
     /**
-     * @brief Indicates whether the key `k` exists in the map.
-     *
-     * If the key `k` was inserted into the map, `contains` returns
-     * true. Otherwise, it returns false.
-     *
-     * ProbeSequence hashers should be callable with both ProbeKey and Key type.
-     * `std::invoke_result<KeyEqual, ProbeKey, Key>` must be well-formed.
-     *
-     * If `key_equal(probe_key, slot_key)` returns true, `hash(probe_key) == hash(slot_key)` must
-     * also be true.
-     *
-     * @tparam ProbeKey Probe key type
-     * @tparam KeyEqual Binary callable type
-     *
-     * @param k The key to search for
-     * @param key_equal The binary callable used to compare two keys
-     * for equality
-     * @return A boolean indicating whether the key/value pair
-     * containing `k` was inserted
-     */
-    template <typename ProbeKey, typename KeyEqual = thrust::equal_to<key_type>>
-    __device__ __forceinline__ bool contains(ProbeKey const& k,
-                                             KeyEqual key_equal = KeyEqual{}) const noexcept;
-
-    /**
      * @brief Indicates whether the pair `p` exists in the map.
      *
      * If the pair `p` was inserted into the map, `contains` returns
@@ -1782,23 +1749,6 @@ class static_multimap {
       KeyEqual key_equal = KeyEqual{}) noexcept;
 
     /**
-     * @brief Counts the occurrence of a given key contained in multimap.
-     *
-     * For a given key, `k`, counts all matching keys, `k'`, as determined by `key_equal(k, k')` and
-     * returns the sum of all matches for `k`.
-     *
-     * @tparam KeyEqual Binary callable type
-     * @param k The key to search for
-     * @param key_equal The binary callable used to compare two keys
-     * for equality
-     * @return Number of matches found by the current thread
-     */
-    template <typename KeyEqual = thrust::equal_to<key_type>>
-    __device__ __forceinline__ std::size_t count(
-      Key const& k,
-      KeyEqual key_equal = KeyEqual{}) noexcept;
-
-    /**
      * @brief Counts the occurrence of a given key contained in multimap. If no
      * matches can be found for a given key, the corresponding occurrence is 1.
      *
@@ -1817,23 +1767,6 @@ class static_multimap {
       cooperative_groups::thread_block_tile<ProbeSequence::cg_size> const& g,
       Key const& k,
       KeyEqual key_equal = KeyEqual{}) noexcept;
-
-    /**
-     * @brief Counts the occurrence of a given key contained in multimap. If no
-     * matches can be found for a given key, the corresponding occurrence is 1.
-     *
-     * For a given key, `k`, counts all matching keys, `k'`, as determined by `key_equal(k, k')` and
-     * returns the sum of all matches for `k`. If `k` does not have any matches, returns 1.
-     *
-     * @tparam KeyEqual Binary callable type
-     * @param k The key to search for
-     * @param key_equal The binary callable used to compare two keys
-     * for equality
-     * @return Number of matches found by the current thread
-     */
-    template <typename KeyEqual = thrust::equal_to<key_type>>
-    __device__ __forceinline__ std::size_t count_outer(Key const& k,
-                                                       KeyEqual key_equal = KeyEqual{}) noexcept;
 
     /**
      * @brief Counts the occurrence of a given key/value pair contained in multimap.
