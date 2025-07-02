@@ -51,7 +51,7 @@
 #include <thrust/functional.h>
 
 #if defined(CUCO_HAS_CUDA_BARRIER)
-#include <hip/barrier>
+#include <cuda/barrier>
 #endif
 
 #include <cstddef>
