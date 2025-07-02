@@ -170,8 +170,7 @@ rapids_cpm_init()
 include(cpm/package_override)
 rapids_cpm_package_override(${CMAKE_CURRENT_LIST_DIR}/versions.json)
 
-include(cmake/thirdparty/get_rocthrust.cmake)
-include(cmake/thirdparty/get_libhipcxx.cmake)
+include(cmake/thirdparty/get_cccl.cmake)
 
 #TODO(HIP/AMD): Ideally, we could use rapids-cmake to configure hipcub
 if (ROCM_PATH STREQUAL "")
@@ -190,10 +189,7 @@ add_library(cuco::cuco ALIAS cuco)
 target_include_directories(cuco INTERFACE
     INTERFACE   $<BUILD_INTERFACE:${CUCO_SOURCE_DIR}/include>
                 $<INSTALL_INTERFACE:include>)
-#target_link_libraries(cuco INTERFACE libhipcxx::libhipcxx hip::device $<BUILD_INTERFACE:cuco::Thrust>)
-#target_link_libraries(cuco INTERFACE libhipcxx::libhipcxx hip::device $<BUILD_INTERFACE::cuco::rocthrust)
-#FIXME(hip): Fix target cuco::rocthrust and use CMake generator expression
-target_link_libraries(cuco INTERFACE libhipcxx::libhipcxx hip::device roc::rocthrust)
+target_link_libraries(cuco INTERFACE CCCL::CCCL hip::device)
 target_compile_features(cuco INTERFACE cxx_std_17 cuda_std_17)
 set(CUCO_CG_SIZE "8" CACHE STRING "Size of cooperative groups")
 target_compile_options(cuco INTERFACE "-DCUCO_CG_SIZE=${CUCO_CG_SIZE}")

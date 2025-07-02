@@ -3,6 +3,9 @@
     "libhipcxx" : {
       "git_url" : "git@github.com:AMD-AI/libhipcxx.git",
       "git_tag" : "amd-integration/v2.7.0"
+    },
+    "rocthrust" : {
+      "version" : "3"
     }
   }
 }
