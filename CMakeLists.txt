@@ -33,6 +33,9 @@
 
 cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 
+# NOTE(HIP/AMD): make *.cu files HIP lang files
+set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_CURRENT_LIST_DIR}/overrides.cmake")
+
 option(USE_WARPSIZE_32 "Use wave size 32, e.g., for gfx1100 devices (experimental)." OFF)
 mark_as_advanced(USE_WARPSIZE_32)
 
