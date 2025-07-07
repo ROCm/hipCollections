@@ -476,7 +476,7 @@ generate_random_byte_sequences(std::size_t n_sequences,
   CUCO_EXPECTS(min_sequence_length <= max_sequence_length,
                "Maximum sequence lengths cannot be smaller than minimum sequence length");
 
-  auto const exec_pol = thrust::cuda::par.on(stream);
+  auto const exec_pol = thrust::hip::par.on(stream);
   // holds the (random) length of each sequence
   thrust::device_vector<std::size_t> lengths(n_sequences);
 
