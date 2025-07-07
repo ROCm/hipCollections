@@ -126,6 +126,7 @@ ConfigureBench(HASH_FUNCTION_BENCH
 
 ###################################################################################################
 # - hyperloglog benchmarks -----------------------------------------------------------
+# Note(HIP/AMD): hyperloglog is currently not supported due to missing reduce api in cooperative_groups
 # ConfigureBench(HYPERLOGLOG_BENCH
 #   hyperloglog/hyperloglog_bench.cu)
 

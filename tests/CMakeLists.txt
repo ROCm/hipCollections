@@ -159,6 +159,7 @@ ConfigureTest(DYNAMIC_BITSET_TEST
 
 ###################################################################################################
 # - hyperloglog ----------------------------------------------------------------------
+# Note(HIP/AMD): hyperloglog is currently not supported due to missing reduce api in cooperative_groups
 #ConfigureTest(HYPERLOGLOG_TEST
 #    hyperloglog/unique_sequence_test.cu
 #    hyperloglog/spark_parity_test.cu
