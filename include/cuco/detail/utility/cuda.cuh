@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, NVIDIA CORPORATION.
+ * Copyright (c) 2023-2025, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ namespace cuco {
 namespace detail {
 
 /// CUDA warp size
-__device__ int32_t warp_size() noexcept {
+[[nodiscard]]  __device__ int32_t warp_size() noexcept {
   return warpSize;
 }
 
@@ -68,7 +68,7 @@ __device__ int32_t warp_size() noexcept {
  *
  * @return The global thread index
  */
-__device__ static inline index_type global_thread_id() noexcept
+[[nodiscard]] __device__ inline index_type global_thread_id() noexcept
 {
   return index_type{threadIdx.x} + index_type{blockDim.x} * index_type{blockIdx.x};
 }
@@ -78,7 +78,7 @@ __device__ static inline index_type global_thread_id() noexcept
  *
  * @return The grid stride
  */
-__device__ static inline index_type grid_stride() noexcept
+[[nodiscard]] __device__ inline index_type grid_stride() noexcept
 {
   return index_type{gridDim.x} * index_type{blockDim.x};
 }

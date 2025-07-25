@@ -50,6 +50,10 @@ function(ConfigureBench BENCH_NAME)
                                              "${CMAKE_CURRENT_SOURCE_DIR}")
     target_compile_options(${BENCH_NAME} PRIVATE --compiler-options=-Wall --compiler-options=-Wextra
       -Wno-deprecated-gpu-targets -Xcompiler -Wno-subobject-linkage -lineinfo) # TODO(HIP/AMD): --expt-extended-lambda
+    # Add GCC-specific warning suppression only for GCC
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      target_compile_options(${BENCH_NAME} PRIVATE -Xcompiler -Wno-subobject-linkage)
+    endif()
     target_link_libraries(${BENCH_NAME} PRIVATE
                                         nvbench::main
                                         pthread

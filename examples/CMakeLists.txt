@@ -44,6 +44,10 @@ function(ConfigureExample EXAMPLE_NAME EXAMPLE_SRC)
                                              "${CMAKE_CURRENT_SOURCE_DIR}")
     target_compile_options(${EXAMPLE_NAME} PRIVATE -Wall -Wextra 
       -Wno-deprecated-gpu-targets -Xcompiler -Wno-subobject-linkage)  #todo(HIP):remove -Wno-unused-parameter, --expt-extended-lambda
+    # Add GCC-specific warning suppression only for GCC
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      target_compile_options(${EXAMPLE_NAME} PRIVATE -Xcompiler -Wno-subobject-linkage)
+    endif()
     target_link_libraries(${EXAMPLE_NAME} PRIVATE cuco hip::device hip::hipcub)
 endfunction(ConfigureExample)
 
