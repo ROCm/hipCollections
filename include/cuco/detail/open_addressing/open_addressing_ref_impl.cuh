@@ -1085,7 +1085,7 @@ class open_addressing_ref_impl {
    * @param output_probe Beginning of the sequence of keys corresponding to matching elements in
    * `output_match`
    * @param output_match Beginning of the sequence of matching elements
-   * @param atomic_counter Pointer to an atomic object of integral type that is used to count the
+   * @param atomic_counter Atomic object of integral type that is used to count the
    * number of output elements
    */
   template <int32_t BlockSize,
@@ -1098,7 +1098,7 @@ class open_addressing_ref_impl {
                            InputProbeIt input_probe_end,
                            OutputProbeIt output_probe,
                            OutputMatchIt output_match,
-                           AtomicCounter* atomic_counter) const
+                           AtomicCounter& atomic_counter) const
   {
     auto constexpr is_outer = false;
     auto const n = cuco::detail::distance(input_probe_begin, input_probe_end);  // TODO include
@@ -1134,7 +1134,7 @@ class open_addressing_ref_impl {
    * @param output_probe Beginning of the sequence of keys corresponding to matching elements in
    * `output_match`
    * @param output_match Beginning of the sequence of matching elements
-   * @param atomic_counter Pointer to an atomic object of integral type that is used to count the
+   * @param atomic_counter Atomic object of integral type that is used to count the
    * number of output elements
    */
   template <int32_t BlockSize,
@@ -1147,7 +1147,7 @@ class open_addressing_ref_impl {
                                  InputProbeIt input_probe_end,
                                  OutputProbeIt output_probe,
                                  OutputMatchIt output_match,
-                                 AtomicCounter* atomic_counter) const
+                                 AtomicCounter& atomic_counter) const
   {
     auto constexpr is_outer = true;
     auto const n = cuco::detail::distance(input_probe_begin, input_probe_end);  // TODO include
@@ -1184,7 +1184,7 @@ class open_addressing_ref_impl {
    * @param output_probe Beginning of the sequence of keys corresponding to matching elements in
    * `output_match`
    * @param output_match Beginning of the sequence of matching elements
-   * @param atomic_counter Pointer to an atomic object of integral type that is used to count the
+   * @param atomic_counter Atomic object of integral type that is used to count the
    * number of output elements
    */
   template <bool IsOuter,
@@ -1198,7 +1198,7 @@ class open_addressing_ref_impl {
                                 cuco::detail::index_type n,
                                 OutputProbeIt output_probe,
                                 OutputMatchIt output_match,
-                                AtomicCounter* atomic_counter) const
+                                AtomicCounter& atomic_counter) const
   {
     namespace cg = cooperative_groups;
 
@@ -1235,7 +1235,7 @@ class open_addressing_ref_impl {
       size_type offset = 0;
       auto const count = counters[flushing_tile_id];
       auto const rank  = tile.thread_rank();
-      if (rank == 0) { offset = atomic_counter->fetch_add(count, cuda::memory_order_relaxed); }
+      if (rank == 0) { offset = atomic_counter.fetch_add(count, cuda::memory_order_relaxed); }
       offset = tile.shfl(offset, 0);
 
       // flush_buffers
