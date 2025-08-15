@@ -172,7 +172,7 @@ CUCO_KERNEL void insert(
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_successes = 0;
 
-  auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
+  auto tile = cg::tiled_partition<tile_size, cg::thread_block>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 
@@ -279,7 +279,7 @@ CUCO_KERNEL void erase(
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_successes = 0;
 
-  auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
+  auto tile = cg::tiled_partition<tile_size, cg::thread_block>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 
@@ -349,7 +349,7 @@ CUCO_KERNEL void insert_if_n(InputIt first,
   __shared__ typename BlockReduce::TempStorage temp_storage;
   std::size_t thread_num_successes = 0;
 
-  auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
+  auto tile = cg::tiled_partition<tile_size, cg::thread_block>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 
@@ -465,7 +465,7 @@ template <std::size_t block_size,
 CUCO_KERNEL void find(
   InputIt first, int64_t n, OutputIt output_begin, viewT view, Hash hash, KeyEqual key_equal)
 {
-  auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
+  auto tile = cg::tiled_partition<tile_size, cg::thread_block>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
 //#pragma nv_diagnostic push
@@ -587,7 +587,7 @@ template <std::size_t block_size,
 CUCO_KERNEL void contains(
   InputIt first, int64_t n, OutputIt output_begin, viewT view, Hash hash, KeyEqual key_equal)
 {
-  auto tile                 = cg::tiled_partition<tile_size>(cg::this_thread_block());
+  auto tile = cg::tiled_partition<tile_size, cg::thread_block>(cg::this_thread_block());
   int64_t const loop_stride = gridDim.x * block_size / tile_size;
   int64_t idx               = (block_size * blockIdx.x + threadIdx.x) / tile_size;
   // NOTE(HIP/AMD): We need to change "block_size / tile_size" to this one to avoid the following error for STATIC_MAP_BLOCK_BENCH

@@ -63,7 +63,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void add(InputIt first,
   if (tile_start >= n) { return; }
   auto const tile_stop = (tile_start + items_per_tile < n) ? tile_start + items_per_tile : n;
 
-  auto const tile = cg::tiled_partition<tile_size>(cg::this_thread_block());
+  auto const tile = cg::tiled_partition<tile_size, cg::thread_block>(cg::this_thread_block());
 
   ref.add(tile, first + tile_start, first + tile_stop);
 }
@@ -82,7 +82,8 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void add_if_n(
   auto const loop_stride = cuco::detail::grid_stride() / CGSize;
   auto idx               = cuco::detail::global_thread_id() / CGSize;
 
-  [[maybe_unused]] auto const tile = cg::tiled_partition<CGSize>(cg::this_thread_block());
+  [[maybe_unused]] auto const tile =
+    cg::tiled_partition<CGSize, cg::thread_block>(cg::this_thread_block());
 
   while (idx < n) {
     if (pred(*(stencil + idx))) {
@@ -113,7 +114,8 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void contains_if_n(InputIt first,
   auto const loop_stride = cuco::detail::grid_stride() / CGSize;
   auto idx               = cuco::detail::global_thread_id() / CGSize;
 
-  [[maybe_unused]] auto const tile = cg::tiled_partition<CGSize>(cg::this_thread_block());
+  [[maybe_unused]] auto const tile =
+    cg::tiled_partition<CGSize, cg::thread_block>(cg::this_thread_block());
 
   if constexpr (CGSize == 1) {
     while (idx < n) {
@@ -122,7 +124,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void contains_if_n(InputIt first,
       idx += loop_stride;
     }
   } else {
-    auto const tile = cg::tiled_partition<CGSize>(cg::this_thread_block());
+    auto const tile = cg::tiled_partition<CGSize, cg::thread_block>(cg::this_thread_block());
     while (idx < n) {
       typename cuda::std::iterator_traits<InputIt>::value_type const& key = *(first + idx);
       auto const found = pred(*(stencil + idx)) ? ref.contains(tile, key) : false;
