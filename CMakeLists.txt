@@ -213,6 +213,12 @@ endif()
 # be revisited later.
 target_compile_options(cuco INTERFACE "-Wno-c++11-narrowing-const-reference")
 ###################################################################################################
+# - Optionally download RoaringFormatSpec test data -----------------------------------------------
+
+option(CUCO_DOWNLOAD_ROARING_TESTDATA "Download RoaringFormatSpec test data" ON)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/roaring_testdata.cmake)
+
+###################################################################################################
 # - optionally build tests ------------------------------------------------------------------------
 
 if(BUILD_TESTS)
