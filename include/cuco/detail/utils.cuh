@@ -38,11 +38,10 @@
 #include <cuda/std/array>
 #include <cuda/std/bit>
 #include <cuda/std/cmath>
+#include <cuda/std/cstdint>
 #include <cuda/std/limits>
 #include <cuda/std/tuple>
 #include <cuda/std/type_traits>
-
-#include <cstddef>
 
 namespace cuco {
 namespace detail {
@@ -140,7 +139,8 @@ __device__ inline int __POPC<unsigned long long>(unsigned long long v) {
  * @brief For the `n` least significant bits in the given unsigned 64-bit integer `x`,
  * returns the number of set bits.
  */
-__device__ __forceinline__ int32_t count_least_significant_bits(uint64_t x, int32_t n)
+__device__ __forceinline__ cuda::std::int32_t count_least_significant_bits(cuda::std::uint32_t x,
+                                                                           cuda::std::int32_t n)
 {
   return __popcll(x & (1UL << n) - 1UL);
 }

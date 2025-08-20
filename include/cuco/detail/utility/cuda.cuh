@@ -32,12 +32,10 @@
 
 #pragma once
 
-#include <cuco/detail/utility/cuda.hpp>
+#include <cuda/std/cstdint>
 
 #include <hip/hip_runtime.h>
 #include <hip/hip_cooperative_groups.h>
-
-#include <cstdint>
 
 #if defined(CUCO_DISABLE_KERNEL_VISIBILITY_WARNING_SUPPRESSION)
 #define CUCO_SUPPRESS_KERNEL_WARNINGS
@@ -58,8 +56,11 @@ _Pragma("GCC diagnostic ignored \"-Wattributes\"")
 namespace cuco {
 namespace detail {
 
+using index_type = cuda::std::int64_t;  ///< CUDA thread index type
+
+/// Default block size
 /// CUDA warp size
-[[nodiscard]]  __device__ int32_t warp_size() noexcept {
+[[nodiscard]]  __device__ cuda::std::int32_t warp_size() noexcept {
   return warpSize;
 }
 
