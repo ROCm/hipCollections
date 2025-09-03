@@ -191,6 +191,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::insert(
                                     sizeof(atomic_ctr_type),
                                     cudaMemcpyDeviceToHost,
                                     stream));
+      CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
       submaps_[submap_idx]->size_ += h_num_successes;
       size_ += h_num_successes;
       first += n;
@@ -239,6 +240,7 @@ void dynamic_map<Key, Value, Scope, Allocator>::erase(
                                   sizeof(atomic_ctr_type),
                                   cudaMemcpyDeviceToHost,
                                   stream));
+    CUCO_CUDA_TRY(cudaStreamSynchronize(stream));
     submaps_[i]->size_ -= h_submap_num_successes;
     size_ -= h_submap_num_successes;
   }
