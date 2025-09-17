@@ -39,12 +39,10 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_CURRENT_LIST_DIR}/overrides.cmake")
 option(USE_WARPSIZE_32 "Use wave size 32, e.g., for gfx1100 devices (experimental)." OFF)
 mark_as_advanced(USE_WARPSIZE_32)
 
-list(APPEND SUPPORTED_WS_64_ARCHS "gfx90a" "gfx908" "gfx940" "gfx941" "gfx942"
-                            "gfx90a:sramecc+:xnack-" "gfx908:sramecc+:xnack-"
-                            "gfx940:sramecc+:xnack-" "gfx941:sramecc+:xnack-"
-                            "gfx942:sramecc+:xnack-"
-                            "gfx90a:xnack+" "gfx940:xnack+" "gfx941:xnack+"
-                            "gfx942:xnack+")
+# TODO(HIP/AMD): are other specifications like gfx90a:sramecc-:xnack+ needed?
+list(APPEND SUPPORTED_WS_64_ARCHS "gfx90a" "gfx908" "gfx942"
+                                  "gfx90a:xnack+" "gfx942:xnack+"
+                                  "gfx90a:xnack-" "gfx942:xnack-")
 list(APPEND SUPPORTED_WS_32_ARCHS "gfx1100")
 
 if(USE_WARPSIZE_32)
