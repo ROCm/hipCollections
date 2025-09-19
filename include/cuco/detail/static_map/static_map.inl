@@ -211,7 +211,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
                   cuda::stream_ref stream)
 {
   insert_and_find_async(first, last, found_begin, inserted_begin, stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
@@ -282,7 +286,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
   insert_or_assign(InputIt first, InputIt last, cuda::stream_ref stream)
 {
   this->insert_or_assign_async(first, last, stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
@@ -320,7 +328,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
   insert_or_apply(InputIt first, InputIt last, Op op, cuda::stream_ref stream)
 {
   this->insert_or_apply_async(first, last, op, stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
@@ -336,7 +348,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
   insert_or_apply(InputIt first, InputIt last, Init init, Op op, cuda::stream_ref stream)
 {
   this->insert_or_apply_async(first, last, init, op, stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
@@ -388,7 +404,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
   InputIt first, InputIt last, cuda::stream_ref stream)
 {
   erase_async(first, last, stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
@@ -419,7 +439,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
   InputIt first, InputIt last, OutputIt output_begin, cuda::stream_ref stream) const
 {
   contains_async(first, last, output_begin, stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
@@ -455,7 +479,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
   cuda::stream_ref stream) const
 {
   contains_if_async(first, last, stencil, pred, output_begin, stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
@@ -491,7 +519,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
   InputIt first, InputIt last, OutputIt output_begin, cuda::stream_ref stream) const
 {
   find_async(first, last, output_begin, stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
@@ -551,7 +583,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
   cuda::stream_ref stream) const
 {
   this->find_if_async(first, last, stencil, pred, output_begin, stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
@@ -620,7 +656,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
   CallbackOp&& callback_op, cuda::stream_ref stream) const
 {
   impl_->for_each_async(std::forward<CallbackOp>(callback_op), stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
@@ -652,7 +692,11 @@ void static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stora
 {
   impl_->for_each_async(
     first, last, std::forward<CallbackOp>(callback_op), ref(op::for_each), stream);
+#if CCCL_MAJOR_VERSION > 3 || (CCCL_MAJOR_VERSION == 3 && CCCL_MINOR_VERSION >= 1)
+  stream.sync();
+#else
   stream.wait();
+#endif
 }
 
 template <class Key,
