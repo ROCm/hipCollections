@@ -52,7 +52,8 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void add(InputIt first,
 {
   namespace cg = cooperative_groups;
 
-  constexpr auto tile_size = cuco::detail::warp_size();
+  constexpr auto tile_size = HIPCO_DEVICE_WAVEFRONT_SIZE;//cuco::detail::warp_size();
+
 
   auto const tile_idx       = cuco::detail::global_thread_id() / tile_size;
   auto const n_tiles        = gridDim.x * BlockSize / tile_size;
