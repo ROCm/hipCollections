@@ -241,6 +241,10 @@
 #   define cudaDevAttrMultiProcessorCount hipDeviceAttributeMultiprocessorCount
 #endif
 
+#ifndef cudaOccupancyMaxActiveBlocksPerMultiprocessor
+#   define cudaOccupancyMaxActiveBlocksPerMultiprocessor hipOccupancyMaxActiveBlocksPerMultiprocessor
+#endif
+
 #if defined(__GFX9__)
 #define HIPCO_DEVICE_WAVEFRONT_SIZE 64u
 #else
