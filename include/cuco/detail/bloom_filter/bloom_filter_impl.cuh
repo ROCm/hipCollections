@@ -194,7 +194,9 @@ class bloom_filter_impl {
     namespace cg = cooperative_groups;
 
     constexpr auto num_threads         = tile_size_v<CG>;
-    constexpr auto optimal_num_threads = add_optimal_cg_size();
+    // FIXME(HIP/AMD): due to an internal issue with subdividing cooperative_groups
+    // we have to deactivate the selection of an optimal cg size
+    constexpr auto optimal_num_threads = num_threads; //add_optimal_cg_size();
     constexpr auto worker_num_threads =
       (num_threads < optimal_num_threads) ? num_threads : optimal_num_threads;
 
