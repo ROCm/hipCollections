@@ -58,7 +58,7 @@ namespace cub = hipcub;
 #include <cuda/stream_ref>
 #include <thrust/iterator/constant_iterator.h>
 
-#include <cooperative_groups.h>
+#include <hip/hip_cooperative_groups.h>
 
 #include <cstdint>
 
