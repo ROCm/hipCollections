@@ -36,7 +36,7 @@
 #include <cuco/detail/pair/traits.hpp>
 #include <type_traits>
 
-#include <cuda/std/tuple>
+#include <thrust/tuple.h>
 
 namespace cuco::detail::open_addressing_ns {
 
@@ -72,10 +72,7 @@ struct get_slot {
       // auto const& [first, second] = storage_[bucket_idx][intra_idx];
       // This leads to corrupted tuples with invalid data being created/returned.
       // Potentially, this is a compiler issue.
-      // return thrust::tuple(storage_[bucket_idx][intra_idx].first, storage_[bucket_idx][intra_idx].second);
-      // TODO(HIP/AMD): check if WAR still necessary
-      auto const [first, second] = storage_[bucket_idx][intra_idx];
-      return cuda::std::tuple{first, second};
+      return thrust::tuple(storage_[bucket_idx][intra_idx].first, storage_[bucket_idx][intra_idx].second);
     } else {
       return storage_[bucket_idx][intra_idx];
     }
@@ -120,7 +117,9 @@ struct slot_is_filled {
       if constexpr (HasPayload) {
         // required by thrust zip iterator in `retrieve_all`
         if constexpr (cuco::detail::is_cuda_std_pair_like<S>::value) {
-          return cuda::std::get<0>(slot);
+          return thrust::get<0>(slot);
+        } else if constexpr (cuco::detail::is_thrust_pair_like<S>::value) {
+          return thrust::get<0>(slot);
         } else {
           return slot.first;
         }
