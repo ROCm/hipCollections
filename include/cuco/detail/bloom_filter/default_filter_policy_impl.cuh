@@ -79,6 +79,7 @@ class default_filter_policy_impl {
     constexpr uint32_t max_pattern_bits_from_hash = hash_bits / bit_index_width;
 
     #ifndef __HIP_DEVICE_COMPILE__
+    {
         // This ensures each word in the block has at least one bit set; otherwise we would never
         // use some of the words
         constexpr uint32_t min_pattern_bits = words_per_block;
@@ -99,6 +100,7 @@ class default_filter_policy_impl {
                      "block");
         // TODO find a proper way to perform input checks/assertions on device without destroying the
         // context (e.g. __trap())
+    }
     #endif
   }
 
