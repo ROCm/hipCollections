@@ -220,7 +220,7 @@ class static_map {
                        cuda_thread_scope<Scope> scope      = {},
                        Storage storage                     = {},
                        Allocator const& alloc              = {},
-                       cuda::stream_ref stream             = {});
+                       cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Constructs a statically-sized map with the number of elements to insert `n`, the desired
@@ -264,7 +264,7 @@ class static_map {
                        cuda_thread_scope<Scope> scope      = {},
                        Storage storage                     = {},
                        Allocator const& alloc              = {},
-                       cuda::stream_ref stream             = {});
+                       cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Constructs a statically-sized map with the specified initial capacity, sentinel values
@@ -300,7 +300,7 @@ class static_map {
                        cuda_thread_scope<Scope> scope      = {},
                        Storage storage                     = {},
                        Allocator const& alloc              = {},
-                       cuda::stream_ref stream             = {});
+                       cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Erases all elements from the container. After this call, `size()` returns zero.
@@ -308,7 +308,7 @@ class static_map {
    *
    * @param stream CUDA stream this operation is executed in
    */
-  void clear(cuda::stream_ref stream = {});
+  void clear(cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Asynchronously erases all elements from the container. After this call, `size()` returns
@@ -316,7 +316,7 @@ class static_map {
    *
    * @param stream CUDA stream this operation is executed in
    */
-  void clear_async(cuda::stream_ref stream = {}) noexcept;
+  void clear_async(cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) noexcept;
 
   /**
    * @brief Inserts all keys in the range `[first, last)` and returns the number of successful
@@ -336,7 +336,9 @@ class static_map {
    * @return Number of successful insertions
    */
   template <typename InputIt>
-  size_type insert(InputIt first, InputIt last, cuda::stream_ref stream = {});
+  size_type insert(InputIt first,
+                   InputIt last,
+                   cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Asynchronously inserts all keys in the range `[first, last)`.
@@ -350,7 +352,9 @@ class static_map {
    * @param stream CUDA stream used for insert
    */
   template <typename InputIt>
-  void insert_async(InputIt first, InputIt last, cuda::stream_ref stream = {}) noexcept;
+  void insert_async(InputIt first,
+                    InputIt last,
+                    cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) noexcept;
 
   /**
    * @brief Inserts keys in the range `[first, last)` if `pred` of the corresponding stencil returns
@@ -377,8 +381,11 @@ class static_map {
    * @return Number of successful insertions
    */
   template <typename InputIt, typename StencilIt, typename Predicate>
-  size_type insert_if(
-    InputIt first, InputIt last, StencilIt stencil, Predicate pred, cuda::stream_ref stream = {});
+  size_type insert_if(InputIt first,
+                      InputIt last,
+                      StencilIt stencil,
+                      Predicate pred,
+                      cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Asynchronously inserts keys in the range `[first, last)` if `pred` of the corresponding
@@ -405,7 +412,7 @@ class static_map {
                        InputIt last,
                        StencilIt stencil,
                        Predicate pred,
-                       cuda::stream_ref stream = {}) noexcept;
+                       cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) noexcept;
 
   /**
    * @brief Asynchronously inserts all elements in the range `[first, last)`.
@@ -433,7 +440,8 @@ class static_map {
                              InputIt last,
                              FoundIt found_begin,
                              InsertedIt inserted_begin,
-                             cuda::stream_ref stream = {}) noexcept;
+                             cuda::stream_ref stream = cuda::stream_ref{
+                               cudaStream_t{nullptr}}) noexcept;
 
   /**
    * @brief Inserts all elements in the range `[first, last)`.
@@ -461,7 +469,7 @@ class static_map {
                        InputIt last,
                        FoundIt found_begin,
                        InsertedIt inserted_begin,
-                       cuda::stream_ref stream = {});
+                       cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief For any key-value pair `{k, v}` in the range `[first, last)`, if a key equivalent to `k`
@@ -482,7 +490,9 @@ class static_map {
    * @param stream CUDA stream used for insert
    */
   template <typename InputIt>
-  void insert_or_assign(InputIt first, InputIt last, cuda::stream_ref stream = {});
+  void insert_or_assign(InputIt first,
+                        InputIt last,
+                        cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief For any key-value pair `{k, v}` in the range `[first, last)`, if a key equivalent to `k`
@@ -501,7 +511,10 @@ class static_map {
    * @param stream CUDA stream used for insert
    */
   template <typename InputIt>
-  void insert_or_assign_async(InputIt first, InputIt last, cuda::stream_ref stream = {}) noexcept;
+  void insert_or_assign_async(InputIt first,
+                              InputIt last,
+                              cuda::stream_ref stream = cuda::stream_ref{
+                                cudaStream_t{nullptr}}) noexcept;
 
   /**
    * @brief For any key-value pair `{k, v}` in the range `[first, first + n)`, if a key equivalent
@@ -525,7 +538,10 @@ class static_map {
    * @param stream CUDA stream used for insert
    */
   template <typename InputIt, typename Op>
-  void insert_or_apply(InputIt first, InputIt last, Op op, cuda::stream_ref stream = {});
+  void insert_or_apply(InputIt first,
+                       InputIt last,
+                       Op op,
+                       cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief For any key-value pair `{k, v}` in the range `[first, first + n)`, if a key equivalent
@@ -553,7 +569,11 @@ class static_map {
    * @param stream CUDA stream used for insert
    */
   template <typename InputIt, typename Init, typename Op>
-  void insert_or_apply(InputIt first, InputIt last, Init init, Op op, cuda::stream_ref stream = {});
+  void insert_or_apply(InputIt first,
+                       InputIt last,
+                       Init init,
+                       Op op,
+                       cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief For any key-value pair `{k, v}` in the range `[first, first + n)`, if a key equivalent
@@ -578,7 +598,8 @@ class static_map {
   void insert_or_apply_async(InputIt first,
                              InputIt last,
                              Op op,
-                             cuda::stream_ref stream = {}) noexcept;
+                             cuda::stream_ref stream = cuda::stream_ref{
+                               cudaStream_t{nullptr}}) noexcept;
 
   /**
    * @brief For any key-value pair `{k, v}` in the range `[first, first + n)`, if a key equivalent
@@ -607,8 +628,12 @@ class static_map {
             typename Init,
             typename Op,
             typename = std::enable_if_t<std::is_convertible_v<Init, T>>>
-  void insert_or_apply_async(
-    InputIt first, InputIt last, Init init, Op op, cuda::stream_ref stream = {}) noexcept;
+  void insert_or_apply_async(InputIt first,
+                             InputIt last,
+                             Init init,
+                             Op op,
+                             cuda::stream_ref stream = cuda::stream_ref{
+                               cudaStream_t{nullptr}}) noexcept;
 
   /**
    * @brief Erases keys in the range `[first, last)`.
@@ -635,7 +660,9 @@ class static_map {
    * provided at construction
    */
   template <typename InputIt>
-  void erase(InputIt first, InputIt last, cuda::stream_ref stream = {});
+  void erase(InputIt first,
+             InputIt last,
+             cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Asynchronously erases keys in the range `[first, last)`.
@@ -660,7 +687,9 @@ class static_map {
    * provided at construction
    */
   template <typename InputIt>
-  void erase_async(InputIt first, InputIt last, cuda::stream_ref stream = {});
+  void erase_async(InputIt first,
+                   InputIt last,
+                   cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Indicates whether the keys in the range `[first, last)` are contained in the map.
@@ -680,7 +709,7 @@ class static_map {
   void contains(InputIt first,
                 InputIt last,
                 OutputIt output_begin,
-                cuda::stream_ref stream = {}) const;
+                cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief Asynchronously indicates whether the keys in the range `[first, last)` are contained in
@@ -698,7 +727,8 @@ class static_map {
   void contains_async(InputIt first,
                       InputIt last,
                       OutputIt output_begin,
-                      cuda::stream_ref stream = {}) const noexcept;
+                      cuda::stream_ref stream = cuda::stream_ref{
+                        cudaStream_t{nullptr}}) const noexcept;
 
   /**
    * @brief Indicates whether the keys in the range `[first, last)` are contained in the map if
@@ -731,7 +761,7 @@ class static_map {
                    StencilIt stencil,
                    Predicate pred,
                    OutputIt output_begin,
-                   cuda::stream_ref stream = {}) const;
+                   cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief Asynchronously indicates whether the keys in the range `[first, last)` are contained in
@@ -762,7 +792,8 @@ class static_map {
                          StencilIt stencil,
                          Predicate pred,
                          OutputIt output_begin,
-                         cuda::stream_ref stream = {}) const noexcept;
+                         cuda::stream_ref stream = cuda::stream_ref{
+                           cudaStream_t{nullptr}}) const noexcept;
 
   /**
    * @brief For all keys in the range `[first, last)`, finds a payload with its key equivalent to
@@ -781,7 +812,10 @@ class static_map {
    * @param stream Stream used for executing the kernels
    */
   template <typename InputIt, typename OutputIt>
-  void find(InputIt first, InputIt last, OutputIt output_begin, cuda::stream_ref stream = {}) const;
+  void find(InputIt first,
+            InputIt last,
+            OutputIt output_begin,
+            cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief For all keys in the range `[first, last)`, asynchronously finds a payload with its key
@@ -802,7 +836,7 @@ class static_map {
   void find_async(InputIt first,
                   InputIt last,
                   OutputIt output_begin,
-                  cuda::stream_ref stream = {}) const;
+                  cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief For all keys in the range `[first, last)`, asynchronously finds an element with key
@@ -829,7 +863,7 @@ class static_map {
                   ProbeEqual const& probe_equal,
                   ProbeHash const& probe_hash,
                   OutputIt output_begin,
-                  cuda::stream_ref stream = {}) const;
+                  cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief For all keys in the range `[first, last)`, finds a match with its key equivalent to the
@@ -862,7 +896,7 @@ class static_map {
                StencilIt stencil,
                Predicate pred,
                OutputIt output_begin,
-               cuda::stream_ref stream = {}) const;
+               cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief For all keys in the range `[first, last)`, asynchronously finds
@@ -893,7 +927,7 @@ class static_map {
                      StencilIt stencil,
                      Predicate pred,
                      OutputIt output_begin,
-                     cuda::stream_ref stream = {}) const;
+                     cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief For all keys in the range `[first, last)`, asynchronously finds
@@ -935,7 +969,7 @@ class static_map {
                      ProbeEqual const& probe_equal,
                      ProbeHash const& probe_hash,
                      OutputIt output_begin,
-                     cuda::stream_ref stream = {}) const;
+                     cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief Applies the given function object `callback_op` to the copy of every filled slot in the
@@ -949,7 +983,8 @@ class static_map {
    * @param stream CUDA stream used for this operation
    */
   template <typename CallbackOp>
-  void for_each(CallbackOp&& callback_op, cuda::stream_ref stream = {}) const;
+  void for_each(CallbackOp&& callback_op,
+                cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief Asynchronously applies the given function object `callback_op` to the copy of every
@@ -963,7 +998,8 @@ class static_map {
    * @param stream CUDA stream used for this operation
    */
   template <typename CallbackOp>
-  void for_each_async(CallbackOp&& callback_op, cuda::stream_ref stream = {}) const;
+  void for_each_async(CallbackOp&& callback_op,
+                      cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief For each key in the range [first, last), applies the function object `callback_op` to
@@ -983,7 +1019,7 @@ class static_map {
   void for_each(InputIt first,
                 InputIt last,
                 CallbackOp&& callback_op,
-                cuda::stream_ref stream = {}) const;
+                cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief For each key in the range [first, last), asynchronously applies the function object
@@ -1003,7 +1039,8 @@ class static_map {
   void for_each_async(InputIt first,
                       InputIt last,
                       CallbackOp&& callback_op,
-                      cuda::stream_ref stream = {}) const noexcept;
+                      cuda::stream_ref stream = cuda::stream_ref{
+                        cudaStream_t{nullptr}}) const noexcept;
 
   /**
    * @brief Counts the occurrences of keys in `[first, last)` contained in the map
@@ -1019,7 +1056,9 @@ class static_map {
    * @return The sum of total occurrences of all keys in `[first, last)`
    */
   template <typename InputIt>
-  size_type count(InputIt first, InputIt last, cuda::stream_ref stream = {}) const;
+  size_type count(InputIt first,
+                  InputIt last,
+                  cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}}) const;
 
   /**
    * @brief Retrieves the matched key-value pair in the map corresponding to all probe keys in the
@@ -1053,7 +1092,8 @@ class static_map {
                                                    InputIt last,
                                                    OutputProbeIt output_probe,
                                                    OutputMatchIt output_match,
-                                                   cuda::stream_ref stream = {}) const;
+                                                   cuda::stream_ref stream = cuda::stream_ref{
+                                                     cudaStream_t{nullptr}}) const;
 
   /**
    * @brief Retrieves all of the keys and their associated values contained in the map
@@ -1078,7 +1118,8 @@ class static_map {
   template <typename KeyOut, typename ValueOut>
   std::pair<KeyOut, ValueOut> retrieve_all(KeyOut keys_out,
                                            ValueOut values_out,
-                                           cuda::stream_ref stream = {}) const;
+                                           cuda::stream_ref stream = cuda::stream_ref{
+                                             cudaStream_t{nullptr}}) const;
 
   /**
    * @brief Regenerates the container.
@@ -1088,7 +1129,7 @@ class static_map {
    *
    * @param stream CUDA stream used for this operation
    */
-  void rehash(cuda::stream_ref stream = {});
+  void rehash(cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Reserves at least the specified number of slots and regenerates the container
@@ -1108,14 +1149,15 @@ class static_map {
    * @param capacity New capacity of the container
    * @param stream CUDA stream used for this operation
    */
-  void rehash(size_type capacity, cuda::stream_ref stream = {});
+  void rehash(size_type capacity,
+              cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Asynchronously regenerates the container.
    *
    * @param stream CUDA stream used for this operation
    */
-  void rehash_async(cuda::stream_ref stream = {});
+  void rehash_async(cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Asynchronously reserves at least the specified number of slots and regenerates the
@@ -1133,7 +1175,8 @@ class static_map {
    * @param capacity New capacity of the container
    * @param stream CUDA stream used for this operation
    */
-  void rehash_async(size_type capacity, cuda::stream_ref stream = {});
+  void rehash_async(size_type capacity,
+                    cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
 
   /**
    * @brief Gets the number of elements in the container.
@@ -1143,7 +1186,8 @@ class static_map {
    * @param stream CUDA stream used to get the number of inserted elements
    * @return The number of elements in the container
    */
-  [[nodiscard]] size_type size(cuda::stream_ref stream = {}) const;
+  [[nodiscard]] size_type size(cuda::stream_ref stream = cuda::stream_ref{
+                                 cudaStream_t{nullptr}}) const;
 
   /**
    * @brief Gets the maximum number of elements the hash map can hold.
