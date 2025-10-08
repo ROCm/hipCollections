@@ -36,44 +36,9 @@ cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 # NOTE(HIP/AMD): make *.cu files HIP lang files
 set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_CURRENT_LIST_DIR}/overrides.cmake")
 
-option(USE_WARPSIZE_32 "Use wave size 32, e.g., for gfx1100 devices (experimental)." OFF)
-mark_as_advanced(USE_WARPSIZE_32)
-
-# TODO(HIP/AMD): are other specifications like gfx90a:sramecc-:xnack+ needed?
-list(APPEND SUPPORTED_WS_64_ARCHS "gfx90a" "gfx908" "gfx942"
-                                  "gfx90a:xnack+" "gfx942:xnack+"
-                                  "gfx90a:xnack-" "gfx942:xnack-")
-list(APPEND SUPPORTED_WS_32_ARCHS "gfx1100")
-list(APPEND EXPERIMENTAL_WS_64_ARCHS "gfx950" "gfx950:xnack+" "gfx950:xnack-")
-
-if(USE_WARPSIZE_32)
-  message(WARNING "Support for warp size 32 is currently in the experimental stage."
-                  "Features and functionality may change and are not guaranteed to be stable or production-ready."
-                  "Use at your own risk.")
-endif()
-
-# WAR for not supporting all architectures yet
-# build only for supported warp size 64 architectures per default
-message(STATUS "CMAKE_HIP_ARCHITECTURES: ${CMAKE_HIP_ARCHITECTURES}")
-if(NOT (DEFINED CMAKE_HIP_ARCHITECTURES))
-  set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx908;gfx942")
-else()
-  foreach(arch ${CMAKE_HIP_ARCHITECTURES})
-    if(NOT ${arch} IN_LIST SUPPORTED_WS_32_ARCHS AND NOT ${arch} IN_LIST SUPPORTED_WS_64_ARCHS AND NOT ${arch} IN_LIST EXPERIMENTAL_WS_64_ARCHS)
-      message(FATAL_ERROR "Aborting, as the provided architecture ${arch} is not supported")
-    endif()
-    if(USE_WARPSIZE_32 AND NOT ${arch} IN_LIST SUPPORTED_WS_32_ARCHS)
-      message(FATAL_ERROR "Aborting, as at least one of the provided architectures is not supported with warp size 32 (${arch}).")
-    endif()
-    if(NOT USE_WARPSIZE_32 AND NOT ${arch} IN_LIST SUPPORTED_WS_64_ARCHS AND NOT ${arch} IN_LIST EXPERIMENTAL_WS_64_ARCHS)
-      message(FATAL_ERROR "Aborting, as at least one of the provided architectures is not supported with warp size 64 (${arch}).")
-    endif()
-    if(${arch} IN_LIST EXPERIMENTAL_WS_64_ARCHS)
-      message(WARNING "Support for the provided architecture ${arch} is currently experimental."
-                      "Features and functionality may change and are not guaranteed to be stable or production-ready."
-                      "Use at your own risk.")
-    endif()
-  endforeach()
+# Set default HIP architectures to maintain compatibility with existing scripts
+if(NOT DEFINED CMAKE_HIP_ARCHITECTURES)
+  set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx942")
 endif()
 
 set(
