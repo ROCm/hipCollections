@@ -159,7 +159,7 @@ class open_addressing_impl {
       erased_key_sentinel_{this->extract_key(empty_slot_sentinel)},
       predicate_{pred},
       probing_scheme_{probing_scheme},
-      storage_{make_valid_extent<probing_scheme_type, Storage>(capacity), alloc}
+      storage_{make_valid_extent<probing_scheme_type, Storage>(capacity), alloc, stream}
   {
     this->clear_async(stream);
   }
@@ -205,7 +205,8 @@ class open_addressing_impl {
       erased_key_sentinel_{this->extract_key(empty_slot_sentinel)},
       predicate_{pred},
       probing_scheme_{probing_scheme},
-      storage_{make_valid_extent<probing_scheme_type, Storage>(n, desired_load_factor), alloc}
+      storage_{
+        make_valid_extent<probing_scheme_type, Storage>(n, desired_load_factor), alloc, stream}
   {
     this->clear_async(stream);
   }
@@ -242,7 +243,7 @@ class open_addressing_impl {
       erased_key_sentinel_{erased_key_sentinel},
       predicate_{pred},
       probing_scheme_{probing_scheme},
-      storage_{make_valid_extent<probing_scheme_type, Storage>(capacity), alloc}
+      storage_{make_valid_extent<probing_scheme_type, Storage>(capacity), alloc, stream}
   {
     CUCO_EXPECTS(this->empty_key_sentinel() != this->erased_key_sentinel(),
                  "The empty key sentinel and erased key sentinel cannot be the same value.",
@@ -357,7 +358,7 @@ class open_addressing_impl {
     if (num_keys == 0) { return 0; }
 
     auto counter =
-      detail::counter_storage<size_type, thread_scope, allocator_type>{this->allocator()};
+      detail::counter_storage<size_type, thread_scope, allocator_type>{this->allocator(), stream};
     counter.reset(stream);
 
     auto const grid_size = cuco::detail::grid_size(num_keys, cg_size);
@@ -865,8 +866,8 @@ class open_addressing_impl {
 
     cuco::detail::index_type h_num_out{0};
     auto temp_allocator = temp_allocator_type{this->allocator()};
-    auto d_num_out      = reinterpret_cast<size_type*>(
-      std::allocator_traits<temp_allocator_type>::allocate(temp_allocator, sizeof(size_type)));
+    auto d_num_out =
+      reinterpret_cast<size_type*>(temp_allocator.allocate(sizeof(size_type), stream));
 
     // TODO: PR #580 to be reverted once https://github.com/NVIDIA/cccl/issues/1422 is resolved
     for (cuco::detail::index_type offset = 0;
@@ -892,7 +893,7 @@ class open_addressing_impl {
                                           stream.get()));
 
       // Allocate temporary storage
-      auto d_temp_storage = temp_allocator.allocate(temp_storage_bytes);
+      auto d_temp_storage = temp_allocator.allocate(temp_storage_bytes, stream);
 
       CUCO_CUDA_TRY(cub::DeviceSelect::If(d_temp_storage,
                                           temp_storage_bytes,
@@ -912,11 +913,10 @@ class open_addressing_impl {
       stream.wait();
 #endif
       h_num_out += temp_count;
-      temp_allocator.deallocate(d_temp_storage, temp_storage_bytes);
+      temp_allocator.deallocate(d_temp_storage, temp_storage_bytes, stream);
     }
 
-    std::allocator_traits<temp_allocator_type>::deallocate(
-      temp_allocator, reinterpret_cast<char*>(d_num_out), sizeof(size_type));
+    temp_allocator.deallocate(reinterpret_cast<char*>(d_num_out), sizeof(size_type), stream);
 
     return output_begin + h_num_out;
   }
@@ -992,7 +992,7 @@ class open_addressing_impl {
   [[nodiscard]] size_type size(cuda::stream_ref stream) const
   {
     auto counter =
-      detail::counter_storage<size_type, thread_scope, allocator_type>{this->allocator()};
+      detail::counter_storage<size_type, thread_scope, allocator_type>{this->allocator(), stream};
     counter.reset(stream);
 
     auto const grid_size = cuco::detail::grid_size(this->capacity());
@@ -1102,7 +1102,7 @@ class open_addressing_impl {
   void rehash_async(extent_type extent, Container const& container, cuda::stream_ref stream)
   {
     auto const old_storage = std::move(this->storage_);
-    new (&storage_) storage_type{extent, this->allocator()};
+    new (&storage_) storage_type{extent, this->allocator(), stream};
     this->clear_async(stream);
 
     auto const num_buckets = old_storage.num_buckets();
@@ -1219,7 +1219,7 @@ class open_addressing_impl {
     if (num_keys == 0) { return 0; }
 
     auto counter =
-      detail::counter_storage<size_type, thread_scope, allocator_type>{this->allocator()};
+      detail::counter_storage<size_type, thread_scope, allocator_type>{this->allocator(), stream};
     counter.reset(stream);
 
     auto const grid_size = cuco::detail::grid_size(num_keys, cg_size);
@@ -1317,7 +1317,7 @@ class open_addressing_impl {
     if (n == 0) { return {output_probe, output_match}; }
 
     using counter_type = detail::counter_storage<size_type, thread_scope, allocator_type>;
-    auto counter       = counter_type{this->allocator()};
+    auto counter       = counter_type{this->allocator(), stream};
     counter.reset(stream.get());
 
     auto constexpr block_size = cuco::detail::default_block_size();
