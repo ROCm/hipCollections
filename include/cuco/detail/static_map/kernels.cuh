@@ -35,6 +35,9 @@
 
 #include <cuco/detail/bitwise_compare.cuh>
 #include <cuco/detail/utility/cuda.cuh>
+#include <cuco/operator.hpp>
+#include <cuco/pair.cuh>
+#include <cuco/types.cuh>
 
 #if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
 #include <cub/block/block_reduce.cuh>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.
+ * Copyright (c) 2020-2025, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,14 @@
 
 #pragma once
 
-#include "hip/hip_runtime.h"
+// <<<<<<< OLD CODE from 7ec035b5 (7ddc7a78) - COMMENTED OUT
+// #include "hip/hip_runtime.h"
+//
+// #if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
+// =======
+#include <cuco/detail/utility/cuda.cuh>
 
-#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
+// >>>>>>> END NEW CODE (7ddc7a78)
 #include <cub/block/block_reduce.cuh>
 #else
 #include <hipcub/block/block_reduce.hpp>
