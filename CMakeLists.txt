@@ -119,14 +119,6 @@ else()
     set(rapids-cmake-branch $ENV{RAPIDS_CMAKE_BRANCH})
   endif()
 
-  set(rapids-cmake-version 25.10)
-  if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
-      # TODO(HIP/AMD): adjust this!
-      file(DOWNLOAD
-        https://raw.githubusercontent.com/rapidsai/rapids-cmake/branch-${rapids-cmake-version}/RAPIDS.cmake
-          ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
-  endif()
-
   include(${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
 endif()
 
