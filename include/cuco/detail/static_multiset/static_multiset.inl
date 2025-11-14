@@ -695,7 +695,7 @@ template <class Key,
           class ProbingScheme,
           class Allocator,
           class Storage>
-constexpr static_multiset<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::key_type
+constexpr typename static_multiset<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::key_type
 static_multiset<Key, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::
   empty_key_sentinel() const noexcept
 {

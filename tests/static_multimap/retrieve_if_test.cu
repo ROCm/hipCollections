@@ -14,6 +14,28 @@
  * limitations under the License.
  */
 
+// MIT License
+//
+// Modifications Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include <test_utils.hpp>
 
 #include <cuco/static_multimap.cuh>
@@ -45,7 +67,7 @@ __global__ void test_retrieve_if_kernel(
   auto const block = cg::this_thread_block();
   auto const pred  = [] __device__(key_type k) { return k % 2 == 0; };
 
-  container_ref.retrieve_if<128>(block,
+  container_ref.template retrieve_if<128>(block,
                                  keys_begin,
                                  keys_begin + num_keys,
                                  stencil_begin,
@@ -71,7 +93,7 @@ __global__ void test_retrieve_if_all_false_kernel(
   auto const block        = cg::this_thread_block();
   auto const always_false = [] __device__(key_type) { return false; };
 
-  container_ref.retrieve_if<128>(block,
+  container_ref.template retrieve_if<128>(block,
                                  keys_begin,
                                  keys_begin + num_keys,
                                  stencil_begin,
@@ -97,7 +119,7 @@ __global__ void test_retrieve_if_all_true_kernel(
   auto const block       = cg::this_thread_block();
   auto const always_true = [] __device__(key_type) { return true; };
 
-  container_ref.retrieve_if<128>(block,
+  container_ref.template retrieve_if<128>(block,
                                  keys_begin,
                                  keys_begin + num_keys,
                                  stencil_begin,

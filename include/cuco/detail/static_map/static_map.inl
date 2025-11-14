@@ -837,7 +837,7 @@ template <class Key,
           class ProbingScheme,
           class Allocator,
           class Storage>
-constexpr static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::key_type
+constexpr typename static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::key_type
 static_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::empty_key_sentinel()
   const noexcept
 {

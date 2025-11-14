@@ -57,35 +57,35 @@ __host__ __device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::bucket_
 }
 
 template <typename T, int BucketSize, typename Extent>
-__host__ __device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::iterator
+__host__ __device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::iterator
 bucket_storage_ref<T, BucketSize, Extent>::end() noexcept
 {
   return iterator{reinterpret_cast<value_type*>(this->data() + this->capacity())};
 }
 
 template <typename T, int BucketSize, typename Extent>
-__host__ __device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::iterator
+__host__ __device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::iterator
 bucket_storage_ref<T, BucketSize, Extent>::end() const noexcept
 {
   return iterator{reinterpret_cast<value_type*>(this->data() + this->capacity())};
 }
 
 template <typename T, int BucketSize, typename Extent>
-__host__ __device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::value_type*
+__host__ __device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::value_type*
 bucket_storage_ref<T, BucketSize, Extent>::data() noexcept
 {
   return slots_;
 }
 
 template <typename T, int BucketSize, typename Extent>
-__host__ __device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::value_type*
+__host__ __device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::value_type*
 bucket_storage_ref<T, BucketSize, Extent>::data() const noexcept
 {
   return slots_;
 }
 
 template <typename T, int BucketSize, typename Extent>
-__device__ constexpr bucket_storage_ref<T, BucketSize, Extent>::bucket_type
+__device__ constexpr typename bucket_storage_ref<T, BucketSize, Extent>::bucket_type
 bucket_storage_ref<T, BucketSize, Extent>::operator[](size_type index) const noexcept
 {
   return *reinterpret_cast<bucket_type*>(this->data() + index);
@@ -122,21 +122,21 @@ constexpr bucket_storage<T, BucketSize, Extent, Allocator>::bucket_storage(
 }
 
 template <typename T, int BucketSize, typename Extent, typename Allocator>
-constexpr bucket_storage<T, BucketSize, Extent, Allocator>::value_type*
+constexpr typename bucket_storage<T, BucketSize, Extent, Allocator>::value_type*
 bucket_storage<T, BucketSize, Extent, Allocator>::data() const noexcept
 {
   return slots_.get();
 }
 
 template <typename T, int BucketSize, typename Extent, typename Allocator>
-constexpr bucket_storage<T, BucketSize, Extent, Allocator>::allocator_type
+constexpr typename bucket_storage<T, BucketSize, Extent, Allocator>::allocator_type
 bucket_storage<T, BucketSize, Extent, Allocator>::allocator() const noexcept
 {
   return allocator_;
 }
 
 template <typename T, int BucketSize, typename Extent, typename Allocator>
-constexpr bucket_storage<T, BucketSize, Extent, Allocator>::ref_type
+constexpr typename bucket_storage<T, BucketSize, Extent, Allocator>::ref_type
 bucket_storage<T, BucketSize, Extent, Allocator>::ref() const noexcept
 {
   return ref_type{this->extent(), this->data()};

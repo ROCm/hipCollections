@@ -467,7 +467,7 @@ template <class Key,
           class Allocator,
           class Storage>
 template <typename InputIt, typename ProbeEqual, typename ProbeHash>
-static_multimap<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size_type
+typename static_multimap<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::size_type
 static_multimap<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::count(
   InputIt first,
   InputIt last,
@@ -660,7 +660,7 @@ template <class Key,
           class ProbingScheme,
           class Allocator,
           class Storage>
-constexpr static_multimap<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::
+constexpr typename static_multimap<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::
   key_type
   static_multimap<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Storage>::
     empty_key_sentinel() const noexcept
