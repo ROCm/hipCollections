@@ -1012,7 +1012,7 @@ class operator_impl<
       auto const group_contains_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_contains_equal) {
         auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_equal) - 1;
-        if (group.thread_rank() == src_lane) {
+        if (group.thread_rank() == static_cast<unsigned int>(src_lane)) {
           if constexpr (wait_for_payload) {
             ref_.impl_.wait_for_payload(slot_ptr->second, empty_value);
           }
@@ -1025,7 +1025,7 @@ class operator_impl<
       if (group_contains_available) {
         auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_available) - 1;
         auto const status   = [&, target_idx = intra_bucket_index]() {
-          if (group.thread_rank() != src_lane) { return insert_result::CONTINUE; }
+          if (group.thread_rank() != static_cast<unsigned int>(src_lane)) { return insert_result::CONTINUE; }
           return ref_.template attempt_insert_or_apply<UseDirectApply>(
             slot_ptr, bucket_slots[target_idx], val, op);
         }();
@@ -1033,7 +1033,7 @@ class operator_impl<
         switch (group.shfl(static_cast<uint32_t>(status), src_lane)) {
           case static_cast<uint32_t>(insert_result::SUCCESS): return true;
           case static_cast<uint32_t>(insert_result::DUPLICATE): {
-            if (group.thread_rank() == src_lane) {
+            if (group.thread_rank() == static_cast<unsigned int>(src_lane)) {
               if constexpr (wait_for_payload) {
                 ref_.impl_.wait_for_payload(slot_ptr->second, empty_value);
               }
