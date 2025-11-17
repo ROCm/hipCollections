@@ -544,7 +544,7 @@ __device__
 
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename CG, typename Hash, typename KeyEqual>
-__device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::insert(
+__device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::insert(
   CG g, value_type const& insert_pair, Hash hash, KeyEqual key_equal) noexcept
 {
   auto current_slot = this->initial_slot(g, insert_pair.first, hash);
@@ -656,7 +656,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::d
 
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename CG, typename Hash, typename KeyEqual>
-__device__ bool static_map<Key, Value, Scope, Allocator>::device_mutable_view::erase(
+__device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_mutable_view::erase(
   CG g, key_type const& k, Hash hash, KeyEqual key_equal) noexcept
 {
   auto current_slot = this->initial_slot(g, k, hash);
@@ -857,7 +857,7 @@ __device__ bool static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::d
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator, uint32_t TileSize, uint32_t BlockSize>
 template <typename CG, typename ProbeKey, typename Hash, typename KeyEqual>
 __device__ cuda::std::enable_if_t<std::is_invocable_v<KeyEqual, ProbeKey, Key>, bool>
-static_map<Key, Value, Scope, Allocator>::device_view::contains(CG g,
+static_map<Key, Value, Scope, Allocator, TileSize, BlockSize>::device_view::contains(CG g,
                                                                 ProbeKey const& k,
                                                                 Hash hash,
                                                                 KeyEqual key_equal) const noexcept
