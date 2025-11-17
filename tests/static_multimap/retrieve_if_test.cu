@@ -129,11 +129,12 @@ __global__ void test_retrieve_if_all_true_kernel(
                                  *atomic_counter);
 }
 
+// FIXME(HIP/AMD): dummy fixes ambiguous get_wrapper calls in catch2
 TEMPLATE_TEST_CASE_SIG("static_multimap retrieve_if",
                        "",
-                       ((typename Key, typename Value), Key, Value),
-                       (int32_t, int32_t),
-                       (int64_t, int64_t))
+                       ((typename Key, typename Value, int dummy), Key, Value, dummy),
+                       (int32_t, int32_t, 1),
+                       (int64_t, int64_t, 1))
 {
   constexpr size_type num_keys{400};
 
