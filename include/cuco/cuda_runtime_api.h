@@ -136,7 +136,9 @@
 #ifndef cudaEventSynchronize
 #  define cudaEventSynchronize hipEventSynchronize
 #endif
-
+#ifndef cudaFuncSetAttribute
+#  define cudaFuncSetAttribute hipFuncSetAttribute
+#endif
 #ifndef cudaFree
 #  define cudaFree hipFree
 #endif
@@ -163,7 +165,9 @@
 #ifndef cudaGetLastError
 #  define cudaGetLastError hipGetLastError
 #endif
-
+#ifndef cudaLaunchKernel
+#  define cudaLaunchKernel hipLaunchKernel
+#endif
 #ifndef cudaMallocAsync
 #  define cudaMallocAsync hipMallocAsync
 #endif
@@ -196,11 +200,23 @@
 #  define cudaMemPrefetchAsync hipMemPrefetchAsync
 #endif
 
+#ifndef cudaMemcpy
+#  define cudaMemcpy hipMemcpy
+#endif
 #ifndef cudaMemcpyAsync
 #  define cudaMemcpyAsync hipMemcpyAsync
 #endif
+#ifndef cudaMemcpyHostToDevice
+#  define cudaMemcpyHostToDevice hipMemcpyHostToDevice
+#endif
 #ifndef cudaMemcpyDeviceToHost
 #  define cudaMemcpyDeviceToHost hipMemcpyDeviceToHost
+#endif
+#ifndef cudaMemcpyFromSymbol
+#  define cudaMemcpyFromSymbol hipMemcpyFromSymbol
+#endif
+#ifndef cudaMemset
+#  define cudaMemset hipMemset
 #endif
 #ifndef cudaMemsetAsync
 #  define cudaMemsetAsync hipMemsetAsync
@@ -241,8 +257,21 @@
 #   define cudaDevAttrMultiProcessorCount hipDeviceAttributeMultiprocessorCount
 #endif
 
+// TODO(HIP/AMD): This attribute is not yet supported in HIP.
+#ifndef cudaDevAttrMaxSharedMemoryPerBlockOptin
+#  define cudaDevAttrMaxSharedMemoryPerBlockOptin hipDeviceAttributeMaxSharedMemoryPerBlockOptin
+#endif
+
+#ifndef cudaFuncAttributeMaxDynamicSharedMemorySize
+#  define cudaFuncAttributeMaxDynamicSharedMemorySize hipFuncAttributeMaxDynamicSharedMemorySize
+#endif
+
 #ifndef cudaOccupancyMaxActiveBlocksPerMultiprocessor
 #   define cudaOccupancyMaxActiveBlocksPerMultiprocessor hipOccupancyMaxActiveBlocksPerMultiprocessor
+#endif
+
+#ifndef cudaOccupancyMaxPotentialBlockSize
+#  define cudaOccupancyMaxPotentialBlockSize hipOccupancyMaxPotentialBlockSize
 #endif
 
 #if defined(__GFX9__)
