@@ -102,14 +102,14 @@ class roaring_bitmap_impl<cuda::std::uint32_t> {
                                cuda::stream_ref stream = {}) const noexcept
   {
     if (this->empty()) {
-      cub::DeviceTransform::Transform(
+      (void) cub::DeviceTransform::Transform(
         thrust::constant_iterator<bool>(false),
         contained,
         cuda::std::distance(first, last),
         cuda::proclaim_return_type<bool>([] __device__(auto /* dummy */) { return false; }),
         stream.get());
     } else {
-      cub::DeviceTransform::Transform(
+      (void) cub::DeviceTransform::Transform(
         first,
         contained,
         cuda::std::distance(first, last),
@@ -341,14 +341,14 @@ class roaring_bitmap_impl<cuda::std::uint64_t> {
                                cuda::stream_ref stream = {}) const noexcept
   {
     if (this->empty()) {
-      cub::DeviceTransform::Transform(
+      (void) cub::DeviceTransform::Transform(
         thrust::constant_iterator<bool>(false),
         contained,
         cuda::std::distance(first, last),
         cuda::proclaim_return_type<bool>([] __device__(auto /* dummy */) { return false; }),
         stream.get());
     } else {
-      cub::DeviceTransform::Transform(
+      (void) cub::DeviceTransform::Transform(
         first,
         contained,
         cuda::std::distance(first, last),
