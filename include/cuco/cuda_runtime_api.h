@@ -257,9 +257,8 @@
 #   define cudaDevAttrMultiProcessorCount hipDeviceAttributeMultiprocessorCount
 #endif
 
-// TODO(HIP/AMD): This attribute is not yet supported in HIP.
 #ifndef cudaDevAttrMaxSharedMemoryPerBlockOptin
-#  define cudaDevAttrMaxSharedMemoryPerBlockOptin hipDeviceAttributeMaxSharedMemoryPerBlockOptin
+#  define cudaDevAttrMaxSharedMemoryPerBlockOptin hipDeviceAttributeSharedMemPerBlockOptin
 #endif
 
 #ifndef cudaFuncAttributeMaxDynamicSharedMemorySize
