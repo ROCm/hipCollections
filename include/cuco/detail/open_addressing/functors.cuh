@@ -70,7 +70,7 @@ struct get_slot {
       // Potentially, this is a compiler issue.
       // Previous Workaround: return thrust::tuple(storage_[bucket_idx][intra_idx].first, storage_[bucket_idx][intra_idx].second);
       auto const [first, second] = *(storage_.data() + idx);
-      return cuda::std::tuple{first, second};
+      return thrust::tuple{first, second};
     } else {
       return *(storage_.data() + idx);
     }

@@ -240,7 +240,7 @@ std::pair<KeyOut, ValueOut> static_map<Key, Value, Scope, Allocator, TileSize, B
   auto slots_begin = reinterpret_cast<value_type*>(slots_);
 
   auto begin =
-    thrust::make_transform_iterator(slots_begin, cuco::detail::slot_to_tuple<Key, Value>{});
+    thrust::make_transform_iterator(slots_begin, thrust::tuple<Key, Value>{});
   auto filled           = cuco::detail::slot_is_filled<Key>{get_empty_key_sentinel()};
   auto zipped_out_begin = thrust::make_zip_iterator(thrust::tuple{keys_out, values_out});
 
