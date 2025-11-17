@@ -109,7 +109,7 @@ class hyperloglog_impl {
       sketch_{reinterpret_cast<register_type*>(sketch_span.data()),
               this->sketch_bytes() / sizeof(register_type)}
   {
-#ifndef __CUDA_ARCH__
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     auto const alignment =
       1ull << cuda::std::countr_zero(reinterpret_cast<cuda::std::uintptr_t>(sketch_span.data()));
     CUCO_EXPECTS(alignment >= sketch_alignment(), "Insufficient sketch alignment");
