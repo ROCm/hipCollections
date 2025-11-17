@@ -66,7 +66,7 @@ __global__ void test_retrieve_if_kernel(
   auto const block = cg::this_thread_block();
   auto const pred  = [] __device__(key_type k) { return k % 2 == 0; };
 
-  container_ref.retrieve_if<128>(block,
+  container_ref.template retrieve_if<128>(block,
                                  keys_begin,
                                  keys_begin + num_keys,
                                  stencil_begin,
@@ -92,7 +92,7 @@ __global__ void test_retrieve_if_all_false_kernel(
   auto const block        = cg::this_thread_block();
   auto const always_false = [] __device__(key_type) { return false; };
 
-  container_ref.retrieve_if<128>(block,
+  container_ref.template retrieve_if<128>(block,
                                  keys_begin,
                                  keys_begin + num_keys,
                                  stencil_begin,
@@ -118,7 +118,7 @@ __global__ void test_retrieve_if_all_true_kernel(
   auto const block       = cg::this_thread_block();
   auto const always_true = [] __device__(key_type) { return true; };
 
-  container_ref.retrieve_if<128>(block,
+  container_ref.template retrieve_if<128>(block,
                                  keys_begin,
                                  keys_begin + num_keys,
                                  stencil_begin,
