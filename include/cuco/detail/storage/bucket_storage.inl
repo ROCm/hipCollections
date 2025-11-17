@@ -37,7 +37,13 @@
 #include <cuco/detail/utility/cuda.hpp>
 #include <cuco/extent.cuh>
 
-#include <cub/device/device_for.cuh>
+#ifdef __HIP_PLATFORM_AMD__
+#  include <hipcub/hipcub.hpp>
+namespace cub = hipcub;
+#else
+#  include <cub/device/device_for.cuh>
+#endif
+
 #include <cuda/std/array>
 #include <cuda/std/bit>
 #include <cuda/stream_ref>
