@@ -38,6 +38,7 @@
 
 #include <test_utils.hpp>
 
+#include <cuco/cuda_runtime_api.h>
 #include <cuco/static_set.cuh>
 
 #include <cuda/functional>
