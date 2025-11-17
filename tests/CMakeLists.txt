@@ -59,10 +59,6 @@ function(ConfigureTest TEST_NAME)
     target_compile_options(${TEST_NAME} PRIVATE -Wall -Wno-unused-parameter)
     # TODO(HIP/AMD): Find equivalents of --expt-extended-lambda -Wno-deprecated-gpu-targets
     # TODO(HIP/AMD): Enable -Wextra
-    # Add GCC-specific warning suppression only for GCC
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(${TEST_NAME} PRIVATE -Xcompiler -Wno-subobject-linkage)
-    endif()
     catch_discover_tests(${TEST_NAME} EXTRA_ARGS --allow-running-no-tests)
 endfunction(ConfigureTest)
 
@@ -126,11 +122,11 @@ ConfigureTest(STATIC_MAP_TEST
 
 ###################################################################################################
 # - dynamic_map tests -----------------------------------------------------------------------------
-# ConfigureTest(DYNAMIC_MAP_TEST
-#     dynamic_map/unique_sequence_test.cu
-#     dynamic_map/unique_sequence_test_experimental.cu
-#     dynamic_map/erase_test.cu
-#     dynamic_map/retrieve_all_test.cu)
+ConfigureTest(DYNAMIC_MAP_TEST
+    dynamic_map/unique_sequence_test.cu
+    dynamic_map/unique_sequence_test_experimental.cu
+    dynamic_map/erase_test.cu
+    dynamic_map/retrieve_all_test.cu)
 
 ###################################################################################################
 # - static_multiset tests -------------------------------------------------------------------------
@@ -171,10 +167,10 @@ ConfigureTest(DYNAMIC_BITSET_TEST
 ###################################################################################################
 # - hyperloglog ----------------------------------------------------------------------
 # Note(HIP/AMD): hyperloglog is currently not supported due to missing reduce api in cooperative_groups
-#ConfigureTest(HYPERLOGLOG_TEST
-#    hyperloglog/unique_sequence_test.cu
-#    hyperloglog/spark_parity_test.cu
-#    hyperloglog/device_ref_test.cu)
+ConfigureTest(HYPERLOGLOG_TEST
+   hyperloglog/unique_sequence_test.cu
+   hyperloglog/spark_parity_test.cu
+   hyperloglog/device_ref_test.cu)
 
 ###################################################################################################
 # - bloom_filter ----------------------------------------------------------------------------------
