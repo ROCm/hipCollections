@@ -758,7 +758,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void size(StorageRef storage,
   size_type thread_count = 0;
   auto const n           = storage.capacity();
 
-  while (idx < n) {
+  while (static_cast<unsigned long>(idx) < n) {
     thread_count += static_cast<size_type>(is_filled(*(storage.data() + idx)));
 
     idx += loop_stride;
@@ -792,12 +792,12 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void rehash(
   auto idx                       = cuco::detail::global_thread_id();
   auto const n                   = storage_ref.num_buckets();
 
-  while (idx - thread_rank < n) {
+  while (static_cast<unsigned long>(idx - thread_rank) < n) {
     if (thread_rank == 0) { buffer_size = 0; }
     block.sync();
 
     // gather values in shmem buffer
-    if (idx < n) {
+    if (static_cast<unsigned long>(idx) < n) {
       auto const bucket = storage_ref[idx];
 
       for (auto const& slot : bucket) {

@@ -489,7 +489,7 @@ class open_addressing_ref_impl {
       if (group_contains_available) {
         auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_available) - 1;
         auto status         = insert_result::CONTINUE;
-        if (group.thread_rank() == src_lane) {
+        if (group.thread_rank() == static_cast<unsigned int>(src_lane)) {
           if constexpr (SupportsErase) {
             status = attempt_insert(this->get_slot_ptr(*probing_iter, intra_bucket_index),
                                     bucket_slots[intra_bucket_index],
@@ -778,7 +778,7 @@ class open_addressing_ref_impl {
       if (group_contains_equal) {
         auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_equal) - 1;
         auto const status =
-          (group.thread_rank() == src_lane)
+          (group.thread_rank() == static_cast<unsigned int>(src_lane))
             ? attempt_insert_stable(this->get_slot_ptr(*probing_iter, intra_bucket_index),
                                     bucket_slots[intra_bucket_index],
                                     this->erased_slot_sentinel())
@@ -1328,7 +1328,7 @@ class open_addressing_ref_impl {
       offset = tile.shfl(offset, 0);
 
       // flush_buffers
-      for (auto i = rank; i < count; i += tile.size()) {
+      for (auto i = rank; i < static_cast<unsigned int>(count); i += tile.size()) {
         *(output_probe + offset + i) = buffers[flushing_tile_id][i].first;
         *(output_match + offset + i) = buffers[flushing_tile_id][i].second;
       }
@@ -1400,7 +1400,7 @@ class open_addressing_ref_impl {
                 num_matches[i] = __popc(exists[i]);
               }
 
-              cuda::std::int32_t output_idx;
+              cuda::std::int32_t output_idx{};
               if (lane_id == 0) {
                 auto const total_matches =
                   thrust::reduce(thrust::seq, num_matches, num_matches + bucket_size);
@@ -1436,7 +1436,7 @@ class open_addressing_ref_impl {
 
           active_flushing_tile.sync();
           // if the buffer has not enough empty slots for the next iteration
-          if (counters[flushing_tile_id] > (buffer_size - max_matches_per_step)) {
+          if (static_cast<unsigned int>(counters[flushing_tile_id]) > (buffer_size - max_matches_per_step)) {
             flush_buffers(active_flushing_tile);
             active_flushing_tile.sync();
 
