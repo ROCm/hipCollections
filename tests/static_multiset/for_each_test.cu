@@ -42,8 +42,10 @@
 #include <thrust/iterator/transform_iterator.h>
 
 #include <hip/hip_cooperative_groups.h>
-#ifdef CUCO_ENABLE_CG_REDUCE
+#if CUCO_HIP_HAS_CG_REDUCE
 #include <hip/hip_cooperative_groups/reduce.h>
+#else
+#include <hip_extensions/hip_cooperative_groups/hip_cooperative_groups_reduce.hpp>
 #endif
 
 #include <catch2/catch_template_test_macros.hpp>

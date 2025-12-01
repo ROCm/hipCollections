@@ -197,6 +197,7 @@ target_compile_options(cuco INTERFACE "-DCUCO_BLOCK_SIZE=${CUCO_BLOCK_SIZE}")
 set(CUCO_STATIC_SET_CG_SIZE "4" CACHE STRING "Size of cooperative groups for static_set")
 target_compile_options(cuco INTERFACE "-DCUCO_STATIC_SET_CG_SIZE=${CUCO_STATIC_SET_CG_SIZE}")
 target_compile_options(cuco INTERFACE "-DHIP_ENABLE_WARP_SYNC_BUILTINS=1")
+target_compile_options(cuco INTERFACE "-DHIP_ENABLE_EXTRA_WARP_SYNC_TYPES=1")
 
 if(USE_WARPSIZE_32)
   target_compile_options(cuco INTERFACE "-DCUCO_USE_WARPSIZE_32")
@@ -265,6 +266,7 @@ rapids_export(
 
 if(INSTALL_CUCO OR CUCO_CREATE_PACKAGE)
     install(DIRECTORY include/cuco/ DESTINATION include/cuco)
+    install(DIRECTORY include/hip_extensions/ DESTINATION include/hip_extensions)
     install(FILES ${CUCO_BINARY_DIR}/include/cuco/version_config.hpp DESTINATION include/cuco)
     # install directory cuco-config generation
     rapids_export(

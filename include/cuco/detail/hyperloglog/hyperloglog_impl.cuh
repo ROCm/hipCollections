@@ -53,8 +53,10 @@
 #include <thrust/type_traits/is_contiguous_iterator.h>
 
 #include <hip/hip_cooperative_groups.h>
-#ifdef CUCO_ENABLE_CG_REDUCE
+#if CUCO_HIP_HAS_CG_REDUCE
 #include <hip/hip_cooperative_groups/reduce.h>
+#else
+#include <hip_extensions/hip_cooperative_groups/hip_cooperative_groups_reduce.hpp>
 #endif
 
 #include <vector>
@@ -362,8 +364,6 @@ class hyperloglog_impl {
   [[nodiscard]] __device__ size_t
   estimate(cooperative_groups::thread_block const& group) const noexcept
   {
-// TODO(HIP/AMD):estimate() is not supported on HIP/AMD platform due to missing cooperative_groups reduce API
-#ifdef CUCO_ENABLE_CG_REDUCE
     __shared__ cuda::atomic<fp_type, cuda::thread_scope_block> block_sum;
     __shared__ cuda::atomic<int, cuda::thread_scope_block> block_zeroes;
     __shared__ size_t estimate;
@@ -413,9 +413,6 @@ class hyperloglog_impl {
     group.sync();
 
     return estimate;
-#else
-    return 0;
-#endif
   }
 
   /**
@@ -429,9 +426,6 @@ class hyperloglog_impl {
    */
   [[nodiscard]] __host__ size_t estimate(cuda::stream_ref stream) const
   {
-#ifdef __HIP_PLATFORM_AMD__
-    CUCO_FAIL("estimate() is not supported on HIP/AMD platform due to missing cooperative_groups reduce API");
-#else
     auto const num_regs = 1ull << this->precision_;
     std::vector<register_type> host_sketch(num_regs);
 
@@ -456,7 +450,6 @@ class hyperloglog_impl {
 
     // pass intermediate result to finalizer for bias correction, etc.
     return finalize(sum, zeroes);
-#endif
   }
 
   /**

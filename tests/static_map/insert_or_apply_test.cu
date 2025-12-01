@@ -85,7 +85,6 @@ void test_insert_or_apply(Map& map, size_type num_keys, size_type num_unique_key
                             cuda::std::equal_to<Value>{}));
 }
 
-#ifdef CUCO_ENABLE_CG_REDUCE
 template <bool HasInit, typename Map, typename Init>
 void test_insert_or_apply_shmem(Map& map, size_type num_keys, size_type num_unique_keys, Init init)
 {
@@ -156,7 +155,6 @@ void test_insert_or_apply_shmem(Map& map, size_type num_keys, size_type num_uniq
                             thrust::make_constant_iterator<Value>(num_keys / num_unique_keys),
                             cuda::std::equal_to<Value>{}));
 }
-#endif 
 
 /*
 TEMPLATE_TEST_CASE_SIG(
@@ -262,7 +260,6 @@ TEMPLATE_TEST_CASE_SIG(
 }
 */
 
-#ifdef CUCO_ENABLE_CG_REDUCE
 TEMPLATE_TEST_CASE_SIG(
   "static_map insert_or_apply shared memory", "", ((typename Key)), (int32_t), (int64_t))
 {
@@ -295,4 +292,3 @@ TEMPLATE_TEST_CASE_SIG(
     test_insert_or_apply_shmem<true>(map, num_keys, num_unique_keys, static_cast<Value>(0));
   }
 }
-#endif

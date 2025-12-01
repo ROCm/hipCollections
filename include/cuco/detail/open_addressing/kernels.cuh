@@ -51,6 +51,11 @@ namespace cub = hipcub;
 #include <cuda/std/type_traits>
 
 #include <hip/hip_cooperative_groups.h>
+#if CUCO_HIP_HAS_CG_REDUCE
+#include <hip/hip_cooperative_groups/reduce.h>
+#else
+#include <hip_extensions/hip_cooperative_groups/hip_cooperative_groups_reduce.hpp>
+#endif
 
 namespace cuco::detail::open_addressing_ns {
 CUCO_SUPPRESS_KERNEL_WARNINGS
@@ -629,8 +634,6 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void count_each(InputIt first,
                                                          OutputIt output_begin,
                                                          Ref ref)
 {
-  // TODO(HIP/AMD): Support when cg::reduce is available
-  #ifdef CUCO_ENABLE_CG_REDUCE
   auto const loop_stride = cuco::detail::grid_stride() / CGSize;
   auto idx               = cuco::detail::global_thread_id() / CGSize;
 
@@ -663,7 +666,6 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void count_each(InputIt first,
     }
     idx += loop_stride;
   }
-  #endif
 }
 
 /**

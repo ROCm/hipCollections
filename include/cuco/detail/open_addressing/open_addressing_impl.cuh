@@ -1248,9 +1248,6 @@ class open_addressing_impl {
                   Ref container_ref,
                   cuda::stream_ref stream) const noexcept
   {
-#ifndef CUCO_ENABLE_CG_REDUCE
-    CUCO_FAIL("count_each() is not supported on HIP/AMD platform due to missing cooperative_groups reduce API");
-#else
     auto const num_keys = cuco::detail::distance(first, last);
     if (num_keys == 0) { return; }
 
@@ -1259,7 +1256,6 @@ class open_addressing_impl {
     detail::open_addressing_ns::count_each<IsOuter, cg_size, cuco::detail::default_block_size()>
       <<<grid_size, cuco::detail::default_block_size(), 0, stream.get()>>>(
         first, num_keys, output_begin, container_ref);
-#endif
   }
 
   /**

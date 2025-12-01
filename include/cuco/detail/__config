@@ -80,6 +80,10 @@
 #define CUCO_HAS_INT128
 #endif
 
+// NOTE(HIP/AMD): cooperative_groups::reduce is not yet available in ROCm
+// Set to 0 to use hip_extensions workaround, 1 when native support is available
+#define CUCO_HIP_HAS_CG_REDUCE 0
+
 #if defined(CUDART_VERSION) && (CUDART_VERSION >= 12000)
 #define CUCO_HAS_CG_REDUCE_UPDATE_ASYNC
 #endif
