@@ -384,7 +384,7 @@ class hyperloglog_impl {
 
     // warp reduce Z and V
     auto const warp =
-      cooperative_groups::tiled_partition<32, cooperative_groups::thread_block>(group);
+      cooperative_groups::tiled_partition<HIPCO_DEVICE_WAVEFRONT_SIZE, cooperative_groups::thread_block>(group);
 #if defined(CUCO_HAS_CG_REDUCE_UPDATE_ASYNC)
     cooperative_groups::reduce_update_async(
       warp, block_sum, thread_sum, cooperative_groups::plus<fp_type>());
