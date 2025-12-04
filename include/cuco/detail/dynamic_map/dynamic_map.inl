@@ -140,7 +140,16 @@ void dynamic_map<Key, T, Extent, Scope, KeyEqual, ProbingScheme, Allocator, Stor
       capacity_ *= 2;
     }
 
-    num_elements_remaining -= max_load_factor_ * submap_capacity - min_insert_size_;
+    // NOTE(HIP/AMD): We handle potential underflow of unsigned integer here.
+    // original code: num_elements_remaining -= max_load_factor_ * submap_capacity - min_insert_size_;
+    auto usable_capacity = max_load_factor_ * submap_capacity;
+    auto effective_capacity = (usable_capacity > min_insert_size_) 
+                               ? (usable_capacity - min_insert_size_) 
+                               : 0;
+    
+    num_elements_remaining = (num_elements_remaining > effective_capacity)
+                              ? (num_elements_remaining - effective_capacity)
+                              : 0;
     submap_idx++;
   }
 }
