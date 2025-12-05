@@ -48,7 +48,11 @@ function(ConfigureBench BENCH_NAME)
                                         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/benchmarks")
     target_include_directories(${BENCH_NAME} PRIVATE
                                              "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_compile_options(${BENCH_NAME} PRIVATE -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable)
+# <<<<<<< OLD CODE from 6116b275 (8aa7909b) - COMMENTED OUT
+#     target_compile_options(${BENCH_NAME} PRIVATE -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable)
+# =======
+    cuco_set_common_compile_options(${BENCH_NAME} ADD_LINEINFO)
+# >>>>>>> END NEW CODE (8aa7909b)
     target_link_libraries(${BENCH_NAME} PRIVATE
                                         nvbench::main
                                         pthread
