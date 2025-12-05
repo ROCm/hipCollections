@@ -42,8 +42,13 @@ function(ConfigureExample EXAMPLE_NAME EXAMPLE_SRC)
                                           RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples")
     target_include_directories(${EXAMPLE_NAME} PRIVATE
                                              "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_compile_options(${EXAMPLE_NAME} PRIVATE -Wall -Wextra)  #todo(HIP): --expt-extended-lambda,  -Wno-subobject-linkage -Wno-deprecated-gpu-target
-    target_link_libraries(${EXAMPLE_NAME} PRIVATE cuco hip::device hip::hipcub)
+# <<<<<<< OLD CODE from 6116b275 (8aa7909b) - COMMENTED OUT
+#     target_compile_options(${EXAMPLE_NAME} PRIVATE -Wall -Wextra)  #todo(HIP): --expt-extended-lambda,  -Wno-subobject-linkage -Wno-deprecated-gpu-target
+#     target_link_libraries(${EXAMPLE_NAME} PRIVATE cuco hip::device hip::hipcub)
+# =======
+    cuco_set_common_compile_options(${EXAMPLE_NAME})
+    target_link_libraries(${EXAMPLE_NAME} PRIVATE cuco CUDA::cudart)
+# >>>>>>> END NEW CODE (8aa7909b)
 endfunction(ConfigureExample)
 
 ###################################################################################################

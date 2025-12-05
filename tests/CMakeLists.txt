@@ -56,9 +56,13 @@ function(ConfigureTest TEST_NAME)
     target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     set_target_properties(${TEST_NAME} PROPERTIES
                                        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
-    target_compile_options(${TEST_NAME} PRIVATE -Wall -Wno-unused-parameter)
-    # TODO(HIP/AMD): Find equivalents of --expt-extended-lambda -Wno-deprecated-gpu-targets
-    # TODO(HIP/AMD): Enable -Wextra
+# <<<<<<< OLD CODE from 6116b275 (8aa7909b) - COMMENTED OUT
+#     target_compile_options(${TEST_NAME} PRIVATE -Wall -Wno-unused-parameter)
+#     # TODO(HIP/AMD): Find equivalents of --expt-extended-lambda -Wno-deprecated-gpu-targets
+#     # TODO(HIP/AMD): Enable -Wextra
+# =======
+    cuco_set_common_compile_options(${TEST_NAME})
+# >>>>>>> END NEW CODE (8aa7909b)
     catch_discover_tests(${TEST_NAME} EXTRA_ARGS --allow-running-no-tests)
 endfunction(ConfigureTest)
 
