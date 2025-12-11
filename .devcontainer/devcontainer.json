@@ -1,6 +1,6 @@
 {
   "shutdownAction": "stopContainer",
-  "image": "rapidsai/devcontainers:25.12-cpp-gcc13-cuda12.9-ubuntu24.04",
+  "image": "rapidsai/devcontainers:25.12-cpp-gcc13-cuda13.0-ubuntu24.04",
   "hostRequirements": {
     "gpu": true
   },
@@ -14,8 +14,8 @@
     "SCCACHE_BUCKET": "rapids-sccache-devs",
     "AWS_ROLE_ARN": "arn:aws:iam::279114543810:role/nv-gha-token-sccache-devs",
     "HISTFILE": "${containerWorkspaceFolder}/.cache/._bash_history",
-    "DEVCONTAINER_NAME": "cuda12.9-gcc13",
-    "CUCO_CUDA_VERSION": "12.9",
+    "DEVCONTAINER_NAME": "cuda13.0-gcc13",
+    "CUCO_CUDA_VERSION": "13.0",
     "CUCO_HOST_COMPILER": "gcc",
     "CUCO_HOST_COMPILER_VERSION": "13"
   },
@@ -38,5 +38,5 @@
       }
     }
   },
-  "name": "cuda12.9-gcc13"
+  "name": "cuda13.0-gcc13"
 }
