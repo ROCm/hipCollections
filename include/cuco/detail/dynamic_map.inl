@@ -32,6 +32,15 @@
 // THE SOFTWARE.
 #include <cstdint>
 
+// TODO(HIP/AMD): Hack: resolves ambiguity between cuda::std::swap and thrust::swap
+// This may have unintended side effects and should be removed when a proper fix is implemented.
+
+#if defined(CCCL_VERSION) && CCCL_VERSION == 3000002
+namespace thrust {
+  using std::swap;
+}
+#endif
+
 namespace cuco {
 
 template <typename Key, typename Value, cuda::thread_scope Scope, typename Allocator>
