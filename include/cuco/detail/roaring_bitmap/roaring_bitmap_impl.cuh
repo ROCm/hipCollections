@@ -48,14 +48,17 @@
 namespace cub = hipcub;
 #else
 #include <cub/device/device_transform.cuh>
-#endif
-
+// <<<<<<< OLD CODE from ac4494ca (46edc245) - COMMENTED OUT
+// #endif
+//
+// =======
+#include <cuda/functional>
+// >>>>>>> END NEW CODE (46edc245)
 #include <cuda/std/cstddef>
 #include <cuda/std/cstdint>
 #include <cuda/std/functional>
 #include <cuda/std/iterator>
 #include <cuda/stream_ref>
-#include <cuda/utility>
 #include <thrust/iterator/constant_iterator.h>
 
 namespace cuco::experimental::detail {
