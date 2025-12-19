@@ -54,14 +54,22 @@ namespace cooperative_groups {
   __device__ __attribute__((always_inline))
   TArg reduce(const cooperative_groups::thread_block_tile<TILE_SIZE, ParentCGTy>& tile, TArg count, plus<TArg>& op) {
     auto member_mask = internal::get_mask(tile);
-    return __reduce_add_sync(member_mask, count);
+    if constexpr (std::is_same_v<TArg, unsigned long>) {
+      return __reduce_add_sync(member_mask, static_cast<unsigned long long>(count));
+    } else {
+      return __reduce_add_sync(member_mask, count);
+    }
   }
 
   template <unsigned TILE_SIZE, typename ParentCGTy, typename TArg>
   __device__ __attribute__((always_inline))
   TArg reduce(const cooperative_groups::thread_block_tile<TILE_SIZE, ParentCGTy>& tile, TArg count, plus<TArg>&& op) {
     auto member_mask = internal::get_mask(tile);
-    return __reduce_add_sync(member_mask, count);
+    if constexpr (std::is_same_v<TArg, unsigned long>) {
+      return __reduce_add_sync(member_mask, static_cast<unsigned long long>(count));
+    } else {
+      return __reduce_add_sync(member_mask, count);
+    }
   }
 }
 
