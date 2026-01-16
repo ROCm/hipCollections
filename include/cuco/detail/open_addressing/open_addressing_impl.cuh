@@ -34,7 +34,6 @@
 #pragma once
 
 #include <cuco/detail/__config>
-#include <cuco/detail/error.hpp>
 #include <cuco/detail/open_addressing/functors.cuh>
 #include <cuco/detail/open_addressing/kernels.cuh>
 #include <cuco/detail/storage/counter_storage.cuh>
