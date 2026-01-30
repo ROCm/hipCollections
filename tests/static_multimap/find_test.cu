@@ -1,5 +1,9 @@
 /*
- * Copyright (c) 2024, NVIDIA CORPORATION.
+// <<<<<<< OLD CODE from 0665cdaf (1ddeffb1) - COMMENTED OUT
+//  * Copyright (c) 2024, NVIDIA CORPORATION.
+// =======
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION.
+// >>>>>>> END NEW CODE (1ddeffb1)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,14 +122,14 @@ TEMPLATE_TEST_CASE_SIG(
     cuco::linear_probing<CGSize, cuco::default_hash_function<T>>,
     cuco::double_hashing<CGSize, cuco::default_hash_function<T>, cuco::default_hash_function<T>>>;
 
-  auto map = cuco::experimental::static_multimap<T,
-                                                 T,
-                                                 cuco::extent<size_type>,
-                                                 cuda::thread_scope_device,
-                                                 cuda::std::equal_to<T>,
-                                                 probe,
-                                                 cuco::cuda_allocator<cuda::std::byte>,
-                                                 cuco::storage<2>>{
+  auto map = cuco::static_multimap<T,
+                                   T,
+                                   cuco::extent<size_type>,
+                                   cuda::thread_scope_device,
+                                   cuda::std::equal_to<T>,
+                                   probe,
+                                   cuco::cuda_allocator<cuda::std::byte>,
+                                   cuco::storage<2>>{
     num_keys, cuco::empty_key<T>{KEY_SENTINEL}, cuco::empty_value<T>{VAL_SENTINEL}};
 
   test_multimap_find(map, num_keys);
