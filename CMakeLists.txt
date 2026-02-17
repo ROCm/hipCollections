@@ -96,7 +96,7 @@ include(rapids-find)
 # * Enable the HIP language
 rapids_hip_init_architectures(CUCO "NATIVE")
 
-project(CUCO VERSION 0.3.0 LANGUAGES CXX HIP)
+project(CUCO VERSION 0.4.0 LANGUAGES CXX HIP)
 ###################################################################################################
 # - build options ---------------------------------------------------------------------------------
 set(default_build_option_state OFF)
