@@ -63,6 +63,8 @@ Similar to how [Thrust](https://github.com/thrust/thrust) and [CUB](https://gith
 
 ### Major Updates
 
+__02/19/2026__ Removed legacy `static_map` implementation from `cuco::legacy` namespace
+
 __02/03/2026__ Modernized `dynamic_map`: promoted `cuco::experimental::dynamic_map` to `cuco::dynamic_map` and removed the legacy implementation
 
 __01/30/2026__ Removed legacy `static_multimap` implementation and promoted `cuco::experimental::static_multimap` to `cuco::static_multimap`
@@ -72,8 +74,6 @@ __10/08/2025__ Changed `cuda_allocator` to stream-ordered, requiring `cuda::stre
 __06/04/2025__ Removed CUDA 11 support
 
 __11/01/2024__ Refined the term `window` as `bucket`
-
-__01/02/2024__ Moved the legacy `static_map` to `cuco::legacy` namespace
 
 
 ## Getting cuCollections
@@ -320,4 +320,7 @@ We plan to add many GPU-accelerated, concurrent data structures to `cuCollection
 
 #### Examples:
 - [Host-bulk APIs](https://github.com/NVIDIA/cuCollections/blob/dev/examples/roaring_bitmap/host_bulk_example.cu) (see [live example in godbolt](https://godbolt.org/clientstate/eJy9WA1v2zYT_iv3qsAgN7aVpB_ZnI_NjdPNWF97sN0VQ1MIlETbhGVRI6k4XpD__h5JfSbK2nV75wCxRR7vnjs-dzzqzpFUSsYT6Qw-3jkscgZHXScmySojK-oMnDCLiNN1JM9EqJ-959cJPIdLnu4FW60VuGEHjg-PX8Hk1_FoPITL6eyX6Wy4GE8nfS1qxN-xkCaSRpAlERWg1hSGKQnxK5_pwq9UaBxw3D8EVwtcO_nctdM5NVr2PIMt2UPCFWSSohomYcliCvQ2pKkClkDIt2nMSBJS2DG1NqZyPQYO_JYr4YEiKE9wRYpPy7okEFVC15-1UunA83a7XZ8Y2H0uVl5shaX3bnx5NZlf9RB6uex9EmNgQdDfMybQ8WAPJEVkIQkQb0x2wAWQlaA4p7hGvhNMsWTVBcmXakcENXoiJpVgQaYawStwov91AQwfSTBwwzmM59cOvBnOx_Ou0fNhvPhp-n4BH4az2XCyGF_NYTrDzZqMxnqr8OktDCe_wc_jyagLFEOHpuhtKrQXCJXpsNLIxnBOaQPGkltYMqUhW7IQCgLBit9QkaBbkFKxZZZqCDIyemK2ZYooM_bIOWPKu06uk2csCeMsonAWZiH3BCcCNfoBU1uS9sNsffFIJlMsZmrvKUGYkv11ml481BQRT6rIC_FfRJcXT06yRLVPqn1KfWugIaDWIpPKi-gNOuLf0FBx0V-3icR8hYSI2yezhGHsJInrKupymvlyLxXdNpYvkQ-UNMcYbxnUvElWjSFrydjxnlsi_2ASbI0K_CCLNz69JUgFimG304FgdAkjusVNxGAoilsp9dbnKdXcLSSn1oLcjDnfZKlRDMNfxrIqFuPEZnZuCXaYL5xgmuw4vDjuoSKwygyRkPQUXr-sDYObcqFMniExt0R1YCn4VqMx-j_OLKQ3RvqtEZkjcz-5Os8lJvoK6Z8FfawlXkO2eKrWdDDDUy4ZRm1f0hoLRLgBZv3X7hbOop8orzKBfNdzIRcCI45jMouRpjAhWxrvu9plDKQyQksex3ynU8hs-MCY6MFH66wucjxTIktkP2CJmXRtlDpf45AXxDzwXh2dnJDoO0-DiIgiXquxzmMo_x6ORyCKTc-Z9vplhcPS4x_E8fql12quU5L4BzykKCzqPM7Pgnzrt2SDOZLq4ge90eX7y6k_mn6YvJsOR_5sOpyNJz_6i6v5YjRcDM-nE31IBFhhqSoTBWsj5n4aY85h0cBilCB74Ge6X-BvzOGA89hy0UXUg4HNdyQdJuo3ea74mlN-StQaod-hViAZWlrRhOpc9jd0L-EcPn5yO9C7AFuaBoNGbTsrTIJRAJr5xog-PrA_wHqpjSMCJn2JGP2bYkkXarMZVtoXx7666BSKADwPLrFwoYe_ZxRTzOApjpuKDHfIyvuCEVWeFCr-MfrNroaj_171t9EzPdTTY4UZ40IekDanDPTTQlq74LaIwQajfXiKX2dwdKg_-vfBuXmoxQWMun6aybUfENzhTafUfd8wgoqN0krbGfZr9vfBwebPdL5AHn9W70lN77dfprdNpy2LTxCsLZ6uURrQFUvcTteaoEnkdgrl90Bj3SJ9PRlfv_wLZGytB4aK_w8mYgGquPjItC18n6Olce_ztNRilpa3ZnuzOLa7jc_fFc9fseOfszVs2jo6_Bu2Hogc3h7n2irZVpFXDZEnETObtOwBUKYT91ir-BO4h7ff5gvgANjfzAyzpV-aGXcVR7AHD30iJRXK1f2zNoPnSUQT5S8JCpc1vosdXP4btghIH0pl8cL4FCjyS1vdg7v7wr7-0g_6G5NiiqZMpuhnm5t5E2tG3YdHVTcX4nIwQKoTsbe2MNXd_2ipPuY2R6XocuGlWRFSIeDsDF14S1DM3Ly0HA7o4Yd29JhZh5GIc-y5LyYoZui-dONHquxtVLI_aHmUGm16BDlilFVtu_1tJh_52KnCM8T-L9RVx_TKW-y0sfY0z8AyegVLqsuD6dxTliQ0aiFNsFd4bgfZckmFW6KpGZ9R7LyNV7ixPLeu50yccY8iV1CcogKvisoPiVRn4ZqI5xdugUWQnZ9yI2PmXWuur-sY7hBStGE4Vx3GXFK3hiQvvfl9onQ87-zLCFj6YrWngm2RvyRGBI07SNWvNMddu8NfCvu0tvG2W6ofCy7BhJbYLceRThE8gvTrBqQcS2r71ilpkjdajcarxXsCdg81cyV-23t4fn-oE6BZJnQreFGBsBXC8E5HX3O5ZuoN3lh6-Y2l5hFZ4dr8TmLRa_mHl3FrQj5Zg7oVimK67mVxc9LR04asZfFkAPU60-fiAr-SOS_joMf50n1ktI4jB4b1odYd6NrH1P7u3nIyz_uGGZww2a9boS3RWk0P_YwtI7wSm5a-6OR1F--PxrOywtWbcdCU8iMmEHfrqtPSTZmFoX4j0_yc2za_vU8qlR9gmWu_yBXFutD-zVcp_Kva7GHV1NZ-iXMKitgqjshtFc8tDPL6bSsahonE6ZqYkRzCg0Je29BC4ns4hAEc4eQzfThWxsojo_0u17pf-WUNWWDYiJWDYRkw7yMb975rp2oL8s-18wWXwc7DhY8Oqtw7608SsaWhqtN19PtRrJSiet_rJDdheHT8KjvCaQsMJ50eKjwPDw6OTqBHRLg-l1v_5BB6PSytCv8p3R5EvZhsA_OGOGZBTWcYhjEO3tiXujigubZx7rvFPFbpxjzWK-f-k_n7H7m6k-4=))
-# >>>>>>> END NEW CODE (ba92d5c1)
+# <<<<<<< OLD CODE from 988db9a6 (dad606de) - COMMENTED OUT
+# # >>>>>>> END NEW CODE (ba92d5c1)
+# =======
+# >>>>>>> END NEW CODE (dad606de)
