@@ -1,5 +1,9 @@
 /*
- * Copyright (c) 2023-2024, NVIDIA CORPORATION.
+// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
+//  * Copyright (c) 2023-2024, NVIDIA CORPORATION.
+// =======
+ * Copyright (c) 2023-2026, NVIDIA CORPORATION.
+// >>>>>>> END NEW CODE (3cdd3b83)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +41,9 @@
 #include <cuco/utility/reduction_functors.cuh>
 
 #include <cuda/atomic>
+#include <cuda/iterator>
 #include <cuda/std/functional>
 #include <thrust/device_vector.h>
-#include <thrust/iterator/constant_iterator.h>
-#include <thrust/iterator/counting_iterator.h>
-#include <thrust/iterator/transform_iterator.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
 
@@ -60,8 +62,8 @@ void test_insert_or_apply(Map& map, size_type num_keys, size_type num_unique_key
   using Value = typename Map::mapped_type;
 
   // Insert pairs
-  auto pairs_begin = thrust::make_transform_iterator(
-    thrust::counting_iterator<size_type>(0),
+  auto pairs_begin = cuda::make_transform_iterator(
+    cuda::counting_iterator<size_type>(0),
     cuda::proclaim_return_type<cuco::pair<Key, Value>>([num_unique_keys] __device__(auto i) {
       return cuco::pair<Key, Value>{i % num_unique_keys, 1};
     }));
@@ -81,7 +83,7 @@ void test_insert_or_apply(Map& map, size_type num_keys, size_type num_unique_key
 
   REQUIRE(cuco::test::equal(d_values.begin(),
                             d_values.end(),
-                            thrust::make_constant_iterator<Value>(num_keys / num_unique_keys),
+                            cuda::make_constant_iterator<Value>(num_keys / num_unique_keys),
                             cuda::std::equal_to<Value>{}));
 }
 
@@ -124,8 +126,8 @@ void test_insert_or_apply_shmem(Map& map, size_type num_keys, size_type num_uniq
                             typename shared_map_ref_type::storage_ref_type>(extent_type{});
 
   // Insert pairs
-  auto pairs_begin = thrust::make_transform_iterator(
-    thrust::counting_iterator<size_type>(0),
+  auto pairs_begin = cuda::make_transform_iterator(
+    cuda::counting_iterator<size_type>(0),
     cuda::proclaim_return_type<cuco::pair<Key, Value>>([num_unique_keys] __device__(auto i) {
       return cuco::pair<Key, Value>{i % num_unique_keys, 1};
     }));
@@ -152,7 +154,7 @@ void test_insert_or_apply_shmem(Map& map, size_type num_keys, size_type num_uniq
 
   REQUIRE(cuco::test::equal(d_values.begin(),
                             d_values.end(),
-                            thrust::make_constant_iterator<Value>(num_keys / num_unique_keys),
+                            cuda::make_constant_iterator<Value>(num_keys / num_unique_keys),
                             cuda::std::equal_to<Value>{}));
 }
 

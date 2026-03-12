@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 NVIDIA CORPORATION.
+ * Copyright (c) 2025-2026, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,13 +53,16 @@ namespace cub = hipcub;
 //
 // =======
 #include <cuda/functional>
-// >>>>>>> END NEW CODE (46edc245)
+// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
+// // >>>>>>> END NEW CODE (46edc245)
+// =======
+#include <cuda/iterator>
+// >>>>>>> END NEW CODE (3cdd3b83)
 #include <cuda/std/cstddef>
 #include <cuda/std/cstdint>
 #include <cuda/std/functional>
 #include <cuda/std/iterator>
 #include <cuda/stream_ref>
-#include <thrust/iterator/constant_iterator.h>
 
 namespace cuco::experimental::detail {
 
@@ -109,8 +112,13 @@ class roaring_bitmap_impl<cuda::std::uint32_t> {
                                  cudaStream_t{nullptr}}) const noexcept
   {
     if (this->empty()) {
-      (void) cub::DeviceTransform::Transform(
-        thrust::constant_iterator<bool>(false),
+// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
+//       (void) cub::DeviceTransform::Transform(
+//         thrust::constant_iterator<bool>(false),
+// =======
+      cub::DeviceTransform::Transform(
+        cuda::constant_iterator<bool>(false),
+// >>>>>>> END NEW CODE (3cdd3b83)
         contained,
         cuda::std::distance(first, last),
         cuda::proclaim_return_type<bool>([] __device__(auto /* dummy */) { return false; }),
@@ -357,8 +365,13 @@ class roaring_bitmap_impl<cuda::std::uint64_t> {
                                  cudaStream_t{nullptr}}) const noexcept
   {
     if (this->empty()) {
-      (void) cub::DeviceTransform::Transform(
-        thrust::constant_iterator<bool>(false),
+// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
+//       (void) cub::DeviceTransform::Transform(
+//         thrust::constant_iterator<bool>(false),
+// =======
+      cub::DeviceTransform::Transform(
+        cuda::constant_iterator<bool>(false),
+// >>>>>>> END NEW CODE (3cdd3b83)
         contained,
         cuda::std::distance(first, last),
         cuda::proclaim_return_type<bool>([] __device__(auto /* dummy */) { return false; }),
