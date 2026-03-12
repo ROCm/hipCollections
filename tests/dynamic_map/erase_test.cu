@@ -36,12 +36,11 @@
 #include <cuco/dynamic_map.cuh>
 
 #include <cuda/functional>
+#include <cuda/iterator>
 #include <cuda/std/functional>
 #include <cuda/std/tuple>
 #include <thrust/device_vector.h>
 #include <thrust/execution_policy.h>
-#include <thrust/iterator/counting_iterator.h>
-#include <thrust/iterator/transform_iterator.h>
 #include <thrust/sequence.h>
 
 #include <catch2/catch_template_test_macros.hpp>
@@ -69,12 +68,17 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map erase tests",
     thrust::sequence(thrust::device, d_keys.begin(), d_keys.end(), 1);
     thrust::sequence(thrust::device, d_values.begin(), d_values.end(), 1);
 
-// <<<<<<< OLD CODE from 7f980758 (24203fbf) - COMMENTED OUT
-//     auto pairs_begin =
-//       thrust::make_zip_iterator(thrust::make_tuple(d_keys.begin(), d_values.begin()));
+// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
+// // <<<<<<< OLD CODE from 7f980758 (24203fbf) - COMMENTED OUT
+// //     auto pairs_begin =
+// //       thrust::make_zip_iterator(thrust::make_tuple(d_keys.begin(), d_values.begin()));
+// // =======
+//     auto pairs_begin = thrust::make_transform_iterator(
+//       thrust::make_counting_iterator<std::size_t>(0),
 // =======
-    auto pairs_begin = thrust::make_transform_iterator(
-      thrust::make_counting_iterator<std::size_t>(0),
+    auto pairs_begin = cuda::make_transform_iterator(
+      cuda::make_counting_iterator<std::size_t>(0),
+// >>>>>>> END NEW CODE (3cdd3b83)
       cuda::proclaim_return_type<cuco::pair<Key, Value>>(
         [keys = d_keys.begin(), values = d_values.begin()] __device__(auto i) {
           return cuco::pair<Key, Value>{keys[i], values[i]};
@@ -124,12 +128,17 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map erase tests",
     thrust::sequence(thrust::device, d_keys.begin(), d_keys.end(), 1);
     thrust::sequence(thrust::device, d_values.begin(), d_values.end(), 1);
 
-// <<<<<<< OLD CODE from 7f980758 (24203fbf) - COMMENTED OUT
-//     auto pairs_begin =
-//       thrust::make_zip_iterator(thrust::make_tuple(d_keys.begin(), d_values.begin()));
+// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
+// // <<<<<<< OLD CODE from 7f980758 (24203fbf) - COMMENTED OUT
+// //     auto pairs_begin =
+// //       thrust::make_zip_iterator(thrust::make_tuple(d_keys.begin(), d_values.begin()));
+// // =======
+//     auto pairs_begin = thrust::make_transform_iterator(
+//       thrust::make_counting_iterator<std::size_t>(0),
 // =======
-    auto pairs_begin = thrust::make_transform_iterator(
-      thrust::make_counting_iterator<std::size_t>(0),
+    auto pairs_begin = cuda::make_transform_iterator(
+      cuda::make_counting_iterator<std::size_t>(0),
+// >>>>>>> END NEW CODE (3cdd3b83)
       cuda::proclaim_return_type<cuco::pair<Key, Value>>(
         [keys = d_keys.begin(), values = d_values.begin()] __device__(auto i) {
           return cuco::pair<Key, Value>{keys[i], values[i]};

@@ -55,10 +55,8 @@ namespace cub = hipcub;
 #endif
 
 #include <cuda/atomic>
+#include <cuda/iterator>
 #include <cuda/std/functional>
-#include <thrust/iterator/constant_iterator.h>
-#include <thrust/iterator/counting_iterator.h>
-#include <thrust/iterator/transform_iterator.h>
 
 #include <cmath>
 #include <cstdint>
@@ -294,7 +292,7 @@ class open_addressing_impl {
   template <typename InputIt, typename Ref>
   size_type insert(InputIt first, InputIt last, Ref container_ref, cuda::stream_ref stream)
   {
-    auto const always_true = thrust::constant_iterator<bool>{true};
+    auto const always_true = cuda::constant_iterator<bool>{true};
     return this->insert_if(first, last, always_true, cuda::std::identity{}, container_ref, stream);
   }
 
@@ -317,7 +315,7 @@ class open_addressing_impl {
                     Ref container_ref,
                     cuda::stream_ref stream) noexcept
   {
-    auto const always_true = thrust::constant_iterator<bool>{true};
+    auto const always_true = cuda::constant_iterator<bool>{true};
     this->insert_if_async(first, last, always_true, cuda::std::identity{}, container_ref, stream);
   }
 
@@ -517,7 +515,7 @@ class open_addressing_impl {
                       Ref container_ref,
                       cuda::stream_ref stream) const noexcept
   {
-    auto const always_true = thrust::constant_iterator<bool>{true};
+    auto const always_true = cuda::constant_iterator<bool>{true};
     this->contains_if_async(
       first, last, always_true, cuda::std::identity{}, output_begin, container_ref, stream);
   }
@@ -591,7 +589,7 @@ class open_addressing_impl {
                   Ref container_ref,
                   cuda::stream_ref stream) const noexcept
   {
-    auto const always_true = thrust::constant_iterator<bool>{true};
+    auto const always_true = cuda::constant_iterator<bool>{true};
 
     this->find_if_async(
       first, last, always_true, cuda::std::identity{}, output_begin, container_ref, stream);
@@ -876,8 +874,8 @@ class open_addressing_impl {
          offset += stride) {
       auto const num_items =
         std::min(static_cast<cuco::detail::index_type>(this->capacity()) - offset, stride);
-      auto const begin = thrust::make_transform_iterator(
-        thrust::counting_iterator{static_cast<size_type>(offset)},
+      auto const begin = cuda::make_transform_iterator(
+        cuda::counting_iterator{static_cast<size_type>(offset)},
         detail::open_addressing_ns::get_slot<has_payload, storage_ref_type>(this->storage_ref()));
       auto const is_filled = detail::open_addressing_ns::slot_is_filled<has_payload, key_type>{
         this->empty_key_sentinel(), this->erased_key_sentinel()};

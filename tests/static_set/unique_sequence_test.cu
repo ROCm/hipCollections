@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2025, NVIDIA CORPORATION.
+ * Copyright (c) 2022-2026, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@
 #include <cuco/static_set.cuh>
 
 #include <cuda/functional>
+#include <cuda/iterator>
+#include <cuda/std/tuple>
+// >>>>>>> END NEW CODE (3cdd3b83)
 #include <thrust/device_vector.h>
 #include <thrust/distance.h>
-#include <thrust/iterator/constant_iterator.h>
-#include <thrust/iterator/counting_iterator.h>
 #include <thrust/sort.h>
 #include <thrust/transform.h>
 
@@ -37,7 +38,7 @@ void test_unique_sequence(Set& set, size_type num_keys)
 {
   using Key = typename Set::key_type;
 
-  auto keys_begin = thrust::counting_iterator<Key>{0};
+  auto keys_begin = cuda::counting_iterator<Key>{0};
   thrust::device_vector<bool> d_contained(num_keys);
 
   auto zip_equal = cuda::proclaim_return_type<bool>(
@@ -58,8 +59,13 @@ void test_unique_sequence(Set& set, size_type num_keys)
     thrust::device_vector<Key> d_results(num_keys);
 
     set.find(keys_begin, keys_begin + num_keys, d_results.begin());
-    auto zip = thrust::make_zip_iterator(thrust::make_tuple(
-      d_results.begin(), thrust::constant_iterator<Key>{set.empty_key_sentinel()}));
+// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
+//     auto zip = thrust::make_zip_iterator(thrust::make_tuple(
+//       d_results.begin(), thrust::constant_iterator<Key>{set.empty_key_sentinel()}));
+// =======
+    auto zip = thrust::make_zip_iterator(
+      cuda::std::tuple{d_results.begin(), cuda::constant_iterator<Key>{set.empty_key_sentinel()}});
+// >>>>>>> END NEW CODE (3cdd3b83)
 
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
   }
@@ -67,7 +73,7 @@ void test_unique_sequence(Set& set, size_type num_keys)
   SECTION("All conditionally inserted keys should be contained")
   {
     auto const inserted = set.insert_if(
-      keys_begin, keys_begin + num_keys, thrust::counting_iterator<std::size_t>(0), is_even);
+      keys_begin, keys_begin + num_keys, cuda::counting_iterator<std::size_t>(0), is_even);
     REQUIRE(inserted == num_keys / 2);
     REQUIRE(set.size() == num_keys / 2);
 
@@ -75,7 +81,7 @@ void test_unique_sequence(Set& set, size_type num_keys)
     REQUIRE(cuco::test::equal(
       d_contained.begin(),
       d_contained.end(),
-      thrust::counting_iterator<std::size_t>(0),
+      cuda::counting_iterator<std::size_t>(0),
       cuda::proclaim_return_type<bool>([] __device__(auto const& idx_contained, auto const& idx) {
         return ((idx % 2) == 0) == idx_contained;
       })));
@@ -96,12 +102,17 @@ void test_unique_sequence(Set& set, size_type num_keys)
   {
     set.contains_if(keys_begin,
                     keys_begin + num_keys,
-                    thrust::counting_iterator<std::size_t>(0),
+                    cuda::counting_iterator<std::size_t>(0),
                     is_even,
                     d_contained.begin());
     auto gold_iter =
-      thrust::make_transform_iterator(thrust::counting_iterator<std::size_t>(0), is_even);
-    auto zip = thrust::make_zip_iterator(thrust::make_tuple(d_contained.begin(), gold_iter));
+// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
+//       thrust::make_transform_iterator(thrust::counting_iterator<std::size_t>(0), is_even);
+//     auto zip = thrust::make_zip_iterator(thrust::make_tuple(d_contained.begin(), gold_iter));
+// =======
+      cuda::make_transform_iterator(cuda::counting_iterator<std::size_t>(0), is_even);
+    auto zip = thrust::make_zip_iterator(cuda::std::tuple{d_contained.begin(), gold_iter});
+// >>>>>>> END NEW CODE (3cdd3b83)
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
   }
 
@@ -123,14 +134,14 @@ void test_unique_sequence(Set& set, size_type num_keys)
 
     set.find_if(keys_begin,
                 keys_begin + num_keys,
-                thrust::counting_iterator<std::size_t>{0},
+                cuda::counting_iterator<std::size_t>{0},
                 is_even,
                 found_results.begin());
 
     REQUIRE(cuco::test::equal(
       found_results.begin(),
       found_results.end(),
-      thrust::make_transform_iterator(thrust::counting_iterator<Key>{0}, gold_fn),
+      cuda::make_transform_iterator(cuda::counting_iterator<Key>{0}, gold_fn),
       cuda::proclaim_return_type<bool>(
         [] __device__(auto const& found, auto const& gold) { return found == gold; })));
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025, NVIDIA CORPORATION.
+ * Copyright (c) 2024-2026, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@
 #include <cuco/static_multiset.cuh>
 
 #include <cuda/functional>
+#include <cuda/iterator>
+#include <cuda/std/tuple>
+// >>>>>>> END NEW CODE (3cdd3b83)
 #include <thrust/device_vector.h>
 #include <thrust/distance.h>
-#include <thrust/iterator/constant_iterator.h>
-#include <thrust/iterator/counting_iterator.h>
 #include <thrust/sequence.h>
 #include <thrust/sort.h>
 #include <thrust/transform.h>
@@ -66,12 +67,17 @@ void test_unique_sequence(Set& set, size_type num_keys)
   {
     set.contains_if(keys_begin,
                     keys_begin + num_keys,
-                    thrust::counting_iterator<std::size_t>(0),
+                    cuda::counting_iterator<std::size_t>(0),
                     is_even,
                     d_contained.begin());
     auto gold_iter =
-      thrust::make_transform_iterator(thrust::counting_iterator<std::size_t>(0), is_even);
-    auto zip = thrust::make_zip_iterator(thrust::make_tuple(d_contained.begin(), gold_iter));
+// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
+//       thrust::make_transform_iterator(thrust::counting_iterator<std::size_t>(0), is_even);
+//     auto zip = thrust::make_zip_iterator(thrust::make_tuple(d_contained.begin(), gold_iter));
+// =======
+      cuda::make_transform_iterator(cuda::counting_iterator<std::size_t>(0), is_even);
+    auto zip = thrust::make_zip_iterator(cuda::std::tuple{d_contained.begin(), gold_iter});
+// >>>>>>> END NEW CODE (3cdd3b83)
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
   }
 }

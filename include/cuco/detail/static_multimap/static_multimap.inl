@@ -40,10 +40,17 @@
 #include <cuco/detail/storage/counter_storage.cuh>
 #include <cuco/detail/utility/cuda.hpp>
 
+// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
+// #include <thrust/count.h>
+// #include <thrust/execution_policy.h>
+// #include <thrust/iterator/transform_iterator.h>
+// #include <thrust/tuple.h>
+// =======
+#include <cuda/iterator>
+#include <cuda/std/tuple>
 #include <thrust/count.h>
 #include <thrust/execution_policy.h>
-#include <thrust/iterator/transform_iterator.h>
-#include <thrust/tuple.h>
+// >>>>>>> END NEW CODE (3cdd3b83)
 
 #include <iterator>
 
