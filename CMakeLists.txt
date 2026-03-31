@@ -108,7 +108,7 @@ option(BUILD_TESTS "Configure CMake to build tests" ${default_build_option_state
 option(BUILD_BENCHMARKS "Configure CMake to build (google) benchmarks" ${default_build_option_state})
 option(BUILD_EXAMPLES "Configure CMake to build examples" ${default_build_option_state})
 option(INSTALL_CUCO "Enable CMake install rules for cuco" ${default_build_option_state})
-option(CUCO_CREATE_PACKAGE "Create a standalone package of hipCollections (NOTE: all dependencies that are downloaded via CPM are added into the package)." OFF)
+option(INSTALL_CUCO_CPM_DEPS "Whether to install/package third-party dependencies of cuco together with cuco. This has only an effect on packages that are downloaded by CPM, not those that CPM finds locally." ON)
 
 # Write the version header
 rapids_cmake_write_version_file(include/cuco/version_config.hpp)
@@ -226,7 +226,7 @@ endif(BUILD_EXAMPLES)
 ###################################################################################################
 # - Install targets -------------------------------------------------------------------------------
 
-install(TARGETS cuco EXPORT cuco-exports)
+install(TARGETS cuco EXPORT cuco-exports COMPONENT devel)
 
 set(doc_string
     [=[
@@ -251,37 +251,47 @@ rapids_export(
     NAMESPACE cuco::
     DOCUMENTATION doc_string)
 
-if(INSTALL_CUCO OR CUCO_CREATE_PACKAGE)
-    install(DIRECTORY include/cuco/ DESTINATION include/cuco)
-    install(DIRECTORY include/hip_extensions/ DESTINATION include/hip_extensions)
-    install(FILES ${CUCO_BINARY_DIR}/include/cuco/version_config.hpp DESTINATION include/cuco)
-    # install directory cuco-config generation
-    rapids_export(
-        INSTALL cuco
-        EXPORT_SET cuco-exports
-        GLOBAL_TARGETS cuco
-        NAMESPACE cuco::
-        DOCUMENTATION doc_string)
-endif()
+if(INSTALL_CUCO)
+  install(DIRECTORY include/cuco/ DESTINATION include/cuco COMPONENT devel)
+  install(DIRECTORY include/hip_extensions/ DESTINATION include/hip_extensions COMPONENT devel)
+  install(FILES ${CUCO_BINARY_DIR}/include/cuco/version_config.hpp DESTINATION include/cuco COMPONENT devel)
+  # install directory cuco-config generation
+  rapids_export(
+      INSTALL cuco
+      EXPORT_SET cuco-exports
+      GLOBAL_TARGETS cuco
+      NAMESPACE cuco::
+      DOCUMENTATION doc_string
+      PROJECT_COMPONENT devel)
 
-if(CUCO_CREATE_PACKAGE)
-  set(DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX "dev")
-  if (DEFINED ENV{CUCO_DEVEL_PACKAGE_SUFFIX})
-    set(DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX "$ENV{CUCO_DEVEL_PACKAGE_SUFFIX}")
-  endif()
-
-  set(CUCO_DEVEL_PACKAGE_SUFFIX "${DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX}" CACHE STRING "Overwrite development package suffix.")
-  set(CPACK_PACKAGE_NAME "rocm-hipcollections-${DEFAULT_CUCO_DEVEL_PACKAGE_SUFFIX}")
+  set(CPACK_PACKAGE_NAME "hipcollections")
   set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc.")
   set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_VENDOR}")
   set(CPACK_OUTPUT_FILE_PREFIX "dist" CACHE PATH "Package output file prefix.")
   set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
   set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
   set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-  if( NOT libhipcxx_ADDED )
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libhipcxx-dev (>= 2.7.0)")
-  endif()
   set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Package install prefix.")
+
+  if(NOT INSTALL_CUCO_CPM_DEPS)
+    # NOTE: Enable component-based packaging
+    #       so that we can filter out the auto-generated
+    #       hipccl dependency, which has its own component.
+    set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME devel) # note: removes 'Unspecified' component
+    set(CPACK_COMPONENTS_ALL devel)
+    set(CPACK_DEB_COMPONENT_INSTALL ON)
+    set(CPACK_RPM_COMPONENT_INSTALL ON)
+    set(CPACK_DEBIAN_DEVEL_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-dev")
+    set(CPACK_RPM_DEVEL_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-devel")
+    set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "libhipcxx-dev (>= 2.7.0)")
+    set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "libhipcxx-devel >= 2.7.0")
+  else()
+    set(CPACK_DEBIAN_DEVEL_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-standalone")
+    set(CPACK_RPM_DEVEL_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-standalone")
+  endif()
+  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+  set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+
   include(CPack)
 endif()
+
