@@ -176,19 +176,12 @@ int main(void)
   auto tuple_iter =
     thrust::make_zip_iterator(thrust::make_tuple(contained_keys.begin(), contained_values.begin()));
   // Iterate over all slot contents and verify that `slot.key + 1 == slot.value` is always true.
-// <<<<<<< OLD CODE from ac4494ca (46edc245) - COMMENTED OUT
-//   auto result = thrust::all_of(
-//     thrust::device, tuple_iter, tuple_iter + num_inserted[0], [] __device__(auto const& tuple) {
-//       return thrust::get<0>(tuple) + 1 == thrust::get<1>(tuple);
-//     });
-// =======
   auto result = thrust::all_of(thrust::device,
                                tuple_iter,
                                tuple_iter + num_inserted[0],
                                [] __device__(auto const& tuple) -> bool {
                                  return cuda::std::get<0>(tuple) + 1 == cuda::std::get<1>(tuple);
                                });
-// >>>>>>> END NEW CODE (46edc245)
 
   if (result) { std::cout << "Success! Target values are properly incremented.\n"; }
 

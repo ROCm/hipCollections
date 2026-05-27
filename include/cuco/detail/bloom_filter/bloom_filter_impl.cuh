@@ -43,15 +43,11 @@
 
 #if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
 #include <cub/device/device_for.cuh>
-// <<<<<<< OLD CODE from 9fbe4599 (234e341f) - COMMENTED OUT
-// #else
-// #include <hipcub/hipcub.hpp>
-// namespace cub = hipcub;
-// #endif
-//
-// =======
 #include <cub/device/device_transform.cuh>
-// >>>>>>> END NEW CODE (234e341f)
+#else
+#include <hipcub/hipcub.hpp>
+namespace cub = hipcub;
+#endif
 #include <cuda/atomic>
 #include <cuda/iterator>
 #include <cuda/std/__algorithm/max.h>

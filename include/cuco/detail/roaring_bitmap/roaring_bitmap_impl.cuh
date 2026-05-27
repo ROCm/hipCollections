@@ -48,16 +48,10 @@
 namespace cub = hipcub;
 #else
 #include <cub/device/device_transform.cuh>
-// <<<<<<< OLD CODE from ac4494ca (46edc245) - COMMENTED OUT
-// #endif
-//
-// =======
+#endif
+
 #include <cuda/functional>
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-// // >>>>>>> END NEW CODE (46edc245)
-// =======
 #include <cuda/iterator>
-// >>>>>>> END NEW CODE (3cdd3b83)
 #include <cuda/std/cstddef>
 #include <cuda/std/cstdint>
 #include <cuda/std/functional>
@@ -112,13 +106,8 @@ class roaring_bitmap_impl<cuda::std::uint32_t> {
                                  cudaStream_t{nullptr}}) const noexcept
   {
     if (this->empty()) {
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-//       (void) cub::DeviceTransform::Transform(
-//         thrust::constant_iterator<bool>(false),
-// =======
       cub::DeviceTransform::Transform(
         cuda::constant_iterator<bool>(false),
-// >>>>>>> END NEW CODE (3cdd3b83)
         contained,
         cuda::std::distance(first, last),
         cuda::proclaim_return_type<bool>([] __device__(auto /* dummy */) { return false; }),
@@ -365,13 +354,8 @@ class roaring_bitmap_impl<cuda::std::uint64_t> {
                                  cudaStream_t{nullptr}}) const noexcept
   {
     if (this->empty()) {
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-//       (void) cub::DeviceTransform::Transform(
-//         thrust::constant_iterator<bool>(false),
-// =======
       cub::DeviceTransform::Transform(
         cuda::constant_iterator<bool>(false),
-// >>>>>>> END NEW CODE (3cdd3b83)
         contained,
         cuda::std::distance(first, last),
         cuda::proclaim_return_type<bool>([] __device__(auto /* dummy */) { return false; }),

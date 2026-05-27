@@ -40,16 +40,13 @@
 #if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
 #include <cub/device/device_scan.cuh>
 #include <cub/device/device_select.cuh>
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-// #else
-// #include <hipcub/device/device_scan.hpp>
-// #include <hipcub/device/device_select.hpp>
-// namespace cub = hipcub;
-// #endif
-//
-// =======
+#else
+#include <hipcub/device/device_scan.hpp>
+#include <hipcub/device/device_select.hpp>
+namespace cub = hipcub;
+#endif
+
 #include <cuda/iterator>
-// >>>>>>> END NEW CODE (3cdd3b83)
 #include <cuda/std/bit>
 #include <thrust/device_vector.h>
 

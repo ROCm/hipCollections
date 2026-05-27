@@ -56,13 +56,7 @@ function(ConfigureTest TEST_NAME)
     target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     set_target_properties(${TEST_NAME} PROPERTIES
                                        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
-# <<<<<<< OLD CODE from 6116b275 (8aa7909b) - COMMENTED OUT
-#     target_compile_options(${TEST_NAME} PRIVATE -Wall -Wno-unused-parameter)
-#     # TODO(HIP/AMD): Find equivalents of --expt-extended-lambda -Wno-deprecated-gpu-targets
-#     # TODO(HIP/AMD): Enable -Wextra
-# =======
     cuco_set_common_compile_options(${TEST_NAME})
-# >>>>>>> END NEW CODE (8aa7909b)
     catch_discover_tests(${TEST_NAME} EXTRA_ARGS --allow-running-no-tests)
 endfunction(ConfigureTest)
 
@@ -174,17 +168,11 @@ ConfigureTest(DYNAMIC_BITSET_TEST
 # - hyperloglog ----------------------------------------------------------------------
 # Note(HIP/AMD): hyperloglog is currently not supported due to missing reduce api in cooperative_groups
 ConfigureTest(HYPERLOGLOG_TEST
-# <<<<<<< OLD CODE from 14d7fa3e (69bb46bc) - COMMENTED OUT
-#    hyperloglog/unique_sequence_test.cu
-#    hyperloglog/spark_parity_test.cu
-#    hyperloglog/device_ref_test.cu)
-# =======
     hyperloglog/unique_sequence_test.cu
     hyperloglog/spark_parity_test.cu
     hyperloglog/device_ref_test.cu
     hyperloglog/type_deduction_test.cu
     hyperloglog/add_if_test.cu)
-# >>>>>>> END NEW CODE (69bb46bc)
 
 ###################################################################################################
 # - bloom_filter ----------------------------------------------------------------------------------

@@ -1,9 +1,5 @@
 /*
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-//  * Copyright (c) 2023-2024, NVIDIA CORPORATION.
-// =======
  * Copyright (c) 2023-2026, NVIDIA CORPORATION.
-// >>>>>>> END NEW CODE (3cdd3b83)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

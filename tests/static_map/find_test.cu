@@ -21,7 +21,6 @@
 #include <cuda/functional>
 #include <cuda/iterator>
 #include <cuda/std/tuple>
-// >>>>>>> END NEW CODE (3cdd3b83)
 #include <thrust/device_vector.h>
 #include <thrust/execution_policy.h>
 #include <thrust/for_each.h>
@@ -66,13 +65,8 @@ void test_unique_sequence(Map& map, size_type num_keys)
   SECTION("Non-inserted keys have no matches")
   {
     map.find(keys_begin, keys_begin + num_keys, d_results.begin());
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-//     auto zip = thrust::make_zip_iterator(thrust::make_tuple(
-//       d_results.begin(), thrust::constant_iterator<Key>{map.empty_key_sentinel()}));
-// =======
     auto zip = thrust::make_zip_iterator(
       cuda::std::tuple{d_results.begin(), cuda::constant_iterator<Key>{map.empty_key_sentinel()}});
-// >>>>>>> END NEW CODE (3cdd3b83)
 
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
   }
@@ -92,13 +86,8 @@ void test_unique_sequence(Map& map, size_type num_keys)
     map.find_async(
       keys_begin, keys_begin + num_keys, always_false{}, map.hash_function(), d_results.begin());
     CUCO_CUDA_TRY(cudaDeviceSynchronize());
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-//     auto zip = thrust::make_zip_iterator(thrust::make_tuple(
-//       d_results.begin(), thrust::constant_iterator<Value>{map.empty_value_sentinel()}));
-// =======
     auto zip = thrust::make_zip_iterator(cuda::std::tuple{
       d_results.begin(), cuda::constant_iterator<Value>{map.empty_value_sentinel()}});
-// >>>>>>> END NEW CODE (3cdd3b83)
 
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
   }
@@ -134,13 +123,8 @@ void test_unique_sequence(Map& map, size_type num_keys)
                       d_results.begin());
 
     CUCO_CUDA_TRY(cudaDeviceSynchronize());
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-//     auto zip = thrust::make_zip_iterator(thrust::make_tuple(
-//       d_results.begin(), thrust::constant_iterator<Value>{map.empty_value_sentinel()}));
-// =======
     auto zip = thrust::make_zip_iterator(cuda::std::tuple{
       d_results.begin(), cuda::constant_iterator<Value>{map.empty_value_sentinel()}});
-// >>>>>>> END NEW CODE (3cdd3b83)
 
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
   }

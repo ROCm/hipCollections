@@ -141,56 +141,6 @@ __device__ __forceinline__ cuda::std::int32_t count_least_significant_bits(cuda:
   return __popcll(x & (1UL << n) - 1UL);
 }
 
-// <<<<<<< OLD CODE from 988db9a6 (dad606de) - COMMENTED OUT
-// /**
-//  * @brief Converts pair to `cuda::std::tuple` to allow assigning to a zip iterator.
-//  *
-//  * @tparam Key The slot key type
-//  * @tparam Value The slot value type
-//  */
-// template <typename Key, typename Value>
-// struct slot_to_tuple {
-//   /**
-//    * @brief Converts a pair to a `cuda::std::tuple`.
-//    *
-//    * @tparam S The slot type
-//    *
-//    * @param s The slot to convert
-//    * @return A cuda::std::tuple containing `s.first` and `s.second`
-//    */
-//   template <typename S>
-//   __host__ __device__ cuda::std::tuple<Key, Value> operator()(S const& s)  // todo(hip): double check if __host__ is needed, file ticket?
-//   {
-//     return cuda::std::tuple<Key, Value>(s.first, s.second);
-//   }
-// };
-//
-// /**
-//  * @brief Device functor returning whether the input slot `s` is filled.
-//  *
-//  * @tparam Key The slot key type
-//  */
-// template <typename Key>
-// struct slot_is_filled {
-//   Key empty_key_sentinel_;  ///< The value of the empty key sentinel
-//
-//   /**
-//    * @brief Indicates if the target slot `s` is filled.
-//    *
-//    * @tparam S The slot type
-//    *
-//    * @param s The slot to query
-//    * @return `true` if slot `s` is filled
-//    */
-//   template <typename S>
-//   __device__ bool operator()(S const& s)
-//   {
-//     return not cuco::detail::bitwise_compare(thrust::get<0>(s), empty_key_sentinel_);
-//   }
-// };
-//
-// =======
-// >>>>>>> END NEW CODE (dad606de)
 template <typename SizeType, typename HashType>
 __host__ __device__ constexpr SizeType to_positive(HashType hash)
 {

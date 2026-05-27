@@ -68,22 +68,12 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map erase tests",
     thrust::sequence(thrust::device, d_keys.begin(), d_keys.end(), 1);
     thrust::sequence(thrust::device, d_values.begin(), d_values.end(), 1);
 
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-// // <<<<<<< OLD CODE from 7f980758 (24203fbf) - COMMENTED OUT
-// //     auto pairs_begin =
-// //       thrust::make_zip_iterator(thrust::make_tuple(d_keys.begin(), d_values.begin()));
-// // =======
-//     auto pairs_begin = thrust::make_transform_iterator(
-//       thrust::make_counting_iterator<std::size_t>(0),
-// =======
     auto pairs_begin = cuda::make_transform_iterator(
       cuda::make_counting_iterator<std::size_t>(0),
-// >>>>>>> END NEW CODE (3cdd3b83)
       cuda::proclaim_return_type<cuco::pair<Key, Value>>(
         [keys = d_keys.begin(), values = d_values.begin()] __device__(auto i) {
           return cuco::pair<Key, Value>{keys[i], values[i]};
         }));
-// >>>>>>> END NEW CODE (24203fbf)
 
     map.insert(pairs_begin, pairs_begin + num_keys);
 
@@ -128,22 +118,12 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map erase tests",
     thrust::sequence(thrust::device, d_keys.begin(), d_keys.end(), 1);
     thrust::sequence(thrust::device, d_values.begin(), d_values.end(), 1);
 
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-// // <<<<<<< OLD CODE from 7f980758 (24203fbf) - COMMENTED OUT
-// //     auto pairs_begin =
-// //       thrust::make_zip_iterator(thrust::make_tuple(d_keys.begin(), d_values.begin()));
-// // =======
-//     auto pairs_begin = thrust::make_transform_iterator(
-//       thrust::make_counting_iterator<std::size_t>(0),
-// =======
     auto pairs_begin = cuda::make_transform_iterator(
       cuda::make_counting_iterator<std::size_t>(0),
-// >>>>>>> END NEW CODE (3cdd3b83)
       cuda::proclaim_return_type<cuco::pair<Key, Value>>(
         [keys = d_keys.begin(), values = d_values.begin()] __device__(auto i) {
           return cuco::pair<Key, Value>{keys[i], values[i]};
         }));
-// >>>>>>> END NEW CODE (24203fbf)
 
     map.insert(pairs_begin, pairs_begin + num);
 

@@ -141,12 +141,8 @@ class hyperloglog {
    *
    * @param stream CUDA stream this operation is executed in
    */
-// <<<<<<< OLD CODE from b2133c28 (51c70131) - COMMENTED OUT
-//   __host__ constexpr void clear_async(cuda::stream_ref stream = {}) noexcept;
-// =======
   constexpr void clear_async(cuda::stream_ref stream = cuda::stream_ref{
                                cudaStream_t{nullptr}}) noexcept;
-// >>>>>>> END NEW CODE (51c70131)
 
   /**
    * @brief Resets the estimator, i.e., clears the current count estimate.
@@ -156,11 +152,7 @@ class hyperloglog {
    *
    * @param stream CUDA stream this operation is executed in
    */
-// <<<<<<< OLD CODE from b2133c28 (51c70131) - COMMENTED OUT
-//   __host__ constexpr void clear(cuda::stream_ref stream = {});
-// =======
   constexpr void clear(cuda::stream_ref stream = cuda::stream_ref{cudaStream_t{nullptr}});
-// >>>>>>> END NEW CODE (51c70131)
 
   /**
    * @brief Asynchronously adds to be counted items to the estimator.

@@ -33,66 +33,58 @@
 
 cmake_minimum_required(VERSION 3.23.1 FATAL_ERROR)
 
-# <<<<<<< OLD CODE from b82a75b9 (354a344f) - COMMENTED OUT
-# # NOTE(HIP/AMD): make *.cu files HIP lang files
-# set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_CURRENT_LIST_DIR}/overrides.cmake")
-#
-# # Set default HIP architectures to maintain compatibility with existing scripts
-# if(NOT DEFINED CMAKE_HIP_ARCHITECTURES)
-#   set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx942")
-# endif()
-#
-# set(
-#   RAPIDS_CMAKE_MODULE_PATH
-#   "$ENV{RAPIDS_CMAKE_MODULE_PATH}"
-#   CACHE FILEPATH
-#   "Announce that ROCmDS-CMake is available via the provided module path."
-# )
-# if (NOT "${RAPIDS_CMAKE_MODULE_PATH}" STREQUAL "")
-#   list(APPEND CMAKE_MODULE_PATH "${RAPIDS_CMAKE_MODULE_PATH}")
-#   include(rapids-cmake)  # ensure rapids-cmake-dir is set
-# else()
-#   if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
-#     if(DEFINED ENV{RAPIDS_CMAKE_SCRIPT_REPO})
-#       set(RAPIDS_CMAKE_SCRIPT_REPO "$ENV{RAPIDS_CMAKE_SCRIPT_REPO}")
-#     else()
-#       set(RAPIDS_CMAKE_SCRIPT_REPO ROCm-DS/ROCmDS-CMake)
-#     endif()
-#     if(DEFINED ENV{RAPIDS_CMAKE_SCRIPT_BRANCH})
-#       set(RAPIDS_CMAKE_SCRIPT_BRANCH "$ENV{RAPIDS_CMAKE_SCRIPT_BRANCH}")
-#     else()
-#       set(RAPIDS_CMAKE_SCRIPT_BRANCH release/rocmds-25.10)
-#     endif()
-#
-#     set(URL "https://raw.githubusercontent.com/${RAPIDS_CMAKE_SCRIPT_REPO}/${RAPIDS_CMAKE_SCRIPT_BRANCH}/RAPIDS.cmake")
-#     file(DOWNLOAD ${URL}
-#       ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake
-#       STATUS DOWNLOAD_STATUS
-#     )
-#     list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
-#     list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
-#
-#     if(${STATUS_CODE} EQUAL 0)
-#       message(STATUS "Downloaded 'CUCO_RAPIDS.cmake' successfully!")
-#     else()
-#       file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
-#       # for debuging: message(FATAL_ERROR "Failed to download 'CUCO_RAPIDS.cmake'. URL: ${URL}, Reason: ${ERROR_MESSAGE}")
-#       message(FATAL_ERROR "Failed to download 'CUCO_RAPIDS.cmake'. Reason: ${ERROR_MESSAGE}")
-#     endif()
-#   endif()
-#
-#   if(DEFINED ENV{RAPIDS_CMAKE_BRANCH})
-#     set(rapids-cmake-branch $ENV{RAPIDS_CMAKE_BRANCH})
-#   endif()
-#
-#   include(${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
-# =======
-set(rapids-cmake-version 25.12)
-if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
-    file(DOWNLOAD
-      https://raw.githubusercontent.com/rapidsai/rapids-cmake/release/${rapids-cmake-version}/RAPIDS.cmake
-         ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
-# >>>>>>> END NEW CODE (354a344f)
+# NOTE(HIP/AMD): make *.cu files HIP lang files
+set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_CURRENT_LIST_DIR}/overrides.cmake")
+
+# Set default HIP architectures to maintain compatibility with existing scripts
+if(NOT DEFINED CMAKE_HIP_ARCHITECTURES)
+  set(CMAKE_HIP_ARCHITECTURES "gfx90a;gfx942")
+endif()
+
+set(
+  RAPIDS_CMAKE_MODULE_PATH
+  "$ENV{RAPIDS_CMAKE_MODULE_PATH}"
+  CACHE FILEPATH
+  "Announce that ROCmDS-CMake is available via the provided module path."
+)
+if (NOT "${RAPIDS_CMAKE_MODULE_PATH}" STREQUAL "")
+  list(APPEND CMAKE_MODULE_PATH "${RAPIDS_CMAKE_MODULE_PATH}")
+  include(rapids-cmake)  # ensure rapids-cmake-dir is set
+else()
+  if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
+    if(DEFINED ENV{RAPIDS_CMAKE_SCRIPT_REPO})
+      set(RAPIDS_CMAKE_SCRIPT_REPO "$ENV{RAPIDS_CMAKE_SCRIPT_REPO}")
+    else()
+      set(RAPIDS_CMAKE_SCRIPT_REPO ROCm-DS/ROCmDS-CMake)
+    endif()
+    if(DEFINED ENV{RAPIDS_CMAKE_SCRIPT_BRANCH})
+      set(RAPIDS_CMAKE_SCRIPT_BRANCH "$ENV{RAPIDS_CMAKE_SCRIPT_BRANCH}")
+    else()
+      set(RAPIDS_CMAKE_SCRIPT_BRANCH release/rocmds-26.03)
+    endif()
+
+    set(URL "https://raw.githubusercontent.com/${RAPIDS_CMAKE_SCRIPT_REPO}/${RAPIDS_CMAKE_SCRIPT_BRANCH}/RAPIDS.cmake")
+    file(DOWNLOAD ${URL}
+      ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake
+      STATUS DOWNLOAD_STATUS
+    )
+    list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+    list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
+
+    if(${STATUS_CODE} EQUAL 0)
+      message(STATUS "Downloaded 'CUCO_RAPIDS.cmake' successfully!")
+    else()
+      file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
+      # for debuging: message(FATAL_ERROR "Failed to download 'CUCO_RAPIDS.cmake'. URL: ${URL}, Reason: ${ERROR_MESSAGE}")
+      message(FATAL_ERROR "Failed to download 'CUCO_RAPIDS.cmake'. Reason: ${ERROR_MESSAGE}")
+    endif()
+  endif()
+
+  if(DEFINED ENV{RAPIDS_CMAKE_BRANCH})
+    set(rapids-cmake-branch $ENV{RAPIDS_CMAKE_BRANCH})
+  endif()
+
+  include(${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
 endif()
 
 include(rapids-cmake)

@@ -1,9 +1,5 @@
 /*
-// <<<<<<< OLD CODE from 0665cdaf (1ddeffb1) - COMMENTED OUT
-//  * Copyright (c) 2024, NVIDIA CORPORATION.
-// =======
  * Copyright (c) 2024-2026, NVIDIA CORPORATION.
-// >>>>>>> END NEW CODE (1ddeffb1)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +21,6 @@
 #include <cuda/functional>
 #include <cuda/iterator>
 #include <cuda/std/tuple>
-// >>>>>>> END NEW CODE (3cdd3b83)
 #include <thrust/device_vector.h>
 #include <thrust/functional.h>
 
@@ -52,13 +47,8 @@ void test_multimap_find(Map& map, size_type num_keys)
     thrust::device_vector<Value> found_vals(num_keys);
 
     map.find(keys_begin, keys_begin + num_keys, found_vals.begin());
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-//     auto zip = thrust::make_zip_iterator(thrust::make_tuple(
-//       found_vals.begin(), thrust::constant_iterator<Value>{map.empty_value_sentinel()}));
-// =======
     auto zip = thrust::make_zip_iterator(cuda::std::tuple{
       found_vals.begin(), cuda::constant_iterator<Value>{map.empty_value_sentinel()}});
-// >>>>>>> END NEW CODE (3cdd3b83)
 
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
   }
