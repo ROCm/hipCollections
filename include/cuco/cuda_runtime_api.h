@@ -36,6 +36,9 @@
 #ifndef cudaStream_t
 #  define cudaStream_t hipStream_t
 #endif
+#ifndef cudaMemcpyKind
+#  define cudaMemcpyKind hipMemcpyKind
+#endif
 #ifndef cudaMemPoolAttr
 #  define cudaMemPoolAttr hipMemPoolAttr
 #endif
@@ -164,6 +167,9 @@
 #endif
 #ifndef cudaGetLastError
 #  define cudaGetLastError hipGetLastError
+#endif
+#ifndef cudaPeekAtLastError
+#  define cudaPeekAtLastError hipPeekAtLastError
 #endif
 #ifndef cudaLaunchKernel
 #  define cudaLaunchKernel hipLaunchKernel

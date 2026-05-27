@@ -704,6 +704,7 @@ class bloom_filter_impl {
                       other.data(),
                       this->data(),
                       [] __device__(word_type a, word_type b) { return a | b; });
+    CUCO_CUDA_TRY(cudaPeekAtLastError());
 #endif
   }
 
@@ -737,6 +738,7 @@ class bloom_filter_impl {
                       other.data(),
                       this->data(),
                       [] __device__(word_type a, word_type b) { return a & b; });
+    CUCO_CUDA_TRY(cudaPeekAtLastError());
 #endif
   }
 
