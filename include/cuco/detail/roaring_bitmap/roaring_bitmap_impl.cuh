@@ -106,7 +106,9 @@ class roaring_bitmap_impl<cuda::std::uint32_t> {
                                  cudaStream_t{nullptr}}) const noexcept
   {
     if (this->empty()) {
-      cub::DeviceTransform::Transform(
+      // contains_async is noexcept so CUCO_CUDA_TRY would terminate; match the
+      // else-branch's explicit discard convention.
+      (void) cub::DeviceTransform::Transform(
         cuda::constant_iterator<bool>(false),
         contained,
         cuda::std::distance(first, last),
@@ -354,7 +356,9 @@ class roaring_bitmap_impl<cuda::std::uint64_t> {
                                  cudaStream_t{nullptr}}) const noexcept
   {
     if (this->empty()) {
-      cub::DeviceTransform::Transform(
+      // contains_async is noexcept so CUCO_CUDA_TRY would terminate; match the
+      // else-branch's explicit discard convention.
+      (void) cub::DeviceTransform::Transform(
         cuda::constant_iterator<bool>(false),
         contained,
         cuda::std::distance(first, last),

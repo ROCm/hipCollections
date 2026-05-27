@@ -23,10 +23,6 @@
 
 #include <cstddef>
 
-#ifdef __HIP_PLATFORM_AMD__
-using cudaMemcpyKind = hipMemcpyKind;
-#endif
-
 namespace cuco::detail {
 
 /**

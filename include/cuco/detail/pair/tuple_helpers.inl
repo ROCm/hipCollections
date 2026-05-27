@@ -41,6 +41,11 @@ struct tuple_element<1, cuco::pair<T1, T2>> {
   using type = T2;
 };
 
+// NOTE(HIP/AMD): without these, structured-binding `auto const& [a, b] = p`
+// over `cuco::pair const` deduces a/b as non-const T because the explicit
+// cv-qualified specializations below previously inherited the non-const type
+// and the standard library's generic cv-propagating specialization doesn't
+// take effect since the more-specific cuco specializations win.
 template <typename T1, typename T2>
 struct tuple_element<0, const cuco::pair<T1, T2>> {
   using type = T1 const;
