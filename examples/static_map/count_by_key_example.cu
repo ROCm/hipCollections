@@ -33,7 +33,6 @@
 
 #include <cuco/static_map.cuh>
 
-#include <cub/block/block_reduce.cuh>
 #include <cuda/iterator>
 #include <cuda/std/atomic>
 #include <cuda/std/functional>

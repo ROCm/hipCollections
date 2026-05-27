@@ -31,11 +31,11 @@
 
 TEMPLATE_TEST_CASE_SIG("dynamic_map find tests",
                        "",
-                       ((typename Key, typename Value), Key, Value),
-                       (int32_t, int32_t),
-                       (int32_t, int64_t),
-                       (int64_t, int32_t),
-                       (int64_t, int64_t))
+                       ((typename Key, typename Value, int dummy), Key, Value, dummy), //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
+                       (int32_t, int32_t, 1),
+                       (int32_t, int64_t, 1),
+                       (int64_t, int32_t, 1),
+                       (int64_t, int64_t, 1))
 {
   constexpr std::size_t num_keys = 1'000'000;
   cuco::dynamic_map<Key, Value> map{num_keys * 2,
@@ -66,9 +66,9 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map find tests",
     map.find(d_keys.begin(), d_keys.end(), d_found_values.begin());
 
     auto zip_equal = cuda::proclaim_return_type<bool>(
-      [] __device__(auto const& p) { return cuda::std::get<0>(p) == cuda::std::get<1>(p); });
+      [] __device__(auto const& p) { return thrust::get<0>(p) == thrust::get<1>(p); });
     auto zip =
-      thrust::make_zip_iterator(cuda::std::tuple{d_values.begin(), d_found_values.begin()});
+      thrust::make_zip_iterator(thrust::make_tuple(d_values.begin(), d_found_values.begin()));
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
 
     thrust::device_vector<Key> d_nonexistent_keys(100);
@@ -81,9 +81,8 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map find tests",
 
     map.find(d_nonexistent_keys.begin(), d_nonexistent_keys.end(), d_nonexistent_values.begin());
 
-    auto empty_zip = thrust::make_zip_iterator(
-      cuda::std::tuple{d_nonexistent_values.begin(),
-                       cuda::constant_iterator<Value>{cuco::empty_value<Value>{-1}.value}});
+    auto empty_zip = thrust::make_zip_iterator(thrust::make_tuple(d_nonexistent_values.begin(),
+                       cuda::constant_iterator<Value>{cuco::empty_value<Value>{-1}.value}));
     REQUIRE(cuco::test::all_of(empty_zip, empty_zip + 100, zip_equal));
 
     thrust::device_vector<Key> d_mixed_keys(200);
@@ -98,12 +97,11 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map find tests",
     map.find(d_mixed_keys.begin(), d_mixed_keys.end(), d_mixed_values.begin());
 
     auto first_half_zip =
-      thrust::make_zip_iterator(cuda::std::tuple{d_values.begin(), d_mixed_values.begin()});
+      thrust::make_zip_iterator(thrust::make_tuple(d_values.begin(), d_mixed_values.begin()));
     REQUIRE(cuco::test::all_of(first_half_zip, first_half_zip + 100, zip_equal));
 
-    auto second_half_empty_zip = thrust::make_zip_iterator(
-      cuda::std::tuple{d_mixed_values.begin() + 100,
-                       cuda::constant_iterator<Value>{cuco::empty_value<Value>{-1}.value}});
+    auto second_half_empty_zip = thrust::make_zip_iterator(thrust::make_tuple(d_mixed_values.begin() + 100,
+                       cuda::constant_iterator<Value>{cuco::empty_value<Value>{-1}.value}));
     REQUIRE(cuco::test::all_of(second_half_empty_zip, second_half_empty_zip + 100, zip_equal));
   }
 
@@ -130,9 +128,9 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map find tests",
     map.find(d_keys.begin(), d_keys.end(), d_found_values.begin());
 
     auto zip_equal = cuda::proclaim_return_type<bool>(
-      [] __device__(auto const& p) { return cuda::std::get<0>(p) == cuda::std::get<1>(p); });
+      [] __device__(auto const& p) { return thrust::get<0>(p) == thrust::get<1>(p); });
     auto zip =
-      thrust::make_zip_iterator(cuda::std::tuple{d_values.begin(), d_found_values.begin()});
+      thrust::make_zip_iterator(thrust::make_tuple(d_values.begin(), d_found_values.begin()));
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
 
     map.erase(d_keys.begin(), d_keys.begin() + num_keys / 2);
@@ -141,13 +139,12 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map find tests",
 
     map.find(d_keys.begin(), d_keys.end(), d_found_values.begin());
 
-    auto first_half_empty_zip = thrust::make_zip_iterator(cuda::std::tuple{
-      d_found_values.begin(), cuda::constant_iterator<Value>{cuco::empty_value<Value>{-1}.value}});
+    auto first_half_empty_zip = thrust::make_zip_iterator(thrust::make_tuple(
+      d_found_values.begin(), cuda::constant_iterator<Value>{cuco::empty_value<Value>{-1}.value}));
     REQUIRE(
       cuco::test::all_of(first_half_empty_zip, first_half_empty_zip + num_keys / 2, zip_equal));
 
-    auto second_half_zip = thrust::make_zip_iterator(
-      cuda::std::tuple{d_values.begin() + num_keys / 2, d_found_values.begin() + num_keys / 2});
+    auto second_half_zip = thrust::make_zip_iterator(thrust::make_tuple(d_values.begin() + num_keys / 2, d_found_values.begin() + num_keys / 2));
     REQUIRE(cuco::test::all_of(second_half_zip, second_half_zip + num_keys / 2, zip_equal));
   }
 }

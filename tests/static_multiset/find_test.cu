@@ -48,8 +48,7 @@ void test_unique_sequence(Set& set, size_type num_keys)
     thrust::device_vector<Key> d_results(num_keys);
 
     set.find(keys_begin, keys_begin + num_keys, d_results.begin());
-    auto zip = thrust::make_zip_iterator(
-      cuda::std::tuple{d_results.begin(), cuda::constant_iterator<Key>{set.empty_key_sentinel()}});
+    auto zip = thrust::make_zip_iterator(thrust::make_tuple(d_results.begin(), cuda::constant_iterator<Key>{set.empty_key_sentinel()}));
 
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
   }

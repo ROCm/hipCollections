@@ -18,12 +18,24 @@
 #include <cuco/detail/bitwise_compare.cuh>
 #include <cuco/detail/utility/cuda.cuh>
 
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
 #include <cub/block/block_reduce.cuh>
 #include <cub/block/block_scan.cuh>
+#else
+#include <hipcub/block/block_reduce.hpp>
+#include <hipcub/block/block_scan.hpp>
+namespace cub = hipcub;
+#endif
+
+#include <cuda/atomic>
 #include <cuda/std/atomic>
 #include <cuda/std/iterator>
 
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
 #include <cooperative_groups.h>
+#else
+#include <hip/hip_cooperative_groups.h>
+#endif
 
 namespace cuco::detail::dynamic_map_ns {
 namespace cg = cooperative_groups;

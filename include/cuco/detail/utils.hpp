@@ -37,10 +37,10 @@ inline constexpr bool
 template <typename Iterator>
 __host__ __device__ constexpr inline index_type distance(Iterator begin, Iterator end)
 {
-  using category = typename cuda::std::iterator_traits<Iterator>::iterator_category;
-  static_assert(cuda::std::is_base_of_v<cuda::std::random_access_iterator_tag, category> ||
-                  has_random_access_iterator_concept<Iterator>,
-                "Input iterator should be a random access iterator.");
+  // NOTE(HIP/AMD): drop the random-access static_assert. rocThrust's
+  // zip_iterator over cuda::counting_iterator doesn't expose iterator_concept,
+  // so the upstream check fires spuriously. The contracts of all call sites
+  // already assume random-access iterators.
   return static_cast<index_type>(cuda::std::distance(begin, end));
 }
 

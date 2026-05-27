@@ -37,9 +37,9 @@
 #include <cuda/std/utility>
 
 // FIXME/WAR(HIP/AMD): We need to include libhipcxx __config here to make
-// the macro _LIBCUDACXX_BEGIN_NAMESPACE_STD_NOVERSION from libhipcxx available
-// in order to add the symbols from tuple_helpers.inl to the correct namespace.
-#include <cuda/std/detail/__config>
+// the namespace macros from libhipcxx available so that symbols defined
+// inside tuple_helpers.inl land in the correct std-equivalent namespace.
+#include <cuda/std/__internal/namespaces.h>
 
 namespace cuco {
 
@@ -71,13 +71,36 @@ __host__ __device__ constexpr bool operator==(cuco::pair<T1, T2> const& lhs,
   return lhs.first == rhs.first and lhs.second == rhs.second;
 }
 
+// NOTE(HIP/AMD): Provide `get<I>(cuco::pair<T1, T2>)` in `cuco::` so that
+// C++17 structured-binding lookup finds it via ADL. The tuple_size and
+// tuple_element specializations live in the std-equivalent namespace below.
+template <std::size_t Index, typename T1, typename T2>
+__host__ __device__ constexpr auto& get(pair<T1, T2>& p) noexcept
+{
+  static_assert(Index < 2);
+  if constexpr (Index == 0) { return p.first; } else { return p.second; }
+}
+template <std::size_t Index, typename T1, typename T2>
+__host__ __device__ constexpr auto const& get(pair<T1, T2> const& p) noexcept
+{
+  static_assert(Index < 2);
+  if constexpr (Index == 0) { return p.first; } else { return p.second; }
+}
+template <std::size_t Index, typename T1, typename T2>
+__host__ __device__ constexpr auto&& get(pair<T1, T2>&& p) noexcept
+{
+  static_assert(Index < 2);
+  if constexpr (Index == 0) { return cuda::std::move(p.first); }
+  else { return cuda::std::move(p.second); }
+}
+
 }  // namespace cuco
 
-// NOTE(HIP/AMD): Older libhipcxx versions use
-// the "hip" namespace name while more recent ones use
-// "cuda". We therefore use the macros from libhipcxx
-// to put the tuple_helpers.inl symbols into the correct 
-// namespace.
-_LIBCUDACXX_BEGIN_NAMESPACE_STD_NOVERSION
+// NOTE(HIP/AMD): Use the libhipcxx namespace macros so the tuple_helpers.inl
+// specializations land in the same std-equivalent namespace as
+// cuda::std::{tuple,tuple_size,tuple_element}. The macro name changed from
+// _LIBCUDACXX_BEGIN_NAMESPACE_STD_NOVERSION (libhipcxx <=2.7) to
+// _CCCL_BEGIN_NAMESPACE_STD (libhipcxx 3.x).
+_CCCL_BEGIN_NAMESPACE_STD
 #include <cuco/detail/pair/tuple_helpers.inl>
-_LIBCUDACXX_END_NAMESPACE_STD_NOVERSION 
+_CCCL_END_NAMESPACE_STD

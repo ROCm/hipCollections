@@ -42,23 +42,33 @@ struct tuple_element<1, cuco::pair<T1, T2>> {
 };
 
 template <typename T1, typename T2>
-struct tuple_element<0, const cuco::pair<T1, T2>> : tuple_element<0, cuco::pair<T1, T2>> {};
-
-template <typename T1, typename T2>
-struct tuple_element<1, const cuco::pair<T1, T2>> : tuple_element<1, cuco::pair<T1, T2>> {};
-
-template <typename T1, typename T2>
-struct tuple_element<0, volatile cuco::pair<T1, T2>> : tuple_element<0, cuco::pair<T1, T2>> {};
-
-template <typename T1, typename T2>
-struct tuple_element<1, volatile cuco::pair<T1, T2>> : tuple_element<1, cuco::pair<T1, T2>> {};
-
-template <typename T1, typename T2>
-struct tuple_element<0, const volatile cuco::pair<T1, T2>> : tuple_element<0, cuco::pair<T1, T2>> {
+struct tuple_element<0, const cuco::pair<T1, T2>> {
+  using type = T1 const;
 };
 
 template <typename T1, typename T2>
-struct tuple_element<1, const volatile cuco::pair<T1, T2>> : tuple_element<1, cuco::pair<T1, T2>> {
+struct tuple_element<1, const cuco::pair<T1, T2>> {
+  using type = T2 const;
+};
+
+template <typename T1, typename T2>
+struct tuple_element<0, volatile cuco::pair<T1, T2>> {
+  using type = T1 volatile;
+};
+
+template <typename T1, typename T2>
+struct tuple_element<1, volatile cuco::pair<T1, T2>> {
+  using type = T2 volatile;
+};
+
+template <typename T1, typename T2>
+struct tuple_element<0, const volatile cuco::pair<T1, T2>> {
+  using type = T1 const volatile;
+};
+
+template <typename T1, typename T2>
+struct tuple_element<1, const volatile cuco::pair<T1, T2>> {
+  using type = T2 const volatile;
 };
 
 template <std::size_t Index, typename T1, typename T2>

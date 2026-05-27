@@ -96,7 +96,7 @@ void test_unique_sequence(Map& map, size_type num_keys)
                     d_contained.begin());
     auto gold_iter =
       cuda::make_transform_iterator(cuda::counting_iterator<std::size_t>(0), is_even);
-    auto zip = thrust::make_zip_iterator(cuda::std::tuple{d_contained.begin(), gold_iter});
+    auto zip = thrust::make_zip_iterator(thrust::make_tuple(d_contained.begin(), gold_iter));
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
   }
 
