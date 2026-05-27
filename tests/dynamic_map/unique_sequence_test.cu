@@ -38,7 +38,6 @@
 #include <cuda/functional>
 #include <cuda/iterator>
 #include <cuda/std/functional>
-// >>>>>>> END NEW CODE (24203fbf)
 #include <thrust/device_vector.h>
 #include <thrust/execution_policy.h>
 #include <thrust/sequence.h>
@@ -48,19 +47,11 @@
 
 TEMPLATE_TEST_CASE_SIG("dynamic_map: unique sequence",
                        "",
-// <<<<<<< OLD CODE from 7f980758 (24203fbf) - COMMENTED OUT
-//                        ((typename Key, typename Value, int dummy), Key, Value, dummy), //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
-//                        (int32_t, int32_t, 1),
-//                        (int32_t, int64_t, 1),
-//                        (int64_t, int32_t, 1),
-//                        (int64_t, int64_t, 1))
-// =======
-                       ((typename Key, typename T), Key, T),
-                       (int32_t, int32_t),
-                       (int32_t, int64_t),
-                       (int64_t, int32_t),
-                       (int64_t, int64_t))
-// >>>>>>> END NEW CODE (24203fbf)
+                       ((typename Key, typename T, int dummy), Key, T, dummy), //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
+                       (int32_t, int32_t, 1),
+                       (int32_t, int64_t, 1),
+                       (int64_t, int32_t, 1),
+                       (int64_t, int64_t, 1))
 {
   constexpr std::size_t num_keys{1'000'000};
 
@@ -83,18 +74,9 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map: unique sequence",
   SECTION("All inserted keys-value pairs should be contained")
   {
     map.insert(pairs_begin, pairs_begin + num_keys);
-// <<<<<<< OLD CODE from 7f980758 (24203fbf) - COMMENTED OUT
-//     map.find(d_keys.begin(), d_keys.end(), d_results.begin());
-//     auto zip = thrust::make_zip_iterator(thrust::make_tuple(d_results.begin(), d_values.begin()));
-//
-//     REQUIRE(cuco::test::all_of(zip, zip + num_keys, [] __device__(auto const& p) {
-//       return thrust::get<0>(p) == thrust::get<1>(p);
-//     }));
-// =======
     map.contains(d_keys.begin(), d_keys.end(), d_contained.begin());
 
     REQUIRE(cuco::test::all_of(d_contained.begin(), d_contained.end(), cuda::std::identity{}));
-// >>>>>>> END NEW CODE (24203fbf)
   }
 
   SECTION("Non-inserted keys-value pairs should not be contained")

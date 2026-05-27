@@ -67,9 +67,6 @@ constexpr hyperloglog<T, Scope, Hash, Allocator>::hyperloglog(
 }
 
 template <class T, cuda::thread_scope Scope, class Hash, class Allocator>
-// <<<<<<< OLD CODE from 14d7fa3e (69bb46bc) - COMMENTED OUT
-// __host__ constexpr void hyperloglog<T, Scope, Hash, Allocator>::clear_async(cuda::stream_ref stream) noexcept
-// =======
 constexpr hyperloglog<T, Scope, Hash, Allocator>::hyperloglog(cuco::precision precision,
                                                               Hash const& hash,
                                                               Allocator const& alloc,
@@ -87,7 +84,6 @@ constexpr hyperloglog<T, Scope, Hash, Allocator>::hyperloglog(cuco::precision pr
 
 template <class T, cuda::thread_scope Scope, class Hash, class Allocator>
 constexpr void hyperloglog<T, Scope, Hash, Allocator>::clear_async(cuda::stream_ref stream) noexcept
-// >>>>>>> END NEW CODE (69bb46bc)
 {
   ref_.clear_async(stream);
 }

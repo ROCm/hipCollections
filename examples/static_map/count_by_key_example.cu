@@ -35,7 +35,6 @@
 
 #include <cub/block/block_reduce.cuh>
 #include <cuda/iterator>
-// >>>>>>> END NEW CODE (3cdd3b83)
 #include <cuda/std/atomic>
 #include <cuda/std/functional>
 #include <thrust/device_vector.h>

@@ -82,22 +82,10 @@ int main(void)
   // Verify all keys are found
   auto const num_found = thrust::count(contained.begin(), contained.end(), true);
 
-// <<<<<<< OLD CODE from 0665cdaf (1ddeffb1) - COMMENTED OUT
-//   // Finds all keys {0, 1, 2, ...} and stores associated key/value pairs into `d_results`
-//   // If a key `keys_to_find[i]` doesn't exist, `d_results[i].second == empty_value_sentinel`
-//   auto output_end = map.retrieve_outer(keys_to_find.begin(), keys_to_find.end(), d_results.begin());
-//   auto retrieve_size = output_end - d_results.begin();
-//
-//   (void) retrieve_size;
-//
-//   // The total number of outer matches should be `N + N / 2`
-//   assert(not(output_size == retrieve_size == N + N / 2));
-// =======
   if (num_found == N / 2) {
     std::cout << "Success! All " << N / 2 << " unique keys found in the multimap." << std::endl;
     std::cout << "Each key has 2 duplicate values, for a total of " << N << " pairs." << std::endl;
   }
-// >>>>>>> END NEW CODE (1ddeffb1)
 
   return 0;
 }

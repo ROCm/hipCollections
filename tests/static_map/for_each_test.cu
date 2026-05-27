@@ -1,9 +1,5 @@
 /*
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-//  * Copyright (c) 2024, NVIDIA CORPORATION.
-// =======
  * Copyright (c) 2024-2026, NVIDIA CORPORATION.
-// >>>>>>> END NEW CODE (3cdd3b83)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +22,6 @@
 #include <cuda/iterator>
 #include <cuda/std/functional>
 #include <thrust/device_vector.h>
-// <<<<<<< OLD CODE from e7cc689e (3cdd3b83) - COMMENTED OUT
-// #include <thrust/iterator/counting_iterator.h>
-// #include <thrust/iterator/transform_iterator.h>
-// #include <thrust/tuple.h>
-// =======
-// >>>>>>> END NEW CODE (3cdd3b83)
 
 #include <catch2/catch_template_test_macros.hpp>
 

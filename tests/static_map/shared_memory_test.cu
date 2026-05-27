@@ -40,7 +40,6 @@
 #include <cuda/functional>
 #include <cuda/iterator>
 #include <cuda/std/tuple>
-// >>>>>>> END NEW CODE (3cdd3b83)
 #include <thrust/device_vector.h>
 #include <thrust/execution_policy.h>
 #include <thrust/iterator/zip_iterator.h>
