@@ -33,6 +33,7 @@
 
 #pragma once
 
+#include <cuco/cuda_runtime_api.h>
 #include <cuco/detail/utility/cuda.cuh>
 #include <cuco/detail/utility/math.cuh>
 

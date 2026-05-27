@@ -31,9 +31,9 @@
 
 TEMPLATE_TEST_CASE_SIG("static_set: operations on different stream than constructor",
                        "",
-                       ((typename Key), Key),
-                       (int32_t),
-                       (int64_t))
+                       ((typename Key, int dummy), Key, dummy), //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
+                       (int32_t, 1),
+                       (int64_t, 1))
 {
   cudaStream_t constructor_stream;
   cudaStream_t operation_stream;
@@ -72,11 +72,11 @@ TEMPLATE_TEST_CASE_SIG("static_set: operations on different stream than construc
       thrust::device_vector<Key> d_results(num_keys);
       set.find(d_keys.begin(), d_keys.end(), d_results.begin(), operation_stream);
 
-      auto zip = thrust::make_zip_iterator(cuda::std::tuple{d_results.begin(), d_keys.begin()});
+      auto zip = thrust::make_zip_iterator(thrust::make_tuple(d_results.begin(), d_keys.begin()));
       REQUIRE(cuco::test::all_of(zip,
                                  zip + num_keys,
                                  cuda::proclaim_return_type<bool>([] __device__(auto const& p) {
-                                   return cuda::std::get<0>(p) == cuda::std::get<1>(p);
+                                   return thrust::get<0>(p) == thrust::get<1>(p);
                                  }),
                                  operation_stream));
     }

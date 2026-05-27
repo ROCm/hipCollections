@@ -47,6 +47,10 @@
 #else
 #include <hipcub/hipcub.hpp>
 namespace cub = hipcub;
+// NOTE(HIP/AMD): rocprim's DeviceTransform doesn't accept cuda::std::tuple of
+// input pointers; bloom_filter merge/intersect falls back to thrust::transform.
+#include <thrust/execution_policy.h>
+#include <thrust/transform.h>
 #endif
 #include <cuda/atomic>
 #include <cuda/iterator>
@@ -686,12 +690,21 @@ class bloom_filter_impl {
   {
     CUCO_EXPECTS(this->block_extent() == other.block_extent(),
                  "mismatching num_blocks in merge_async");
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
     CUCO_CUDA_TRY(cub::DeviceTransform::Transform(
       cuda::std::tuple{this->data(), other.data()},
       this->data(),
       this->block_extent() * words_per_block,
       [] __device__(word_type a, word_type b) { return a | b; },
       stream.get()));
+#else
+    thrust::transform(thrust::hip::par.on(stream.get()),
+                      this->data(),
+                      this->data() + this->block_extent() * words_per_block,
+                      other.data(),
+                      this->data(),
+                      [] __device__(word_type a, word_type b) { return a | b; });
+#endif
   }
 
   __host__ constexpr void intersect(bloom_filter_impl<Key, Extent, Scope, Policy> const& other,
@@ -710,12 +723,21 @@ class bloom_filter_impl {
   {
     CUCO_EXPECTS(this->block_extent() == other.block_extent(),
                  "mismatching num_blocks in intersect_async");
+#if defined(__HIP_PLATFORM_NVIDIA__) or defined(__HIP_PLATFORM_NVCC__)
     CUCO_CUDA_TRY(cub::DeviceTransform::Transform(
       cuda::std::tuple{this->data(), other.data()},
       this->data(),
       this->block_extent() * words_per_block,
       [] __device__(word_type a, word_type b) { return a & b; },
       stream.get()));
+#else
+    thrust::transform(thrust::hip::par.on(stream.get()),
+                      this->data(),
+                      this->data() + this->block_extent() * words_per_block,
+                      other.data(),
+                      this->data(),
+                      [] __device__(word_type a, word_type b) { return a & b; });
+#endif
   }
 
   [[nodiscard]] __host__ __device__ constexpr word_type* data() noexcept { return words_; }

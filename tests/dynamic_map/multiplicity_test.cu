@@ -30,9 +30,9 @@
 
 TEMPLATE_TEST_CASE_SIG("dynamic_map: cross-submap duplicate handling",
                        "",
-                       ((typename Key, typename T), Key, T),
-                       (int32_t, int32_t),
-                       (int64_t, int64_t))
+                       ((typename Key, typename T, int dummy), Key, T, dummy), //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
+                       (int32_t, int32_t, 1),
+                       (int64_t, int64_t, 1))
 {
   // Use capacity large enough to satisfy min_insert_size_ (10,000 default)
   // but small enough to force multiple submaps after several inserts

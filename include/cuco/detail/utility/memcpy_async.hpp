@@ -16,11 +16,16 @@
 
 #pragma once
 
+#include <cuco/cuda_runtime_api.h>
 #include <cuco/detail/error.hpp>
 
 #include <cuda/stream_ref>
 
 #include <cstddef>
+
+#ifdef __HIP_PLATFORM_AMD__
+using cudaMemcpyKind = hipMemcpyKind;
+#endif
 
 namespace cuco::detail {
 

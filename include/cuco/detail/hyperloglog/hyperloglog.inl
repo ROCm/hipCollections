@@ -89,7 +89,7 @@ constexpr void hyperloglog<T, Scope, Hash, Allocator>::clear_async(cuda::stream_
 }
 
 template <class T, cuda::thread_scope Scope, class Hash, class Allocator>
-__host__ constexpr void hyperloglog<T, Scope, Hash, Allocator>::clear(cuda::stream_ref stream)
+constexpr void hyperloglog<T, Scope, Hash, Allocator>::clear(cuda::stream_ref stream)
 {
   ref_.clear(stream);
 }

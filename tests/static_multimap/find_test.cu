@@ -47,8 +47,8 @@ void test_multimap_find(Map& map, size_type num_keys)
     thrust::device_vector<Value> found_vals(num_keys);
 
     map.find(keys_begin, keys_begin + num_keys, found_vals.begin());
-    auto zip = thrust::make_zip_iterator(cuda::std::tuple{
-      found_vals.begin(), cuda::constant_iterator<Value>{map.empty_value_sentinel()}});
+    auto zip = thrust::make_zip_iterator(thrust::make_tuple(
+      found_vals.begin(), cuda::constant_iterator<Value>{map.empty_value_sentinel()}));
 
     REQUIRE(cuco::test::all_of(zip, zip + num_keys, zip_equal));
   }

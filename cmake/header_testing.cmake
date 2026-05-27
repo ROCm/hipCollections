@@ -60,9 +60,11 @@ function(cuco_add_header_tests)
     # Write simple test file that includes the header
     file(WRITE "${header_src}" "#include <${header}>\nint main() { return 0; }\n")
 
+    set_source_files_properties(${header_src} PROPERTIES LANGUAGE HIP)
+
     # Create executable test for this specific header
     add_executable(${headertest_target} ${header_src})
-    target_link_libraries(${headertest_target} PRIVATE cuco::cuco CUDA::cudart)
+    target_link_libraries(${headertest_target} PRIVATE cuco::cuco hip::device hip::hipcub)
     
     # Use common compile options (includes all compiler-specific warning suppressions)
     cuco_set_common_compile_options(${headertest_target})

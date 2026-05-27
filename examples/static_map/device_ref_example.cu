@@ -180,7 +180,7 @@ int main(void)
                                tuple_iter,
                                tuple_iter + num_inserted[0],
                                [] __device__(auto const& tuple) -> bool {
-                                 return cuda::std::get<0>(tuple) + 1 == cuda::std::get<1>(tuple);
+                                 return thrust::get<0>(tuple) + 1 == thrust::get<1>(tuple);
                                });
 
   if (result) { std::cout << "Success! Target values are properly incremented.\n"; }

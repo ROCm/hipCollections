@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include <hip/hip_runtime.h>
+
 namespace cuco::detail {
 /**
  * @brief Functor for initializing device memory with a given value

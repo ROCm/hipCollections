@@ -161,11 +161,11 @@ void test_merge_intersect(Filter& filter_a,
 TEMPLATE_TEST_CASE_SIG(
   "bloom_filter merge and intersect tests",
   "",
-  ((class Key, class Policy), Key, Policy),
-  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint32_t, 1>),
-  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint32_t, 8>),
-  (int64_t, cuco::default_filter_policy<cuco::xxhash_64<int64_t>, uint64_t, 1>),
-  (int64_t, cuco::default_filter_policy<cuco::xxhash_64<int64_t>, uint64_t, 8>))
+  ((class Key, class Policy, int dummy), Key, Policy, dummy), //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
+  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint32_t, 1>, 1),
+  (int32_t, cuco::default_filter_policy<cuco::xxhash_64<int32_t>, uint32_t, 8>, 1),
+  (int64_t, cuco::default_filter_policy<cuco::xxhash_64<int64_t>, uint64_t, 1>, 1),
+  (int64_t, cuco::default_filter_policy<cuco::xxhash_64<int64_t>, uint64_t, 8>, 1))
 {
   using filter_type =
     cuco::bloom_filter<Key, cuco::extent<size_t>, cuda::thread_scope_device, Policy>;
@@ -189,10 +189,10 @@ TEMPLATE_TEST_CASE_SIG(
 
 TEMPLATE_TEST_CASE_SIG("bloom_filter merge and intersect arrow tests",
                        "",
-                       ((class Key, class Policy), Key, Policy),
-                       (int32_t, cuco::arrow_filter_policy<int32_t>),
-                       (int64_t, cuco::arrow_filter_policy<int64_t>),
-                       (float, cuco::arrow_filter_policy<float>))
+                       ((class Key, class Policy, int dummy), Key, Policy, dummy), //FIXME(hip): dummy fixes ambiguous get_wrapper calls in catch2
+                       (int32_t, cuco::arrow_filter_policy<int32_t>, 1),
+                       (int64_t, cuco::arrow_filter_policy<int64_t>, 1),
+                       (float, cuco::arrow_filter_policy<float>, 1))
 {
   using filter_type =
     cuco::bloom_filter<Key, cuco::extent<size_t>, cuda::thread_scope_device, Policy>;
