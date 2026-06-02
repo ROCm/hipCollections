@@ -51,6 +51,8 @@ inline constexpr bool is_random_access_iterator =
 // exposes no `iterator_concept`, so the wrapper itself looks non-random-access
 // even when every underlying iterator is. Validate such zip iterators by their
 // element iterators instead (skipping the `thrust::null_type` tuple padding).
+// TODO(#101): drop this zip carve-out once rocThrust propagates cccl iterator
+// categories through `zip_iterator`.
 template <typename Iterator>
 inline constexpr bool is_zip_iterator = false;
 template <typename... Iterators>

@@ -44,6 +44,7 @@ void test_unique_sequence(Set& set, size_type num_keys)
   thrust::device_vector<bool> d_contained(num_keys);
 
   auto zip_equal = cuda::proclaim_return_type<bool>(
+    // TODO(#101): rocThrust zip_iterator workaround; revert to cuda::std::tuple/get on ROCm upgrade
     [] __device__(auto const& p) { return thrust::get<0>(p) == thrust::get<1>(p); });
   auto is_even =
     cuda::proclaim_return_type<bool>([] __device__(auto const& i) { return i % 2 == 0; });

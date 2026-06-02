@@ -174,6 +174,7 @@ int main(void)
   map.retrieve_all(contained_keys.begin(), contained_values.begin());
 
   auto tuple_iter =
+    // TODO(#101): rocThrust zip_iterator workaround; revert to cuda::std::tuple/get on ROCm upgrade
     thrust::make_zip_iterator(thrust::make_tuple(contained_keys.begin(), contained_values.begin()));
   // Iterate over all slot contents and verify that `slot.key + 1 == slot.value` is always true.
   auto result = thrust::all_of(thrust::device,

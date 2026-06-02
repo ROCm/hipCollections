@@ -56,6 +56,7 @@ void test_unique_sequence(Map& map, size_type num_keys)
       [] __device__(auto i) { return cuco::pair<Key, Value>{i, i}; }));
 
   auto zip_equal = cuda::proclaim_return_type<bool>(
+    // TODO(#101): rocThrust zip_iterator workaround; revert to cuda::std::tuple/get on ROCm upgrade
     [] __device__(auto const& p) { return thrust::get<0>(p) == thrust::get<1>(p); });
   auto is_even =
     cuda::proclaim_return_type<bool>([] __device__(auto const& i) { return i % 2 == 0; });

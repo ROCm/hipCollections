@@ -66,6 +66,7 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map find tests",
     map.find(d_keys.begin(), d_keys.end(), d_found_values.begin());
 
     auto zip_equal = cuda::proclaim_return_type<bool>(
+      // TODO(#101): rocThrust zip_iterator workaround; revert to cuda::std::tuple/get on ROCm upgrade
       [] __device__(auto const& p) { return thrust::get<0>(p) == thrust::get<1>(p); });
     auto zip =
       thrust::make_zip_iterator(thrust::make_tuple(d_values.begin(), d_found_values.begin()));

@@ -144,6 +144,7 @@ TEMPLATE_TEST_CASE_SIG("static_map retrieve_if",
 
   auto keys_begin  = cuda::counting_iterator<Key>(1);
   auto vals_begin  = cuda::counting_iterator<T>(1);
+  // TODO(#101): rocThrust zip_iterator workaround; revert to cuda::std::tuple/get on ROCm upgrade
   auto pairs_begin = thrust::make_zip_iterator(thrust::make_tuple(keys_begin, vals_begin));
 
   container.insert(pairs_begin, pairs_begin + num_keys);
