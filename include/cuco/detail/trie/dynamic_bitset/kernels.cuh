@@ -17,7 +17,12 @@
 
 #pragma once
 
-#include <cuco/detail/trie/dynamic_bitset/dynamic_bitset.cuh>
+// NOTE(HIP/AMD): include only rank.cuh for the concrete `rank` type, not
+// dynamic_bitset.cuh. Including the latter created a cycle
+// (dynamic_bitset.cuh -> dynamic_bitset.inl -> kernels.cuh) that left these
+// kernel templates undeclared when kernels.cuh was the first header included,
+// breaking header self-containment.
+#include <cuco/detail/trie/dynamic_bitset/rank.cuh>
 #include <cuco/detail/utility/cuda.cuh>
 #include <cuco/detail/utility/cuda.hpp>
 

@@ -199,12 +199,8 @@ endfunction()
 if(BUILD_TESTS)
     include(CTest)
     add_subdirectory(tests)
-    # NOTE(HIP/AMD): the upstream header self-containment tests fail because
-    # many cuco headers rely on macros/types pulled in transitively by their
-    # includers (HIPCO_DEVICE_WAVEFRONT_SIZE, __forceinline__, cudaStream_t,
-    # circular include between dynamic_bitset.cuh and its kernels.cuh, etc.).
-    # TODO(HIP/AMD): re-enable once each header is self-contained on HIP.
-    # include(cmake/header_testing.cmake)
+    # Include header tests as part of the regular test suite
+    include(cmake/header_testing.cmake)
 endif(BUILD_TESTS)
 
 ###################################################################################################
