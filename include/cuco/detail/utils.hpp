@@ -20,6 +20,8 @@
 
 #include <cuda/std/iterator>
 #include <cuda/std/type_traits>
+#include <thrust/iterator/zip_iterator.h>
+#include <thrust/tuple.h>
 
 namespace cuco {
 namespace detail {
@@ -34,13 +36,45 @@ inline constexpr bool
     cuda::std::is_base_of_v<cuda::std::random_access_iterator_tag,
                             typename Iterator::iterator_concept>;
 
+// True if a single iterator is random-access, by either the C++20
+// `random_access_iterator` concept or an `iterator_concept` member tag. The
+// concept leg is what accepts libcu++ fancy iterators such as
+// `cuda::counting_iterator`, whose legacy `iterator_category` is not
+// random-access. Both legs are SFINAE-friendly, so this is safe to evaluate for
+// non-iterator types (e.g. `thrust::null_type` tuple padding).
+template <typename Iterator>
+inline constexpr bool is_random_access_iterator =
+  cuda::std::random_access_iterator<Iterator> || has_random_access_iterator_concept<Iterator>;
+
+// NOTE(HIP/AMD): rocThrust's `zip_iterator` wrapping a libcu++ fancy iterator
+// (e.g. `cuda::counting_iterator`) reports `iterator_category = input` and
+// exposes no `iterator_concept`, so the wrapper itself looks non-random-access
+// even when every underlying iterator is. Validate such zip iterators by their
+// element iterators instead (skipping the `thrust::null_type` tuple padding).
+template <typename Iterator>
+inline constexpr bool is_zip_iterator = false;
+template <typename... Iterators>
+inline constexpr bool is_zip_iterator<thrust::zip_iterator<thrust::tuple<Iterators...>>> = true;
+
+template <typename T>
+inline constexpr bool zip_element_is_random_access =
+  cuda::std::is_same_v<T, thrust::null_type> || is_random_access_iterator<T>;
+
+template <typename Iterator>
+struct zip_is_random_access : cuda::std::true_type {};
+template <typename... Iterators>
+struct zip_is_random_access<thrust::zip_iterator<thrust::tuple<Iterators...>>>
+  : cuda::std::bool_constant<(zip_element_is_random_access<Iterators> && ...)> {};
+
+template <typename Iterator>
+inline constexpr bool is_random_access =
+  is_zip_iterator<Iterator> ? zip_is_random_access<Iterator>::value
+                            : is_random_access_iterator<Iterator>;
+
 template <typename Iterator>
 __host__ __device__ constexpr inline index_type distance(Iterator begin, Iterator end)
 {
-  // NOTE(HIP/AMD): drop the random-access static_assert. rocThrust's
-  // zip_iterator over cuda::counting_iterator doesn't expose iterator_concept,
-  // so the upstream check fires spuriously. The contracts of all call sites
-  // already assume random-access iterators.
+  static_assert(is_random_access<Iterator>, "Input iterator should be a random access iterator.");
   return static_cast<index_type>(cuda::std::distance(begin, end));
 }
 
