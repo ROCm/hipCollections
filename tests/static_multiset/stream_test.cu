@@ -92,6 +92,7 @@ TEMPLATE_TEST_CASE_SIG("static_multiset: operations on different stream than con
       thrust::device_vector<Key> d_results(num_keys);
       multiset.find(d_keys.begin(), d_keys.end(), d_results.begin(), operation_stream);
 
+      // TODO(#101): rocThrust zip_iterator workaround; revert to cuda::std::tuple/get on ROCm upgrade
       auto zip = thrust::make_zip_iterator(thrust::make_tuple(d_results.begin(), d_keys.begin()));
       REQUIRE(cuco::test::all_of(zip,
                                  zip + num_keys,

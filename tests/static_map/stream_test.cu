@@ -87,6 +87,7 @@ TEMPLATE_TEST_CASE_SIG("static_map: unique sequence of keys on given stream",
 
       map.insert(pairs_begin, pairs_begin + num_keys, stream);
       map.find(d_keys.begin(), d_keys.end(), d_results.begin(), stream);
+      // TODO(#101): rocThrust zip_iterator workaround; revert to cuda::std::tuple/get on ROCm upgrade
       auto zip = thrust::make_zip_iterator(thrust::make_tuple(d_results.begin(), d_values.begin()));
 
       REQUIRE(cuco::test::all_of(zip,

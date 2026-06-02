@@ -38,6 +38,7 @@ void test_multimap_find(Map& map, size_type num_keys)
   using Value = typename Map::mapped_type;
 
   auto zip_equal = cuda::proclaim_return_type<bool>(
+    // TODO(#101): rocThrust zip_iterator workaround; revert to cuda::std::tuple/get on ROCm upgrade
     [] __device__(auto val) { return thrust::get<0>(val) == thrust::get<1>(val); });
 
   auto const keys_begin = cuda::counting_iterator<Key>{0};

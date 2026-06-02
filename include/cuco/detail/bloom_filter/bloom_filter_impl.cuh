@@ -49,6 +49,8 @@
 namespace cub = hipcub;
 // NOTE(HIP/AMD): rocprim's DeviceTransform doesn't accept cuda::std::tuple of
 // input pointers; bloom_filter merge/intersect falls back to thrust::transform.
+// TODO(#101): revert to cub::DeviceTransform::Transform once rocPRIM accepts a
+// cuda::std::tuple of input iterators.
 #include <thrust/execution_policy.h>
 #include <thrust/transform.h>
 #endif
