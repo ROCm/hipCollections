@@ -20,6 +20,7 @@
 
 #include <cuda/std/iterator>
 #include <cuda/std/type_traits>
+#include <thrust/iterator/transform_iterator.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
 
@@ -68,10 +69,29 @@ template <typename... Iterators>
 struct zip_is_random_access<thrust::zip_iterator<thrust::tuple<Iterators...>>>
   : cuda::std::bool_constant<(zip_element_is_random_access<Iterators> && ...)> {};
 
+// NOTE(HIP/AMD): rocThrust's `transform_iterator` wrapping a libcu++ fancy
+// iterator (e.g. `cuda::counting_iterator`) likewise reports
+// `iterator_category = input` and exposes no `iterator_concept`, so the wrapper
+// looks non-random-access even when its base iterator is. Validate such
+// transform iterators by their base iterator instead.
+// TODO(#101): drop this carve-out once rocThrust propagates cccl iterator
+// categories through `transform_iterator`.
+template <typename Iterator>
+inline constexpr bool is_transform_iterator = false;
+template <typename F, typename Iter, typename Ref, typename Val>
+inline constexpr bool is_transform_iterator<thrust::transform_iterator<F, Iter, Ref, Val>> = true;
+
+template <typename Iterator>
+struct transform_is_random_access : cuda::std::true_type {};
+template <typename F, typename Iter, typename Ref, typename Val>
+struct transform_is_random_access<thrust::transform_iterator<F, Iter, Ref, Val>>
+  : cuda::std::bool_constant<is_random_access_iterator<Iter>> {};
+
 template <typename Iterator>
 inline constexpr bool is_random_access =
-  is_zip_iterator<Iterator> ? zip_is_random_access<Iterator>::value
-                            : is_random_access_iterator<Iterator>;
+  is_zip_iterator<Iterator>         ? zip_is_random_access<Iterator>::value
+  : is_transform_iterator<Iterator> ? transform_is_random_access<Iterator>::value
+                                    : is_random_access_iterator<Iterator>;
 
 template <typename Iterator>
 __host__ __device__ constexpr inline index_type distance(Iterator begin, Iterator end)
