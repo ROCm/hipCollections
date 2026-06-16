@@ -68,7 +68,7 @@ __global__ void shared_memory_test_kernel(Ref* maps,
   auto insert_ref = maps[map_id].make_copy(g, sm_buffer, cuco::thread_scope_block);
   auto find_ref   = insert_ref.rebind_operators(cuco::op::find);
 
-  for (int i = g.thread_rank(); i < number_of_elements; i += g.size()) {
+  for (int i = g.thread_rank(); i < static_cast<int>(number_of_elements); i += g.size()) {
     auto found_pair_it = find_ref.find(insterted_keys[offset + i]);
 
     if (found_pair_it != find_ref.end()) {
@@ -232,7 +232,7 @@ __global__ void shared_memory_hash_table_kernel(bool* key_found)
   auto const retrieved_pair = find_ref.find(rank);
   block.sync();
 
-  if (retrieved_pair != find_ref.end() && retrieved_pair->second == rank) {
+  if (retrieved_pair != find_ref.end() && retrieved_pair->second == static_cast<int>(rank)) {
     key_found[index] = true;
   }
 }

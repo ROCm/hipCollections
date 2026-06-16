@@ -29,7 +29,7 @@ __global__ void select_false_kernel(BitsetRef ref, size_type num_elements, Outpu
 {
   cuco::detail::index_type index  = blockIdx.x * blockDim.x + threadIdx.x;
   cuco::detail::index_type stride = gridDim.x * blockDim.x;
-  while (index < num_elements) {
+  while (index < static_cast<cuco::detail::index_type>(num_elements)) {
     output[index] = ref.select_false(index);
     index += stride;
   }

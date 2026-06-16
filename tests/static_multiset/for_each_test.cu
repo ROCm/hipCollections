@@ -62,7 +62,7 @@ CUCO_KERNEL void for_each_check_scalar(Ref ref,
   auto const loop_stride = cuco::detail::grid_stride();
   auto idx               = cuco::detail::global_thread_id();
 
-  while (idx < n) {
+  while (idx < static_cast<cuco::detail::index_type>(n)) {
     auto const& key     = *(first + idx);
     std::size_t matches = 0;
     ref.for_each(key, [&] __device__(auto const slot) {
@@ -85,7 +85,7 @@ CUCO_KERNEL void for_each_check_cooperative(Ref ref,
   auto idx               = cuco::detail::global_thread_id() / Ref::cg_size;
   ;
 
-  while (idx < n) {
+  while (idx < static_cast<cuco::detail::index_type>(n)) {
     auto const tile =
       cooperative_groups::tiled_partition<Ref::cg_size, cooperative_groups::thread_block>(
         cooperative_groups::this_thread_block());

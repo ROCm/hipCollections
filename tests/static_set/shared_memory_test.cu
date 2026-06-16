@@ -63,7 +63,7 @@ __global__ void shared_memory_test_kernel(Ref* sets,
   auto insert_ref = sets[set_id].make_copy(g, sm_buffer, cuco::thread_scope_block);
   auto find_ref   = insert_ref.rebind_operators(cuco::op::find);
 
-  for (int i = g.thread_rank(); i < number_of_elements; i += g.size()) {
+  for (int i = g.thread_rank(); i < static_cast<int>(number_of_elements); i += g.size()) {
     auto found_it = find_ref.find(insterted_keys[offset + i]);
 
     if (found_it != find_ref.end()) {
@@ -205,7 +205,7 @@ __global__ void shared_memory_hash_set_kernel(bool* key_found)
   auto const retrieved_it = find_ref.find(rank);
   block.sync();
 
-  if (retrieved_it != find_ref.end() && *retrieved_it == rank) { key_found[index] = true; }
+  if (retrieved_it != find_ref.end() && *retrieved_it == static_cast<int>(rank)) { key_found[index] = true; }
 }
 
 TEST_CASE("static_set shared memory slots test", "")

@@ -151,10 +151,10 @@ void test_merge_intersect(Filter& filter_a,
   {
     // also test with custom stream
     cudaStream_t stream;
-    cudaStreamCreate(&stream);
+    CUCO_CUDA_TRY(cudaStreamCreate(&stream));
     REQUIRE_THROWS_AS(filter_a.merge(filter_c, stream), cuco::logic_error);
     REQUIRE_THROWS_AS(filter_a.intersect(filter_c, stream), cuco::logic_error);
-    cudaStreamDestroy(stream);
+    CUCO_CUDA_TRY(cudaStreamDestroy(stream));
   }
 }
 
