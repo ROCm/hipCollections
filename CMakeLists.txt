@@ -185,8 +185,9 @@ function(cuco_set_common_compile_options target_name)
     
     # NOTE(HIP/AMD): hipcc/clang use plain compiler flags, not nvcc-style
     # `--compiler-options=` / `--expt-extended-lambda` / `-Werror=all-warnings`.
-    # TODO(HIP/AMD): enable -Wextra/-Werror once the codebase is warning-clean.
-    target_compile_options(${target_name} PRIVATE -Wall -Wno-unused-parameter)
+    # -Werror is intentionally omitted: it's brittle across ROCm/clang versions
+    # (a new warning in a future toolchain would break the build).
+    target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
     if(CUCO_OPTS_ADD_LINEINFO)
         target_compile_options(${target_name} PRIVATE -gline-tables-only)

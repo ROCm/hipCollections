@@ -60,8 +60,8 @@ struct heterogeneous_hasher {
   __device__ std::size_t operator()(Key const& key) const
   {
     auto const& ref  = thrust::raw_reference_cast(key);
-    auto const major = get<0>(ref);  // Works for both pair.first and get<0>(tuple)
-    auto const minor = get<1>(ref);  // Works for both pair.second and get<1>(tuple)
+    auto const major = cuda::std::get<0>(ref);  // Works for both pair.first and get<0>(tuple)
+    auto const minor = cuda::std::get<1>(ref);  // Works for both pair.second and get<1>(tuple)
     return static_cast<std::size_t>(major * 131 + minor);
   }
 };
@@ -75,8 +75,8 @@ struct heterogeneous_key_equal {
   {
     auto const& left  = thrust::raw_reference_cast(lhs);
     auto const& right = thrust::raw_reference_cast(rhs);
-    return (get<0>(left) == get<0>(right)) and  // Compare first elements
-           (get<1>(left) == get<1>(right));     // Compare second elements
+    return (cuda::std::get<0>(left) == cuda::std::get<0>(right)) and  // Compare first elements
+           (cuda::std::get<1>(left) == cuda::std::get<1>(right));     // Compare second elements
   }
 };
 
@@ -134,8 +134,8 @@ int main()
   for (std::size_t i = 0; i < h_queries.size(); ++i) {
     auto const& query  = h_queries[i];
     auto const present = h_contains[i];
-    std::cout << "Lookup tuple (sensor " << get<0>(query) << ", channel "
-              << get<1>(query) << ", timestamp " << cuda::std::get<2>(query) << ") -> "
+    std::cout << "Lookup tuple (sensor " << cuda::std::get<0>(query) << ", channel "
+              << cuda::std::get<1>(query) << ", timestamp " << cuda::std::get<2>(query) << ") -> "
               << (present ? "found" : "missing");
 
     if (present) { std::cout << ", stored value = " << h_found[i]; }
