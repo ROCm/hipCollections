@@ -64,7 +64,7 @@ __global__ void custom_cooperative_insert(SetRef set, InputIterator keys, std::s
   int64_t const loop_stride = gridDim.x * blockDim.x / cg_size;
   int64_t idx               = (blockDim.x * blockIdx.x + threadIdx.x) / cg_size;
 
-  while (idx < n) {
+  while (idx < static_cast<int64_t>(n)) {
     set.insert(tile, *(keys + idx));
     idx += loop_stride;
   }
@@ -82,7 +82,7 @@ __global__ void custom_contains(SetRef set, InputIterator keys, std::size_t n, O
   int64_t const loop_stride = gridDim.x * blockDim.x / cg_size;
   int64_t idx               = (blockDim.x * blockIdx.x + threadIdx.x) / cg_size;
 
-  while (idx < n) {
+  while (idx < static_cast<int64_t>(n)) {
     bool const is_contained = set.contains(tile, *(keys + idx));
     if (tile.thread_rank() == 0) { found[idx] = is_contained; }
     idx += loop_stride;

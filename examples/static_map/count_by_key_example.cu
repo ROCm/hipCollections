@@ -91,7 +91,7 @@ __global__ void count_by_key(Map map_ref,
   int64_t idx               = BlockSize * blockIdx.x + threadIdx.x;
 
   uint64_t thread_unique_keys = 0;
-  while (idx < num_keys) {
+  while (idx < static_cast<int64_t>(num_keys)) {
     // insert key into the map with a count of 1
     auto [slot, is_new_key] = map_ref.insert_and_find(cuco::pair{keys[idx], 1});
     if (is_new_key) {
