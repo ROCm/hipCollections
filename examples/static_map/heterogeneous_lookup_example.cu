@@ -59,9 +59,11 @@ struct heterogeneous_hasher {
   template <typename Key>
   __device__ std::size_t operator()(Key const& key) const
   {
-    auto const& ref  = thrust::raw_reference_cast(key);
-    auto const major = cuda::std::get<0>(ref);  // Works for both pair.first and get<0>(tuple)
-    auto const minor = cuda::std::get<1>(ref);  // Works for both pair.second and get<1>(tuple)
+    auto const& ref = thrust::raw_reference_cast(key);
+    // NOTE(HIP/AMD): unqualified `get` (ADL) is required here because the key may
+    // be a cuco::pair, which libhipcxx's `cuda::std::get` does not recognize.
+    auto const major = get<0>(ref);  // Works for both pair.first and get<0>(tuple)
+    auto const minor = get<1>(ref);  // Works for both pair.second and get<1>(tuple)
     return static_cast<std::size_t>(major * 131 + minor);
   }
 };
@@ -75,8 +77,8 @@ struct heterogeneous_key_equal {
   {
     auto const& left  = thrust::raw_reference_cast(lhs);
     auto const& right = thrust::raw_reference_cast(rhs);
-    return (cuda::std::get<0>(left) == cuda::std::get<0>(right)) and  // Compare first elements
-           (cuda::std::get<1>(left) == cuda::std::get<1>(right));     // Compare second elements
+    return (get<0>(left) == get<0>(right)) and  // Compare first elements (ADL, see hasher note)
+           (get<1>(left) == get<1>(right));     // Compare second elements
   }
 };
 
