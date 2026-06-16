@@ -253,7 +253,7 @@ TEMPLATE_TEST_CASE_SIG("dynamic_map: cross-submap duplicate handling",
     auto mixed_pairs = cuda::make_transform_iterator(
       cuda::make_counting_iterator<int>(0),
       cuda::proclaim_return_type<cuco::pair<Key, T>>([] __device__(auto i) {
-        Key key = (i < num_keys / 2) ? Key(i) : Key(3 * num_keys + i - num_keys / 2);
+        Key key = (static_cast<std::size_t>(i) < num_keys / 2) ? Key(i) : Key(3 * num_keys + i - num_keys / 2);
         return cuco::pair<Key, T>(key, T(i + 500));
       }));
     std::size_t const size_before = map.size();

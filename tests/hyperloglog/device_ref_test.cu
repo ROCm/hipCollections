@@ -68,7 +68,7 @@ __global__ void estimate_kernel(cuco::sketch_size_kb sketch_size_kb,
     estimator.clear(block);
     block.sync();
 
-    for (int i = block.thread_rank(); i < n; i += block.num_threads()) {
+    for (std::size_t i = block.thread_rank(); i < n; i += block.num_threads()) {
       estimator.add(*(in + i));
     }
     block.sync();
