@@ -69,14 +69,14 @@ class default_filter_policy_impl {
   {
     // This ensures each word in the block has at least one bit set; otherwise we would never use
     // some of the words
-    constexpr uint32_t min_pattern_bits = words_per_block;
+    [[maybe_unused]] constexpr uint32_t min_pattern_bits = words_per_block;
 
     // The maximum number of bits to be set for a key is capped by the total number of bits in the
     // filter block
-    constexpr uint32_t max_pattern_bits = word_bits * words_per_block;
+    [[maybe_unused]] constexpr uint32_t max_pattern_bits = word_bits * words_per_block;
 
     constexpr uint32_t hash_bits = cuda::std::numeric_limits<hash_result_type>::digits;
-    constexpr uint32_t max_pattern_bits_from_hash = hash_bits / bit_index_width;
+    [[maybe_unused]] constexpr uint32_t max_pattern_bits_from_hash = hash_bits / bit_index_width;
 
     #ifndef __HIP_DEVICE_COMPILE__
     {

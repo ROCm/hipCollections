@@ -612,7 +612,7 @@ class operator_impl<
       auto const group_contains_equal = group.ballot(state == detail::equal_result::EQUAL);
       if (group_contains_equal) {
         auto const src_lane = __FFS((lane_mask)group_contains_equal) - 1;
-        if (group.thread_rank() == src_lane) {
+        if (static_cast<int>(group.thread_rank()) == src_lane) {
           cuda::atomic_ref<mapped_type, Scope> payload_ref(slot_ptr->second);
           payload_ref.store(val.second, cuda::memory_order_relaxed);
         }
@@ -624,7 +624,7 @@ class operator_impl<
       if (group_contains_available) {
         auto const src_lane = __FFS((lane_mask)group_contains_available) - 1;
         auto const status =
-          (group.thread_rank() == src_lane) ? attempt_insert_or_assign(slot_ptr, val) : false;
+          (static_cast<int>(group.thread_rank()) == src_lane) ? attempt_insert_or_assign(slot_ptr, val) : false;
 
         // Exit if inserted or assigned
         if (group.shfl(static_cast<uint32_t>(status), src_lane)) { return; }

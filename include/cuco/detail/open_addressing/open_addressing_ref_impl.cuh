@@ -369,7 +369,7 @@ class open_addressing_ref_impl {
   template <typename CG>
   __device__ constexpr void initialize(CG tile) noexcept
   {
-    auto tid          = tile.thread_rank();
+    auto tid          = static_cast<size_type>(tile.thread_rank());
     auto const extent = static_cast<size_type>(this->extent());
 
     auto* const slots_ptr = this->storage_ref().data();
@@ -653,7 +653,7 @@ class open_addressing_ref_impl {
       if (group_finds_equal) {
         auto const src_lane = cuco::detail::__FFS((lane_mask)group_finds_equal) - 1;
         auto const res      = group.shfl(reinterpret_cast<intptr_t>(slot_ptr), src_lane);
-        if (group.thread_rank() == src_lane) {
+        if (static_cast<int>(group.thread_rank()) == src_lane) {
           if constexpr (has_payload) {
             // wait to ensure that the write to the value part also took place
             this->wait_for_payload(slot_ptr->second, this->empty_value_sentinel());
@@ -668,13 +668,13 @@ class open_addressing_ref_impl {
         auto const src_lane = cuco::detail::__FFS((lane_mask)group_contains_available) - 1;
         auto const res      = group.shfl(reinterpret_cast<intptr_t>(slot_ptr), src_lane);
         auto const status   = [&, target_idx = intra_bucket_index]() {
-          if (group.thread_rank() != src_lane) { return insert_result::CONTINUE; }
+          if (static_cast<int>(group.thread_rank()) != src_lane) { return insert_result::CONTINUE; }
           return this->attempt_insert_stable(slot_ptr, bucket_slots[target_idx], val);
         }();
 
         switch (static_cast<insert_result>(group.shfl(to_underlying_t(status), src_lane))) {
           case insert_result::SUCCESS: {
-            if (group.thread_rank() == src_lane) {
+            if (static_cast<int>(group.thread_rank()) == src_lane) {
               if constexpr (has_payload) {
                 // wait to ensure that the write to the value part also took place
                 this->wait_for_payload(slot_ptr->second, this->empty_value_sentinel());
@@ -684,7 +684,7 @@ class open_addressing_ref_impl {
             return {iterator{reinterpret_cast<value_type*>(res)}, true};
           }
           case insert_result::DUPLICATE: {
-            if (group.thread_rank() == src_lane) {
+            if (static_cast<int>(group.thread_rank()) == src_lane) {
               if constexpr (has_payload) {
                 // wait to ensure that the write to the value part also took place
                 this->wait_for_payload(slot_ptr->second, this->empty_value_sentinel());

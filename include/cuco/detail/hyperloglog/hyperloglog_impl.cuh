@@ -139,7 +139,7 @@ class hyperloglog_impl {
   template <class CG>
   __device__ constexpr void clear(CG group) noexcept
   {
-    for (int i = group.thread_rank(); i < this->sketch_.size(); i += group.size()) {
+    for (int i = group.thread_rank(); i < static_cast<int>(this->sketch_.size()); i += group.size()) {
       new (&(this->sketch_[i])) register_type{};
     }
   }
@@ -355,7 +355,7 @@ class hyperloglog_impl {
     // TODO find a better way to do error handling in device code
     // if (other.precision_ != this->precision_) { __trap(); }
 
-    for (int i = group.thread_rank(); i < this->sketch_.size(); i += group.size()) {
+    for (int i = group.thread_rank(); i < static_cast<int>(this->sketch_.size()); i += group.size()) {
       this->update_max(i, other.sketch_[i]);
     }
   }
@@ -428,7 +428,7 @@ class hyperloglog_impl {
 
     fp_type thread_sum = 0;
     int thread_zeroes  = 0;
-    for (int i = group.thread_rank(); i < this->sketch_.size(); i += group.size()) {
+    for (int i = group.thread_rank(); i < static_cast<int>(this->sketch_.size()); i += group.size()) {
       auto const reg = this->sketch_[i];
       thread_sum += fp_type{1} / static_cast<fp_type>(1ull << reg);
       thread_zeroes += reg == 0;
