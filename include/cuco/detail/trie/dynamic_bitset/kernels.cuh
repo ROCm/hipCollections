@@ -170,7 +170,7 @@ CUCO_KERNEL void encode_ranks_from_prefix_bit_counts(const SizeType* prefix_bit_
                                                      SizeType num_blocks,
                                                      SizeType words_per_block)
 {
-  auto rank_id      = cuco::detail::global_thread_id();
+  SizeType rank_id  = cuco::detail::global_thread_id();
   auto const stride = cuco::detail::grid_stride();
 
   while (rank_id < num_blocks) {
@@ -213,7 +213,7 @@ CUCO_KERNEL void mark_blocks_with_select_entries(SizeType const* prefix_bit_coun
                                                  SizeType words_per_block,
                                                  SizeType bits_per_block)
 {
-  auto block_id     = cuco::detail::global_thread_id();
+  SizeType block_id = cuco::detail::global_thread_id();
   auto const stride = cuco::detail::grid_stride();
 
   while (block_id < num_blocks) {

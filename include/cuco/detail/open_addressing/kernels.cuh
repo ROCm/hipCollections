@@ -763,7 +763,7 @@ CUCO_KERNEL __launch_bounds__(BlockSize) void size(StorageRef storage,
   size_type thread_count = 0;
   auto const n           = storage.capacity();
 
-  while (static_cast<unsigned long>(idx) < n) {
+  while (static_cast<unsigned long>(idx) < static_cast<unsigned long>(n)) {
     thread_count += static_cast<size_type>(is_filled(*(storage.data() + idx)));
 
     idx += loop_stride;

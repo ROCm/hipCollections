@@ -421,8 +421,8 @@ class bloom_filter_impl {
       size_type block_index;
 
       auto const group_iters = cuco::detail::int_div_ceil(num_keys, num_threads);
-      for (size_type i = 0; (i / num_threads) < group_iters; i += num_threads) {
-        if (i + rank < num_keys) {
+      for (size_type i = 0; (i / num_threads) < static_cast<size_type>(group_iters); i += num_threads) {
+        if (i + rank < static_cast<size_type>(num_keys)) {
           typename cuda::std::iterator_traits<InputIt>::value_type const& insert_element{
             *(first + i + rank)};
           hash_value  = policy_.hash(insert_element);
@@ -448,8 +448,8 @@ class bloom_filter_impl {
 
       auto const group_iters = cuco::detail::int_div_ceil(num_keys, num_threads);
 
-      for (size_type i = 0; (i / num_threads) < group_iters; i += num_threads) {
-        if (i + rank < num_keys) {
+      for (size_type i = 0; (i / num_threads) < static_cast<size_type>(group_iters); i += num_threads) {
+        if (i + rank < static_cast<size_type>(num_keys)) {
           typename cuda::std::iterator_traits<InputIt>::value_type const& key{*(first + i + rank)};
           hash_value  = policy_.hash(key);
           block_index = policy_.block_index(hash_value, num_blocks_);
