@@ -33,8 +33,14 @@ function(cuco_add_header_tests)
 
   # List of headers that have known issues or are not meant to be included directly
   set(excluded_headers
-    # Add any headers that should be excluded from testing here
-    # Example: cuco/internal_header.cuh
+    # NOTE(HIP/AMD): dynamic_bitset's kernels.cuh is only ever pulled in via
+    # dynamic_bitset.cuh -> dynamic_bitset.inl; on its own it forms the cycle
+    # kernels.cuh -> dynamic_bitset.cuh -> dynamic_bitset.inl -> kernels.cuh, and
+    # hipcc/clang requires the launched kernel to be declared at the `<<<>>>`
+    # site (stricter than nvcc), so a standalone include fails to find the kernel
+    # templates. This matches upstream's header layout; only the standalone test
+    # is skipped.
+    cuco/detail/trie/dynamic_bitset/kernels.cuh
   )
   
   # Remove excluded headers
