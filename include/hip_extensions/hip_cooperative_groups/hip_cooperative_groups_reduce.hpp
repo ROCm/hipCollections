@@ -24,6 +24,18 @@
 
 #include <hip/hip_cooperative_groups.h>
 #include <hip/amd_detail/amd_warp_sync_functions.h>
+#include <rocm-core/rocm_version.h>
+
+// ROCm 7.13 added cooperative_groups::plus (and other reduce operators) to
+// <hip/amd_detail/amd_hip_cooperative_groups.h>. Only define the polyfill plus
+// below on older ROCm where it is still missing, otherwise it redefines the
+// native one. cg::reduce(tile, val, op) is still not provided natively, so the
+// reduce() helpers further down are kept unconditionally.
+#if ROCM_VERSION_MAJOR > 7 || (ROCM_VERSION_MAJOR == 7 && ROCM_VERSION_MINOR >= 13)
+#define CUCO_HIP_CG_HAS_NATIVE_PLUS 1
+#else
+#define CUCO_HIP_CG_HAS_NATIVE_PLUS 0
+#endif
 
 namespace cooperative_groups {
 namespace internal {
@@ -42,6 +54,7 @@ namespace internal {
 // the missing cg::reduce APIs in HIP's cooperative groups.
 namespace cooperative_groups {
 
+#if !CUCO_HIP_CG_HAS_NATIVE_PLUS
   template<typename TArg>
   struct plus {
     __device__ __attribute__((always_inline)) TArg operator()(const TArg& lhs, const TArg& rhs) const
@@ -49,6 +62,7 @@ namespace cooperative_groups {
       return lhs + rhs;
     }
   };
+#endif
 
   template <unsigned TILE_SIZE, typename ParentCGTy, typename TArg>
   __device__ __attribute__((always_inline))
