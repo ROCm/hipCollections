@@ -60,7 +60,7 @@ else()
     if(DEFINED ENV{RAPIDS_CMAKE_SCRIPT_BRANCH})
       set(RAPIDS_CMAKE_SCRIPT_BRANCH "$ENV{RAPIDS_CMAKE_SCRIPT_BRANCH}")
     else()
-      set(RAPIDS_CMAKE_SCRIPT_BRANCH release/rocmds-25.10)
+      set(RAPIDS_CMAKE_SCRIPT_BRANCH release/rocmds-26.03)
     endif()
 
     set(URL "https://raw.githubusercontent.com/${RAPIDS_CMAKE_SCRIPT_REPO}/${RAPIDS_CMAKE_SCRIPT_BRANCH}/RAPIDS.cmake")

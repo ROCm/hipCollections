@@ -22,10 +22,11 @@ Header-only library of GPU-accelerated, concurrent data structures.
 This is a port of the original CUDA version at https://github.com/NVIDIA/cuCollections to HIP in order to enable support for AMD GPUs.
 
 # Requirements
-- ROCm and HIP 7.0.2 (must include `rocthrust-dev` and `hipcub`)
+- ROCm and HIP 7.2.3 (must include `rocthrust-dev` and `hipcub`)
 - CMake 3.23.1 or higher (for building the tests)
 - git (for getting `libhipcxx`)
-- AMD MI200, MI300 GPU
+- gfx90a, gfx942, gfx950
+- Tested on AMD Instinct MI210, MI250, MI300X, MI300A, MI325X, and MI355X accelerators.
 - Linux distribution (tested presently with Ubuntu 22.04)
 
 > [!NOTE]
