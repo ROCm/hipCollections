@@ -26,8 +26,8 @@ This is a port of the original CUDA version at https://github.com/NVIDIA/cuColle
 - CMake 3.23.1 or higher (for building the tests)
 - git (for getting `libhipcxx`)
 - gfx90a, gfx942, gfx950
-- Tested on AMD Instinct MI210, MI250, MI300X, MI300A, MI325X, and MI355X accelerators.
-- Linux distribution (tested presently with Ubuntu 22.04)
+- Tested on AMD Instinct MI210, MI250, MI300X, MI325X, and MI355X accelerators.
+- Linux distribution (tested presently with Ubuntu 24.04, 22.04)
 
 > [!NOTE]
 > If `rocthrust-dev` and `hipcub` is not part of your ROCm installation, you can
