@@ -40,8 +40,8 @@
 #   HIPCOLLECTIONS_INSTALL_COMPONENTS
 #                                    Components installed when the build type is
 #                                    'install'. Empty (the default) installs
-#                                    everything, which is what this project's
-#                                    install rules provide.
+#                                    everything; the project only defines the
+#                                    'devel' component.
 #   HIPCOLLECTIONS_CPACK_GENERATORS  Semicolon separated CPack generator list.
 #                                    Defaults to the generators whose backend is
 #                                    present (RPM and/or DEB).
@@ -77,8 +77,8 @@ if [ -n "${HIPCOLLECTIONS_CONDA_ENV:-}" ]; then
   set -u
 fi
 
-# The project has no COMPONENT install rules, so a component list would install
-# nothing; default to a full install.
+# The project installs everything under the 'devel' component; an empty list
+# means a full install, which amounts to the same set of files.
 components="${HIPCOLLECTIONS_INSTALL_COMPONENTS-}"
 tests_tarball_name="${PROJECT_ID}-tests.tar.gz"
 
@@ -116,14 +116,17 @@ fi
 
 #### configure
 
-# CUCO_CREATE_PACKAGE is what gates include(CPack), so it has to be on for the
-# 'package' target to exist at all.
+# INSTALL_CUCO is what gates include(CPack), so it has to be on for the
+# 'package' target to exist at all. INSTALL_CUCO_CPM_DEPS is off because the
+# ROCm-DS stack packages the CPM dependencies (libhipcxx in particular)
+# separately; that also selects the hipcollections-dev/-devel package names
+# over the self-contained hipcollections-standalone one.
 cmake_args=(
   "-D BUILD_TESTS=${HIPCOLLECTIONS_BUILD_TESTS:-ON}"
   "-D BUILD_BENCHMARKS=${HIPCOLLECTIONS_BUILD_BENCHMARKS:-ON}"
   "-D BUILD_EXAMPLES=${HIPCOLLECTIONS_BUILD_EXAMPLES:-ON}"
   "-D INSTALL_CUCO=ON"
-  "-D CUCO_CREATE_PACKAGE=ON"
+  "-D INSTALL_CUCO_CPM_DEPS=OFF"
   "-D CMAKE_VERBOSE_MAKEFILE=ON"
   "-D CPACK_OUTPUT_FILE_PREFIX=${BUILD_ARTIFACTS_DIR}"
   "-D CPACK_GENERATOR=${cpack_generators}"
