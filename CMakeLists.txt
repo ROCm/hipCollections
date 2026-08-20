@@ -286,8 +286,11 @@ if(INSTALL_CUCO)
     set(CPACK_DEBIAN_DEVEL_PACKAGE_DEPENDS "libhipcxx-dev (>= 2.7.0)")
     set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "libhipcxx-devel >= 2.7.0")
   else()
-    set(CPACK_DEBIAN_DEVEL_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-standalone")
-    set(CPACK_RPM_DEVEL_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-standalone")
+    # NOTE: The standalone package ships every component, so packaging stays
+    #       monolithic. The per-component name variables above only apply to
+    #       component-based packaging and would be ignored here.
+    set(CPACK_DEBIAN_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-standalone")
+    set(CPACK_RPM_PACKAGE_NAME "${CPACK_PACKAGE_NAME}-standalone")
   endif()
   set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
   set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
