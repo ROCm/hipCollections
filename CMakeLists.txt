@@ -50,6 +50,11 @@ set(
 if (NOT "${RAPIDS_CMAKE_MODULE_PATH}" STREQUAL "")
   list(APPEND CMAKE_MODULE_PATH "${RAPIDS_CMAKE_MODULE_PATH}")
   include(rapids-cmake)  # ensure rapids-cmake-dir is set
+  # NOTE(HIP/AMD): Only the installed ROCmDS-CMake package defines
+  # rapids-cmake-dir, a source checkout does not.
+  if(NOT DEFINED rapids-cmake-dir)
+    set(rapids-cmake-dir "${RAPIDS_CMAKE_MODULE_PATH}")
+  endif()
 else()
   if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/CUCO_RAPIDS.cmake)
     if(DEFINED ENV{RAPIDS_CMAKE_SCRIPT_REPO})
