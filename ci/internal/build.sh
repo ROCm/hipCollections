@@ -27,6 +27,8 @@
 # Required environment variables:
 #   SRC_DIR              Parent directory of the project checkout.
 #   BUILD_DIR            Scratch directory for the build tree.
+#   INSTALL_DIR          Prefix the install step targets and the packages are
+#                        built for.
 #   BUILD_ARTIFACTS_DIR  Destination for packages and the tests tarball.
 #
 # Optional environment variables:
@@ -48,14 +50,22 @@
 #   HIPCOLLECTIONS_BUILD_TESTS       ON (default) builds the test targets.
 #   HIPCOLLECTIONS_BUILD_BENCHMARKS  ON (default) builds the benchmarks.
 #   HIPCOLLECTIONS_BUILD_EXAMPLES    ON (default) builds the examples.
-#   CMAKE_INSTALL_PREFIX             Install prefix; the literal
-#                                    '<conda-prefix>' resolves to CONDA_PREFIX.
+#   CMAKE_INSTALL_PREFIX             Install prefix, overriding INSTALL_DIR; the
+#                                    literal '<conda-prefix>' resolves to
+#                                    CONDA_PREFIX.
 #   CPACK_PACKAGING_INSTALL_PREFIX   Prefix baked into the packages. Defaults to
-#                                    CMAKE_INSTALL_PREFIX.
+#                                    the install prefix.
+#   RAPIDS_CMAKE_MODULE_PATH         Where the rocmds-cmake modules live, either
+#                                    an installed package or a source checkout;
+#                                    when set, they are used instead of a
+#                                    download.
 #   AMDGPU_TARGETS                   GPU architectures to compile for.
 #   SCCACHE_ENABLE                   'true' enables the sccache launchers.
-#   CMAKE_VERSION                    When set, cmake of that version is
-#                                    installed into a venv under BUILD_DIR.
+#   CMAKE_VERSION                    Version of the cmake package to install
+#                                    into the venv under BUILD_DIR that supplies
+#                                    cmake, cpack and ctest. Unset means
+#                                    whatever cmake is on PATH, e.g. from a
+#                                    conda environment.
 #   ROCM_PATH, CMAKE_PREFIX_PATH
 #   CMAKE_BUILD_PARALLEL_LEVEL, MAX_JOBS   Build parallelism.
 
@@ -63,6 +73,7 @@ set -xeu
 
 : "${SRC_DIR:?SRC_DIR must be set}"
 : "${BUILD_DIR:?BUILD_DIR must be set}"
+: "${INSTALL_DIR:?INSTALL_DIR must be set}"
 : "${BUILD_ARTIFACTS_DIR:?BUILD_ARTIFACTS_DIR must be set}"
 
 PROJECT_ID="${PROJECT_ID:-hipcollections}"
@@ -133,7 +144,6 @@ cmake_args=(
   ${no_use_versions_json:+"-D CPM_libhipcxx_SOURCE=${SRC_DIR}/libhipcxx"}
   ${no_use_versions_json:+"-D CPM_hipbench_SOURCE=${SRC_DIR}/hipbench"}
   ${no_use_versions_json:+"-D CPM_nvbench_SOURCE=${SRC_DIR}/hipbench"}
-  ${no_use_versions_json:+"-D CPM_rapids_logger_SOURCE=${SRC_DIR}/rocmds_logger"}
   ${CMAKE_PREFIX_PATH:+"-D CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}${ROCM_PATH:+:${ROCM_PATH}/lib/cmake}"}
   ${AMDGPU_TARGETS:+"-D CMAKE_HIP_ARCHITECTURES=${AMDGPU_TARGETS}"}
   ${use_sccache:+"-D CMAKE_HIP_COMPILER_LAUNCHER=sccache"}
@@ -147,10 +157,11 @@ if [ -n "${install_to_conda_prefix:-}" ]; then
     "-D CPACK_PACKAGING_INSTALL_PREFIX=${CONDA_PREFIX}"
   )
 else
-  package_prefix="${CPACK_PACKAGING_INSTALL_PREFIX:-${CMAKE_INSTALL_PREFIX:-}}"
+  install_prefix="${CMAKE_INSTALL_PREFIX:-${INSTALL_DIR}}"
+  package_prefix="${CPACK_PACKAGING_INSTALL_PREFIX:-${install_prefix}}"
   cmake_args+=(
-    ${CMAKE_INSTALL_PREFIX:+"-D CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}"}
-    ${package_prefix:+"-D CPACK_PACKAGING_INSTALL_PREFIX=${package_prefix}"}
+    "-D CMAKE_INSTALL_PREFIX=${install_prefix}"
+    "-D CPACK_PACKAGING_INSTALL_PREFIX=${package_prefix}"
   )
 fi
 
@@ -168,13 +179,15 @@ cp -R ${src_dir} ${build_src_dir}
 
 mkdir -p ${BUILD_ARTIFACTS_DIR}
 
-# The pipeline pins cmake per build; the Docker images ship their own.
+# cmake, cpack and ctest come from this venv.
 if [ -n "${CMAKE_VERSION:-}" ]; then
+  python3 --version
   python3 -m venv ${build_src_dir}/_venv
   . ${build_src_dir}/_venv/bin/activate
   pip3 install --upgrade pip
-  pip3 install cmake==${CMAKE_VERSION}
+  pip3 install "cmake==${CMAKE_VERSION}"
 fi
+cmake --version && cpack --version && ctest --version
 
 #### build, package, install
 
@@ -202,4 +215,7 @@ du -sh ${BUILD_ARTIFACTS_DIR}/${tests_tarball_name}
 # inspect package contents
 if command -v dpkg >/dev/null 2>&1; then
   find ${BUILD_ARTIFACTS_DIR} -name "*.deb" -exec echo "{}:" \; -exec dpkg -c {} \;
+fi
+if command -v rpm >/dev/null 2>&1; then
+  find ${BUILD_ARTIFACTS_DIR} -name "*.rpm" -exec echo "{}:" \; -exec rpm -qlp {} \;
 fi
