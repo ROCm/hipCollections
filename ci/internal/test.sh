@@ -47,12 +47,17 @@ if [ -n "${HIPCOLLECTIONS_CONDA_ENV:-}" ]; then
   set -u
 fi
 
-# build.sh only creates this venv when the caller pins CMAKE_VERSION; it is
-# where ctest lives in that case.
-if [ -f "${BUILD_DIR}/${PROJECT_ID}/_venv/bin/activate" ]; then
+# ctest comes from this venv.
+venv_dir="${BUILD_DIR}/${PROJECT_ID}/_venv"
+if [ -n "${CMAKE_VERSION:-}" ]; then
+  python3 --version
+  python3 -m venv --clear "${venv_dir}"
   # shellcheck disable=SC1091
-  . "${BUILD_DIR}/${PROJECT_ID}/_venv/bin/activate"
+  . "${venv_dir}/bin/activate"
+  pip3 install --upgrade pip
+  pip3 install "cmake==${CMAKE_VERSION}"
 fi
+ctest --version
 
 if [ ! -f "${tests_dir}/CTestTestfile.cmake" ]; then
   echo "ERROR: no CTest configuration at ${tests_dir}; was the build run with BUILD_TESTS=ON?" >&2
