@@ -50,6 +50,8 @@
 #   HIPCOLLECTIONS_BUILD_TESTS       ON (default) builds the test targets.
 #   HIPCOLLECTIONS_BUILD_BENCHMARKS  ON (default) builds the benchmarks.
 #   HIPCOLLECTIONS_BUILD_EXAMPLES    ON (default) builds the examples.
+#   CI_INTERNAL_CREATE_TESTS_TARBALL '1' packs the tests tarball the tester
+#                                    images consume (default: 0).
 #   CMAKE_INSTALL_PREFIX             Install prefix, overriding INSTALL_DIR; the
 #                                    literal '<conda-prefix>' resolves to
 #                                    CONDA_PREFIX.
@@ -92,6 +94,11 @@ fi
 # means a full install, which amounts to the same set of files.
 components="${HIPCOLLECTIONS_INSTALL_COMPONENTS-}"
 tests_tarball_name="${PROJECT_ID}-tests.tar.gz"
+
+case "${CI_INTERNAL_CREATE_TESTS_TARBALL:-0}" in
+  1 | true | yes | on) create_tests_tarball="1" ;;
+  *) create_tests_tarball="" ;;
+esac
 
 [[ "${CMAKE_INSTALL_PREFIX:-}" == "<conda-prefix>" ]] && install_to_conda_prefix="1"
 [[ "${SCCACHE_ENABLE:-false}" == "true" ]] && use_sccache=1
@@ -209,8 +216,10 @@ fi
 
 # The tester images extract this at / and drive ci/internal/test.sh out of the
 # source tree it carries, so the archive keeps absolute paths.
-tar --exclude=.git -czvf ${BUILD_ARTIFACTS_DIR}/${tests_tarball_name} ${build_build_dir} ${src_dir}
-du -sh ${BUILD_ARTIFACTS_DIR}/${tests_tarball_name}
+if [ -n "${create_tests_tarball:-}" ]; then
+  tar --exclude=.git -czvf ${BUILD_ARTIFACTS_DIR}/${tests_tarball_name} ${build_build_dir} ${src_dir}
+  du -sh ${BUILD_ARTIFACTS_DIR}/${tests_tarball_name}
+fi
 
 # inspect package contents
 if command -v dpkg >/dev/null 2>&1; then
