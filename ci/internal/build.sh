@@ -215,7 +215,10 @@ fi
 #### test archive
 
 # The tester images extract this at / and drive ci/internal/test.sh out of the
-# source tree it carries, so the archive keeps absolute paths.
+# source tree it carries, so the archive keeps absolute paths. Unlike hipbench
+# and jitify, the configured source copy under BUILD_DIR stays out: the tester
+# runs prebuilt binaries through ctest rather than recompiling, and the only
+# test data it reads (roaring bitmaps) is downloaded into the build tree.
 if [ -n "${create_tests_tarball:-}" ]; then
   tar --exclude=.git -czvf ${BUILD_ARTIFACTS_DIR}/${tests_tarball_name} ${build_build_dir} ${src_dir}
   du -sh ${BUILD_ARTIFACTS_DIR}/${tests_tarball_name}
