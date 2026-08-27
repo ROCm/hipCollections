@@ -38,10 +38,13 @@ include(CTest)
 ###################################################################################################
 # - Fetch Catch   ---------------------------------------------------------------------------------
 
+# The test executables are HIP targets that clang links as PIE, so this
+# archive has to be position-independent as well.
 CPMAddPackage(
   NAME Catch2
   GITHUB_REPOSITORY catchorg/Catch2
   VERSION 3.3.0
+  OPTIONS "CMAKE_POSITION_INDEPENDENT_CODE ON"
 )
 
 # Header for catch_discover_tests

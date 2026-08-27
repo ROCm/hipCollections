@@ -146,6 +146,9 @@ cmake_args=(
   "-D INSTALL_CUCO=ON"
   "-D INSTALL_CUCO_CPM_DEPS=OFF"
   "-D CMAKE_VERBOSE_MAKEFILE=ON"
+  # Catch2 comes from the gcc toolset the wrapper exports, while the HIP test
+  # executables are linked by clang, which defaults to -pie.
+  "-D CMAKE_POSITION_INDEPENDENT_CODE=ON"
   "-D CPACK_OUTPUT_FILE_PREFIX=${BUILD_ARTIFACTS_DIR}"
   "-D CPACK_GENERATOR=${cpack_generators}"
   ${no_use_versions_json:+"-D CPM_libhipcxx_SOURCE=${SRC_DIR}/libhipcxx"}
